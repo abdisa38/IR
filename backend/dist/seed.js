@@ -492,60 +492,7 @@ const initialStaff = [
         assignedTables: ['5', '6', '7', '8'],
     },
 ];
-const initialOrders = [
-    {
-        orderNumber: 'IL-1001',
-        type: 'Dine in',
-        table: '3',
-        customerName: 'Table 3',
-        items: [
-            { menuItemId: 'main-1', name: 'Ispeeshaal Goodinii', price: 1400, quantity: 1, image: '/images/menu/ispeeshaal-goodinii.jpg' },
-            { menuItemId: 'drinks-14', name: 'Jaanboo', price: 90, quantity: 2, image: '/images/menu/jaanboo.jpg' },
-        ],
-        subtotal: 1580,
-        total: 1580,
-        status: 'preparing',
-        paymentStatus: 'pay_after_eating',
-        paymentTiming: 'post_pay',
-        paymentMethod: 'Pay after eating',
-        note: 'Well roasted ribs with extra awaze',
-    },
-    {
-        orderNumber: 'IL-1002',
-        type: 'Dine in',
-        table: '7',
-        customerName: 'Table 7',
-        items: [
-            { menuItemId: 'main-7', name: 'Kitfoo', price: 1500, quantity: 2, image: '/images/menu/kitfoo.jpg' },
-            { menuItemId: 'additional-4', name: 'Bey-Aynat', price: 200, quantity: 1, image: '/images/menu/bey-aynat.jpg' },
-            { menuItemId: 'drinks-6', name: 'Bishaan, 2 L', price: 70, quantity: 1, image: '/images/menu/bishaan.jpg' },
-        ],
-        subtotal: 3270,
-        total: 3270,
-        status: 'pending',
-        paymentStatus: 'pay_after_eating',
-        paymentTiming: 'post_pay',
-        paymentMethod: 'Pay after eating',
-        note: 'One kitfo leb-leb (medium warm)',
-    },
-    {
-        orderNumber: 'IL-1003',
-        type: 'Pickup',
-        customerName: 'Solomon G.',
-        customerPhone: '0912345678',
-        items: [
-            { menuItemId: 'main-11', name: 'Shekla Tibs', price: 1500, quantity: 1, image: '/images/menu/shekla-tibs.jpg' },
-            { menuItemId: 'additional-1', name: 'Ispeeshaal Illillii', price: 400, quantity: 1, image: '/images/ethiopian-sharing-platter.jpg' },
-        ],
-        subtotal: 1900,
-        total: 1900,
-        status: 'ready',
-        paymentStatus: 'paid',
-        paymentTiming: 'pre_pay',
-        paymentMethod: 'Cash',
-        note: 'Pack with double injera and peppers',
-    },
-];
+const initialOrders = [];
 async function seed() {
     const uri = process.env.MONGODB_URI || '';
     console.log('Connecting to MongoDB Atlas...');
