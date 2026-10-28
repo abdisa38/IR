@@ -1,4 +1,4 @@
-import { useLanguage } from './language'
+import { useLanguage, languageOptions } from './language'
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Icon, Logo, Mark, Modal, useDialog } from './shared-ui'
 import { SiteLink, sitePage } from './site-routing'
