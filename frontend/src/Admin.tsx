@@ -5,6 +5,7 @@ import { formatBirr } from './menu-data'
 import { canAccess, canSeeCustomer, canSeeMoney, createDemoOrders, navigation, nextOrderStatus, orderTotal, orderStatusLabel, recordedSales, roles } from './admin-model'
 import type { AdminPage, DemoOrder, OrderStatus, PaymentStatus, Role } from './admin-model'
 import { AdminCategories, AdminMenu, AdminSettings, AdminStaff, AdminTables } from './AdminManagement'
+import { api, type ApiOrder } from './api/client'
 import './admin.css'
 import { Pagination, StatusBadge } from './ui-patterns'
 import { useLanguage } from './language'
@@ -12,20 +13,20 @@ import { useLanguage } from './language'
 const paymentFilters: PaymentStatus[] = ['Unpaid', 'Awaiting Payment', 'Verification Pending', 'Paid', 'Failed', 'Refunded']
 const statusFilters: ('All Orders' | OrderStatus)[] = ['All Orders', 'New', 'Accepted', 'Preparing', 'Ready', 'Completed', 'Cancelled']
 const time = (value: string) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-const Badge = ({ value, type = 'Order' }: { value: string; type?: 'Payment' | 'Order' }) => <StatusBadge label={value} type={type} demo tone={['Paid', 'Completed', 'Ready for Pickup', 'Ready to Serve'].includes(value) ? 'success' : ['Failed', 'Cancelled', 'Refunded'].includes(value) ? 'error' : ['Submitted', 'Awaiting Payment', 'Verification Pending'].includes(value) ? 'warning' : 'neutral'} />
+const Badge = ({ value, type = 'Order' }: { value: string; type?: 'Payment' | 'Order' }) => <StatusBadge label={value} type={type} tone={['Paid', 'Completed', 'Ready for Pickup', 'Ready to Serve'].includes(value) ? 'success' : ['Failed', 'Cancelled', 'Refunded'].includes(value) ? 'error' : ['Submitted', 'Awaiting Payment', 'Verification Pending'].includes(value) ? 'warning' : 'neutral'} />
 type Confirmation = { kind: 'cancel' | 'verify' | 'unable' | 'cash'; order: DemoOrder }
 
 function ActivityChart({ orders }: { orders: DemoOrder[] }) {
   const sorted = [...orders].sort((a, b) => a.received.localeCompare(b.received))
   const points = sorted.map((_, i) => `${35 + i * (560 / Math.max(1, sorted.length - 1))},${155 - ((i + 1) / Math.max(1, sorted.length)) * 120}`).join(' ')
-  return <div className="admin-activity-chart"><svg viewBox="0 0 630 190" role="img" aria-label={`Cumulative activity for ${orders.length} illustrative orders, earliest to latest`}><g className="chart-grid"><path d="M35 35h560M35 75h560M35 115h560M35 155h560" /></g><g className="chart-axis"><text x="5" y="39">{orders.length}</text><text x="12" y="159">0</text><text x="35" y="182">Earliest demo order</text><text x="490" y="182">Latest demo order</text></g>{sorted.length > 0 && <><polygon className="chart-area" points={`35,155 ${points} 595,155`} /><polyline className="chart-line" points={points} /><circle cx={sorted.length === 1 ? 35 : 595} cy={35} r="4" className="chart-point" /></>}</svg></div>
+  return <div className="admin-activity-chart"><svg viewBox="0 0 630 190" role="img" aria-label={`Cumulative activity for ${orders.length} orders`}><g className="chart-grid"><path d="M35 35h560M35 75h560M35 115h560M35 155h560" /></g><g className="chart-axis"><text x="5" y="39">{orders.length}</text><text x="12" y="159">0</text><text x="35" y="182">Earliest order</text><text x="490" y="182">Latest order</text></g>{sorted.length > 0 && <><polygon className="chart-area" points={`35,155 ${points} 595,155`} /><polyline className="chart-line" points={points} /><circle cx={sorted.length === 1 ? 35 : 595} cy={35} r="4" className="chart-point" /></>}</svg></div>
 }
 
 export default function Admin() {
   const { language, setLanguage } = useLanguage()
   const [page, setPage] = useState<AdminPage>('Overview')
   const [role, setRole] = useState<Role>('Owner')
-  const [orders, setOrders] = useState(createDemoOrders)
+  const [orders, setOrders] = useState<DemoOrder[]>(createDemoOrders)
   const [mobile, setMobile] = useState(false)
   const [narrow, setNarrow] = useState(() => window.innerWidth <= 1024)
   const [query, setQuery] = useState('')
@@ -44,6 +45,50 @@ export default function Admin() {
   const profileMenuRef = useRef<HTMLDivElement>(null)
   const [signedOut, setSignedOut] = useState(false)
   const [viewState, setViewState] = useState('ready')
+
+  const loadOrders = async () => {
+    try {
+      const res = await api.getOrders({ limit: 100 })
+      if (res.success && res.orders) {
+        const mapped: DemoOrder[] = res.orders.map(o => ({
+          id: o.orderNumber,
+          type: (o.type === 'Pickup' ? 'Pickup' : 'Dine-in') as 'Dine-in' | 'Pickup',
+          status: (o.status === 'pending'
+            ? 'New'
+            : o.status === 'preparing'
+            ? 'Preparing'
+            : o.status === 'ready'
+            ? 'Ready'
+            : o.status === 'completed'
+            ? 'Completed'
+            : 'Cancelled') as OrderStatus,
+          payment: (o.paymentStatus === 'paid' ? 'Paid' : 'Unpaid') as PaymentStatus,
+          method: (o.paymentMethod?.includes('Telebirr')
+            ? 'Telebirr'
+            : o.paymentMethod?.includes('CBE')
+            ? 'CBE transfer'
+            : 'Cash') as any,
+          received: o.createdAt,
+          table: o.table || undefined,
+          customer: o.customerName || (o.table ? `Table ${o.table}` : 'Guest'),
+          phone: o.customerPhone || '0909511588',
+          items: o.items.map(i => ({ id: i.menuItemId, name: i.name, price: i.price, quantity: i.quantity })),
+          note: o.note,
+          activity: [`Order created at ${time(o.createdAt)}`],
+          fee: 0,
+        }))
+        setOrders(mapped)
+      }
+    } catch (err: any) {
+      console.warn('Could not load orders from backend:', err.message)
+    }
+  }
+
+  useEffect(() => {
+    loadOrders()
+    const timerId = setInterval(loadOrders, 10000)
+    return () => clearInterval(timerId)
+  }, [])
   useEffect(() => setOrderPage(1), [filter, query])
   useEffect(() => {
     if (!profileMenuOpen) return
@@ -99,24 +144,41 @@ export default function Admin() {
   const current = selected ? orders.find(order => order.id === selected.id) : null
   const notify = (text: string) => setNotice(text)
   const navigate = (next: AdminPage) => { setPage(next); setMobile(false); setQuery(''); setViewState('ready'); setNotice('') }
-  const changeOrder = (order: DemoOrder) => {
+  const changeOrder = async (order: DemoOrder) => {
     if (!operation) return
     const next = nextOrderStatus(order)
-    if (!next || role === 'Kitchen Staff' && !['Accepted', 'Preparing'].includes(order.status)) return
-    setOrders(current => current.map(item => item.id === order.id ? { ...item, status: next.status, activity: [...item.activity, `${next.label} · demo ${time(new Date().toISOString())}`] } : item))
-    notify(`${order.id}: ${next.label.toLowerCase()} illustrated. Payment status is unchanged.`)
+    if (!next || (role === 'Kitchen Staff' && !['Accepted', 'Preparing'].includes(order.status))) return
+    const apiStatus = next.status === 'Preparing' ? 'preparing' : next.status === 'Ready' ? 'ready' : next.status === 'Completed' ? 'completed' : 'pending'
+    try {
+      await api.updateOrderStatus(order.id, apiStatus as any)
+      notify(`Order ${order.id}: ${next.label}`)
+      await loadOrders()
+    } catch (err: any) {
+      notify(`Update error: ${err.message}`)
+    }
   }
   const confirmAction = (kind: Confirmation['kind'], order: DemoOrder) => { setConfirmation({ kind, order }); setReason(''); setChecked(false); setFormError('') }
-  const confirm = () => {
+  const confirm = async () => {
     if (!confirmation) return
     const { kind, order } = confirmation
     if (kind === 'cancel' ? !operation : !reviewing) return
     if ((kind === 'cancel' || kind === 'unable') && !reason.trim()) { setFormError('Add a reason so the team can understand this decision.'); return }
-    if ((kind === 'verify' || kind === 'cash') && !checked) { setFormError('Confirm the trusted-record check for this illustration. Evidence alone is not proof.'); return }
-    setOrders(current => current.map(item => item.id === order.id ? kind === 'cancel' ? { ...item, status: 'Cancelled', activity: [...item.activity, `Cancellation illustration: ${reason}`] } : kind === 'unable' ? { ...item, payment: 'Verification Pending', reviewer: `Demo ${role}`, reviewedAt: new Date().toISOString(), activity: [...item.activity, `Unable to verify · sample reason: ${reason}`] } : { ...item, payment: 'Paid', reviewer: `Demo ${role}`, reviewedAt: new Date().toISOString(), activity: [...item.activity, `${kind === 'cash' ? 'Cash recorded' : 'Transfer verified'} · illustration only`] } : item))
-    setConfirmation(null); notify('Local demo record updated. No payment, refund or real order was changed.')
+    if ((kind === 'verify' || kind === 'cash') && !checked) { setFormError('Confirm the payment check.'); return }
+    try {
+      if (kind === 'cancel') {
+        await api.cancelOrder(order.id)
+        notify(`Order ${order.id} cancelled.`)
+      } else {
+        await api.updateOrderPayment(order.id, 'paid', kind === 'cash' ? 'Cash' : 'Bank Transfer')
+        notify(`Payment verified for order ${order.id}.`)
+      }
+      setConfirmation(null)
+      await loadOrders()
+    } catch (err: any) {
+      notify(`Payment action error: ${err.message}`)
+    }
   }
-  const orderTable = (data: DemoOrder[]) => <><div className="admin-mobile-orders">{data.map(order => <article className="admin-mobile-order" key={order.id}><div><button className="admin-order-link" onClick={() => setSelected(order)}>{order.id}</button><span>{time(order.received)}</span></div><span className="admin-order-type"><Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={16} />{order.type}{order.table && ` · Table ${order.table}`}</span><p>{order.items.map(item => `${item.quantity} × ${item.name}`).join(', ')}</p><div className="mobile-order-statuses"><Badge value={order.payment} type="Payment" /><Badge value={orderStatusLabel(order)} /></div><div className="mobile-order-action">{financial && <strong>{formatBirr(orderTotal(order))} <small>ETB</small></strong>}<button className="button secondary" onClick={() => setSelected(order)} aria-label={`View order ${order.id}`}>View order<Icon name="arrow" size={16} /></button></div></article>)}{data.length === 0 && <div className="admin-empty"><Icon name="search" size={28} /><h3>No matching demo orders.</h3><p>Try another filter or clear your search.</p></div>}</div><div className="admin-table-wrap admin-order-table"><table className="admin-table"><thead><tr><th>Order reference</th><th>Received</th><th>Order type</th><th>Items</th>{financial && <th>Total</th>}<th>Payment</th><th>Order status</th><th /></tr></thead><tbody>{data.map(order => <tr key={order.id}><td><button className="admin-order-link" onClick={() => setSelected(order)}>{order.id}</button><small>{order.table ? `Table ${order.table}` : 'Guest order'}</small></td><td>{time(order.received)}</td><td><span className={`admin-order-type type-${order.type.toLowerCase()}`}><Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={14} />{order.type}</span></td><td><span className="admin-item-summary">{order.items.map(item => `${item.quantity} × ${item.name}`).join(', ')}</span></td>{financial && <td><strong>{formatBirr(orderTotal(order))}</strong><small>ETB</small></td>}<td><Badge value={order.payment} type="Payment" /></td><td><Badge value={orderStatusLabel(order)} /></td><td><button className="icon-button" aria-label={`View ${order.id}`} onClick={() => setSelected(order)}><Icon name="arrow" size={15} /></button></td></tr>)}</tbody></table>{data.length === 0 && <div className="admin-empty"><Icon name="search" size={28} /><h3>No matching demo orders.</h3><p>Try another filter or clear your search.</p></div>}</div></>
+  const orderTable = (data: DemoOrder[]) => <><div className="admin-mobile-orders">{data.map(order => <article className="admin-mobile-order" key={order.id}><div><button className="admin-order-link" onClick={() => setSelected(order)}>{order.id}</button><span>{time(order.received)}</span></div><span className="admin-order-type"><Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={16} />{order.type}{order.table && ` · Table ${order.table}`}</span><p>{order.items.map(item => `${item.quantity} × ${item.name}`).join(', ')}</p><div className="mobile-order-statuses"><Badge value={order.payment} type="Payment" /><Badge value={orderStatusLabel(order)} /></div><div className="mobile-order-action">{financial && <strong>{formatBirr(orderTotal(order))} <small>ETB</small></strong>}<button className="button secondary" onClick={() => setSelected(order)} aria-label={`View order ${order.id}`}>View order<Icon name="arrow" size={16} /></button></div></article>)}{data.length === 0 && <div className="admin-empty"><Icon name="search" size={28} /><h3>No matching orders.</h3><p>Try another filter or clear your search.</p></div>}</div><div className="admin-table-wrap admin-order-table"><table className="admin-table"><thead><tr><th>Order reference</th><th>Received</th><th>Order type</th><th>Items</th>{financial && <th>Total</th>}<th>Payment</th><th>Order status</th><th /></tr></thead><tbody>{data.map(order => <tr key={order.id}><td><button className="admin-order-link" onClick={() => setSelected(order)}>{order.id}</button><small>{order.table ? `Table ${order.table}` : 'Guest order'}</small></td><td>{time(order.received)}</td><td><span className={`admin-order-type type-${order.type.toLowerCase()}`}><Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={14} />{order.type}</span></td><td><span className="admin-item-summary">{order.items.map(item => `${item.quantity} × ${item.name}`).join(', ')}</span></td>{financial && <td><strong>{formatBirr(orderTotal(order))}</strong><small>ETB</small></td>}<td><Badge value={order.payment} type="Payment" /></td><td><Badge value={orderStatusLabel(order)} /></td><td><button className="icon-button" aria-label={`View ${order.id}`} onClick={() => setSelected(order)}><Icon name="arrow" size={15} /></button></td></tr>)}</tbody></table>{data.length === 0 && <div className="admin-empty"><Icon name="search" size={28} /><h3>No matching orders.</h3><p>Try another filter or clear your search.</p></div>}</div></>
   const reportOrders = scoped.filter(order => order.status === 'Completed' && order.payment === 'Paid' && order.fee !== null)
   const bestSellers = useMemo(() => {
     const map = new Map<string, number>(); reportOrders.forEach(order => order.items.forEach(item => map.set(item.name, (map.get(item.name) || 0) + item.quantity))); return [...map].sort((a, b) => b[1] - a[1])

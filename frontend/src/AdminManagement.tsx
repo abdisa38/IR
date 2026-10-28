@@ -524,11 +524,11 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
               </span>
             </div>
             <QrPlaceholder table={table.id} />
-            <small>{`/?demoTable=${table.id}#menu`}</small>
+            <small>{`/?table=${table.id}#menu`}</small>
             {demoTables.includes(table.id as typeof demoTables[number]) && table.active ? (
               <SiteLink
-                href={`/?demoTable=${table.id}#menu`}
-                onClick={() => window.dispatchEvent(new CustomEvent('ilillii-demo-table', { detail: table.id }))}
+                href={`/?table=${table.id}#menu`}
+                onClick={() => window.dispatchEvent(new CustomEvent('ilillii-table', { detail: table.id }))}
                 className="button secondary"
               >
                 Open table ordering link<Icon name="arrow" size={15} />

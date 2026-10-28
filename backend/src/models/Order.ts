@@ -19,7 +19,7 @@ export interface IOrder extends Document {
   total: number
   status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
   paymentStatus: 'unpaid' | 'paid' | 'pay_after_eating'
-  paymentTiming: 'pre_pay' | 'post_pay'
+  paymentTiming: 'pre_pay' | 'post_pay' | 'pay_before' | 'pay_after'
   paymentMethod?: string
   note?: string
   createdAt: Date
@@ -64,7 +64,7 @@ const OrderSchema = new Schema<IOrder>(
     paymentTiming: {
       type: String,
       required: true,
-      enum: ['pre_pay', 'post_pay'],
+      enum: ['pre_pay', 'post_pay', 'pay_before', 'pay_after'],
       default: 'post_pay',
     },
     paymentMethod: { type: String, default: 'Pay after eating' },

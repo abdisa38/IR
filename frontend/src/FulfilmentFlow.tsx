@@ -103,7 +103,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
         setReceipt({
           reference: res.order.orderNumber,
           accessCode: res.order.id.slice(-6).toUpperCase(),
-          mode: res.order.type === 'Pickup' ? 'pickup' : 'table',
+          mode: res.order.type === 'Pickup' ? 'pickup' : 'dine',
           lines: res.order.items.map(i => ({
             item: {
               id: i.menuItemId,

@@ -80,15 +80,19 @@ router.post('/', async (req: Request, res: Response) => {
     const total = subtotal
     const orderNumber = await generateOrderNumber()
 
+    const normalizedTiming = (paymentTiming === 'pay_before' || paymentTiming === 'pre_pay') ? 'pre_pay' : 'post_pay'
+    const normalizedPaymentStatus = normalizedTiming === 'pre_pay' ? 'paid' : 'pay_after_eating'
+    const normalizedPaymentMethod = paymentMethod || (normalizedTiming === 'pre_pay' ? 'Cash / Transfer' : 'Pay after eating')
+
     const newOrder = new Order({
       orderNumber,
       type: type === 'Pickup' ? 'Pickup' : 'Dine in',
       table: table || '',
       customerName: customerName || (table ? `Table ${table}` : 'Guest'),
       customerPhone: customerPhone || '',
-      items: items.map((i: any) => ({
-        menuItemId: i.menuItemId || i.id,
-        name: i.name,
+      items: items.map((i: any, index: number) => ({
+        menuItemId: String(i.menuItemId || i.id || i.dishId || i._id || `item-${index + 1}`),
+        name: i.name || 'Dish',
         price: Number(i.price) || 0,
         quantity: Number(i.quantity) || 1,
         image: i.image || '',
@@ -96,9 +100,9 @@ router.post('/', async (req: Request, res: Response) => {
       subtotal,
       total,
       status: 'pending',
-      paymentStatus: paymentTiming === 'pre_pay' ? 'paid' : 'pay_after_eating',
-      paymentTiming,
-      paymentMethod: paymentMethod || (paymentTiming === 'pre_pay' ? 'Cash / Transfer' : 'Pay after eating'),
+      paymentStatus: normalizedPaymentStatus,
+      paymentTiming: normalizedTiming,
+      paymentMethod: normalizedPaymentMethod,
       note: note || '',
     })
 
