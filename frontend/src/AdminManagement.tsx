@@ -465,40 +465,77 @@ export function AdminCategories({ notify }: { notify: (text: string) => void }) 
   )
 }
 
-function QrPlaceholder({ table }: { table: string }) {
+function TableQrCode({ table }: { table: string }) {
+  const qrTarget = typeof window !== 'undefined'
+    ? `${window.location.origin}/?table=${table}&source=qr#menu`
+    : `https://frontend-psi-ten-87.vercel.app/?table=${table}&source=qr#menu`
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&data=${encodeURIComponent(qrTarget)}`
+
   return (
-    <svg className="admin-qr" viewBox="0 0 100 100" role="img" aria-label={`QR code for table ${table}`}>
-      <rect width="100" height="100" fill="white" />
-      <g fill="none" stroke="currentColor" strokeWidth="6">
-        <rect x="9" y="9" width="23" height="23" />
-        <rect x="67" y="9" width="23" height="23" />
-        <rect x="9" y="67" width="23" height="23" />
-      </g>
-      <g fill="currentColor">
-        <path d="M17 17h7v7h-7ZM75 17h7v7h-7ZM17 75h7v7h-7ZM44 13h8v20h-8ZM42 44h15v15H42ZM67 45h8v10h-8ZM80 65h10v22H80ZM44 77h10v12H44ZM62 65h8v10h-8ZM10 44h20v8H10Z" />
-      </g>
-      <rect x="19" y="57" width="64" height="13" fill="white" />
-      <text x="50" y="66" textAnchor="middle" fontSize="6" fontWeight="bold" fill="#7D1825">
-        TABLE {table}
-      </text>
-    </svg>
+    <div style={{ textAlign: 'center', background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', margin: '8px 0' }}>
+      <img
+        src={qrUrl}
+        alt={`QR Code for Table ${table}`}
+        width={140}
+        height={140}
+        loading="lazy"
+        style={{ display: 'block', margin: '0 auto', maxWidth: '100%', height: 'auto' }}
+      />
+      <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 600, display: 'inline-block', marginTop: '6px' }}>
+        📲 Scans to Table {table} Order
+      </span>
+    </div>
   )
 }
 
 export function AdminTables({ notify }: { notify: (text: string) => void }) {
-  const [tables, setTables] = useState(demoTables.map(id => ({ id: String(id), active: true })))
+  const [tables, setTables] = useState<{ id: string; active: boolean }[]>(() => {
+    try {
+      const saved = localStorage.getItem('ilillii_tables')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map(id => ({ id, active: true }))
+  })
   const [editing, setEditing] = useState<{ id: string; active: boolean; original?: string } | null>(null)
+  const [printableTable, setPrintableTable] = useState<string | null>(null)
   const [error, setError] = useState('')
 
+  const saveTables = (newTables: { id: string; active: boolean }[]) => {
+    setTables(newTables)
+    try {
+      localStorage.setItem('ilillii_tables', JSON.stringify(newTables))
+    } catch {}
+  }
+
   const download = (id: string) => {
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400"><rect width="400" height="400" fill="#FFF8F3"/><text x="200" y="160" text-anchor="middle" font-size="40" fill="#B82032">ILILLII · TABLE ${id}</text><text x="200" y="230" text-anchor="middle" font-size="18">SCAN FOR TABLE ORDERING</text></svg>`
+    const qrTarget = `${window.location.origin}/?table=${id}&source=qr#menu`
+    const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=${encodeURIComponent(qrTarget)}`
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="480" viewBox="0 0 400 480">
+      <rect width="400" height="480" fill="#FFF8F3" rx="16"/>
+      <rect x="20" y="20" width="360" height="440" fill="#ffffff" stroke="#e5e7eb" stroke-width="2" rx="12"/>
+      <text x="200" y="60" text-anchor="middle" font-size="20" font-weight="bold" fill="#B82032" font-family="sans-serif">ILILLII BAR &amp; RESTAURANT</text>
+      <text x="200" y="85" text-anchor="middle" font-size="12" fill="#78350f" font-family="sans-serif">Bale Robe, Oromia · 0909511588</text>
+      <line x1="40" y1="100" x2="360" y2="100" stroke="#f3f4f6" stroke-width="2"/>
+      <text x="200" y="145" text-anchor="middle" font-size="32" font-weight="900" fill="#1c1917" font-family="sans-serif">TABLE ${id}</text>
+      <text x="200" y="175" text-anchor="middle" font-size="13" fill="#15803d" font-weight="bold" font-family="sans-serif">SCAN WITH YOUR PHONE CAMERA</text>
+      <image href="${qrImg}" x="100" y="195" width="200" height="200"/>
+      <text x="200" y="420" text-anchor="middle" font-size="12" fill="#57534e" font-family="sans-serif">Browse Food &amp; Drink · Order to Table ${id}</text>
+      <text x="200" y="440" text-anchor="middle" font-size="10" fill="#a8a29e" font-family="sans-serif">Around Awraris, near General Wako Gutu Square</text>
+    </svg>`
     const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
     const link = document.createElement('a')
     link.href = url
-    link.download = `ilillii-table-${id}.svg`
+    link.download = `ilillii-table-${id}-qr-card.svg`
     link.click()
     setTimeout(() => URL.revokeObjectURL(url), 1000)
-    notify(`Downloaded QR printable for Table ${id}`)
+    notify(`Downloaded printable QR tent card for Table ${id}`)
+  }
+
+  const handleDelete = (id: string) => {
+    if (!confirm(`Are you sure you want to remove Table ${id}?`)) return
+    const updated = tables.filter(t => t.id !== id)
+    saveTables(updated)
+    notify(`Table ${id} removed.`)
   }
 
   return (
@@ -514,44 +551,107 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
           <Icon name="plus" size={16} />Add Table
         </button>
       </div>
+
       <div className="admin-tables-grid">
-        {tables.map(table => (
-          <article className="admin-table-card" key={table.id}>
-            <div>
-              <h2>Table {table.id}</h2>
-              <span className={`admin-badge ${table.active ? 'badge-green' : 'badge-neutral'}`}>
-                {table.active ? 'Active' : 'Inactive'}
-              </span>
-            </div>
-            <QrPlaceholder table={table.id} />
-            <small>{`/?table=${table.id}#menu`}</small>
-            {demoTables.includes(table.id as typeof demoTables[number]) && table.active ? (
-              <SiteLink
-                href={`/?table=${table.id}#menu`}
-                onClick={() => window.dispatchEvent(new CustomEvent('ilillii-table', { detail: table.id }))}
-                className="button secondary"
-              >
-                Open table ordering link<Icon name="arrow" size={15} />
-              </SiteLink>
-            ) : (
-              <span className="admin-inline-note">Table active in dining room.</span>
-            )}
-            <div className="table-card-actions">
-              <button onClick={() => download(table.id)}>
-                <Icon name="download" size={16} />Download printable
-              </button>
-              <button
-                onClick={() => {
-                  setEditing({ ...table, original: table.id })
-                  setError('')
-                }}
-              >
-                Edit
-              </button>
-            </div>
-          </article>
-        ))}
+        {tables.map(table => {
+          const directUrl = `/?table=${table.id}&source=qr#menu`
+          return (
+            <article className="admin-table-card" key={table.id}>
+              <div>
+                <h2>Table {table.id}</h2>
+                <span className={`admin-badge ${table.active ? 'badge-green' : 'badge-neutral'}`}>
+                  {table.active ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+
+              <TableQrCode table={table.id} />
+
+              <small style={{ wordBreak: 'break-all', fontSize: '11px', color: '#6b7280' }}>
+                {directUrl}
+              </small>
+
+              {table.active ? (
+                <SiteLink
+                  href={directUrl}
+                  onClick={() => {
+                    localStorage.setItem('ilillii_table', table.id)
+                    localStorage.setItem('ilillii_table_source', 'qr')
+                    window.dispatchEvent(new CustomEvent('ilillii-table', { detail: table.id }))
+                  }}
+                  className="button secondary"
+                >
+                  Test Table Order Link<Icon name="arrow" size={15} />
+                </SiteLink>
+              ) : (
+                <span className="admin-inline-note">Table inactive in dining room.</span>
+              )}
+
+              <div className="table-card-actions" style={{ flexWrap: 'wrap', gap: '6px' }}>
+                <button onClick={() => setPrintableTable(table.id)} title="Preview printable card">
+                  <Icon name="document" size={15} />Tent Card
+                </button>
+                <button onClick={() => download(table.id)} title="Download SVG card">
+                  <Icon name="download" size={15} />Download
+                </button>
+                <button
+                  onClick={() => {
+                    setEditing({ ...table, original: table.id })
+                    setError('')
+                  }}
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(table.id)}
+                  style={{ color: '#dc2626' }}
+                  title="Remove this table"
+                >
+                  Delete
+                </button>
+              </div>
+            </article>
+          )
+        })}
       </div>
+
+      {printableTable && (
+        <Modal title={`Print Table ${printableTable} Tent Card`} close={() => setPrintableTable(null)}>
+          <div style={{ textAlign: 'center', padding: '16px', background: '#fdfbf7', borderRadius: '12px', border: '2px dashed #b82032', maxWidth: '340px', margin: '0 auto' }}>
+            <h2 style={{ color: '#b82032', margin: '0 0 4px', fontSize: '18px', fontWeight: 900 }}>ILILLII BAR &amp; RESTAURANT</h2>
+            <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#78350f' }}>Bale Robe, Oromia · 0909511588</p>
+            <div style={{ background: '#ffffff', padding: '14px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+              <div style={{ fontSize: '28px', fontWeight: 900, color: '#1c1917', marginBottom: '4px' }}>
+                TABLE {printableTable}
+              </div>
+              <p style={{ fontSize: '12px', fontWeight: 700, color: '#15803d', margin: '0 0 10px' }}>
+                SCAN WITH PHONE CAMERA TO ORDER
+              </p>
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=6&data=${encodeURIComponent(`${window.location.origin}/?table=${printableTable}&source=qr#menu`)}`}
+                alt={`Table ${printableTable} QR Code`}
+                width={180}
+                height={180}
+                style={{ display: 'block', margin: '0 auto' }}
+              />
+              <p style={{ fontSize: '11px', color: '#57534e', marginTop: '10px', marginBottom: 0 }}>
+                Browse Food &amp; Drink · Direct Table Service
+              </p>
+            </div>
+            <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '12px' }}>
+              Around Awraris, near General Wako Gutu Square
+            </p>
+            <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+              <button className="button primary" style={{ flex: 1 }} onClick={() => window.print()}>
+                Print Card
+              </button>
+              <button className="button secondary" style={{ flex: 1 }} onClick={() => download(printableTable)}>
+                Download SVG
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
       {editing && (
         <Modal title="Table configuration" close={() => setEditing(null)}>
           <form
@@ -565,13 +665,12 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
                 setError('Use a unique table number with 1–3 digits.')
                 return
               }
-              setTables(current =>
-                editing.original
-                  ? current.map(table =>
-                      table.id === editing.original ? { id: editing.id, active: editing.active } : table
-                    )
-                  : [...current, { id: editing.id, active: editing.active }]
-              )
+              const updated = editing.original
+                ? tables.map(table =>
+                    table.id === editing.original ? { id: editing.id, active: editing.active } : table
+                  )
+                : [...tables, { id: editing.id, active: editing.active }]
+              saveTables(updated)
               setEditing(null)
               notify(`Table ${editing.id} saved!`)
             }}

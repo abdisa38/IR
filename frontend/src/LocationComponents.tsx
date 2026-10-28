@@ -140,10 +140,10 @@ export function GlobalHeader({
             <button
               className="language-button"
               onClick={() => setLanguageOpen(true)}
-              aria-label="Choose Afaan Oromo or Amharic"
+              aria-label="Choose Language"
             >
               <Icon name="globe" size={17} />
-              <span>{language === 'am' ? 'አማርኛ / Afaan Oromo' : 'Afaan Oromo / አማርኛ'}</span>
+              <span>{language === 'om' ? 'Afaan Oromoo' : language === 'am' ? 'አማርኛ' : 'English'}</span>
               <Icon name="down" size={13} />
             </button>
             {cartCount !== undefined ? (
@@ -173,18 +173,18 @@ export function GlobalHeader({
         </div>
       </header>
       {languageOpen && (
-        <Modal title="Feel at home." close={() => setLanguageOpen(false)}>
+        <Modal title="Choose Language / Qooqa Filadhaa" close={() => setLanguageOpen(false)}>
           <div className="language-options">
-            {[
-              { id: 'om', label: 'Afaan Oromo' },
-              { id: 'am', label: 'አማርኛ — Amharic' },
-            ].map(option => (
+            {languageOptions.map(option => (
               <button
                 key={option.id}
                 className={`language-option ${language === option.id ? 'selected' : ''}`}
-                onClick={() => setLanguage(option.id)}
+                onClick={() => {
+                  setLanguage(option.id)
+                  setLanguageOpen(false)
+                }}
               >
-                <span>{option.label}</span>
+                <span>{option.native} — {option.label}</span>
                 <Icon name={language === option.id ? 'check' : 'globe'} />
               </button>
             ))}
@@ -299,7 +299,7 @@ export function GlobalFooter() {
             <span className="footer-title">LANGUAGE</span>
             <button className="footer-action footer-compact-lang" onClick={() => setLanguageOpen(true)}>
               <Icon name="globe" size={14} />
-              <span>{language === 'am' ? 'አማርኛ' : 'Afaan Oromo'}</span>
+              <span>{language === 'om' ? 'Afaan Oromoo' : language === 'am' ? 'አማርኛ' : 'English'}</span>
             </button>
           </div>
         </div>
@@ -310,18 +310,18 @@ export function GlobalFooter() {
         </div>
       </div>
       {languageOpen && (
-        <Modal title="Choose language" close={() => setLanguageOpen(false)}>
+        <Modal title="Choose Language / Qooqa Filadhaa" close={() => setLanguageOpen(false)}>
           <div className="language-options">
-            {[{ id: 'om', label: 'Afaan Oromo' }, { id: 'am', label: 'አማርኛ — Amharic' }].map(option => (
+            {languageOptions.map(option => (
               <button
                 key={option.id}
                 className={`language-option ${language === option.id ? 'selected' : ''}`}
                 onClick={() => {
-                  setLanguage(option.id as any)
+                  setLanguage(option.id)
                   setLanguageOpen(false)
                 }}
               >
-                <span>{option.label}</span>
+                <span>{option.native} — {option.label}</span>
                 <Icon name={language === option.id ? 'check' : 'globe'} />
               </button>
             ))}
