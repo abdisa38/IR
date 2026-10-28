@@ -494,9 +494,10 @@ export function AuthCard({
 
           <label className="auth-field">
             <span>Preferred language</span>
-            <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-              <option value="om">Afaan Oromo</option>
+            <select value={language} onChange={(e) => setLanguage(e.target.value as any)}>
+              <option value="om">Afaan Oromoo</option>
               <option value="am">አማርኛ (Amharic)</option>
+              <option value="en">English</option>
             </select>
           </label>
 
