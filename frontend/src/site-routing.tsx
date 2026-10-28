@@ -10,7 +10,8 @@ export function SiteLink({ href = '/', onClick, ...props }: AnchorHTMLAttributes
 }
 export function sitePage() {
   if (window.location.pathname.replace(/\/$/, '') === '/design-system' && !window.location.hash) return 'design-system'
-  if (window.location.hash === '#admin' || window.location.pathname.replace(/\/$/, '') === '/admin' && !window.location.hash) return 'admin'
+  if (window.location.hash === '#admin' || (window.location.pathname.replace(/\/$/, '') === '/admin' && !window.location.hash)) return 'admin'
+  if (['#login', '#register', '#signin', '#signup'].includes(window.location.hash) || ['/login', '/register', '/signin', '/signup'].includes(window.location.pathname.replace(/\/$/, ''))) return 'auth'
   if (['#home', '#about', '#find-us'].includes(window.location.hash)) return 'home'
   if (['#menu', '#food-menu'].includes(window.location.hash)) return 'menu'
   return window.location.pathname.replace(/\/$/, '') === '/contact' || window.location.hash === '#contact' ? 'contact' : 'menu'
