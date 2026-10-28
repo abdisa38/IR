@@ -57,25 +57,73 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
   const go = (next: Page) => { setError(''); setPage(next) }
   const stages = fulfilmentStages(activeMode)
 
-  const submit = () => {
+  const submit = async () => {
     if (lock.current || receipt) return
     const invalid = validateOffsite(name, phone)
     if (invalid || !lines.length) { setError(invalid || 'Check your cart before continuing.'); return }
     lock.current = true; setBusy(true); setError('')
-    timer.current = setTimeout(() => {
+    try {
+      const res = await api.createOrder({
+        items: lines.map(l => ({
+          menuItemId: l.item.id,
+          name: l.item.name,
+          price: l.item.price,
+          quantity: l.quantity,
+          image: l.item.confirmedImage || '',
+        })),
+        type: 'Pickup',
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        note,
+        paymentTiming: 'post_pay',
+        paymentMethod: 'Pay at Counter / Pickup',
+      })
       lock.current = false; setBusy(false)
-      if (scenario !== 'normal') { setError(scenario === 'network' ? 'Connection interrupted · demo. No order was sent. Your cart and details are kept in this session.' : scenario === 'unavailable' ? 'An item needs checking · demo. No order was accepted. Edit your cart or ask staff.' : 'Submission failed · demo. Your order was not sent and nothing has been charged. Try again.'); return }
-      setReceipt({ reference: `DEMO-ILL-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, accessCode: crypto.randomUUID().replace(/-/g, '').slice(0, 10).toUpperCase(), mode, lines: lines.map(line => ({ ...line })), subtotal, created: new Date().toISOString() })
-      setStage(0); setPage('confirmation')
-    }, 800)
+      if (res.success && res.order) {
+        setReceipt({
+          reference: res.order.orderNumber,
+          accessCode: res.order.id.slice(-6).toUpperCase(),
+          mode,
+          lines: lines.map(line => ({ ...line })),
+          subtotal: res.order.subtotal,
+          created: res.order.createdAt,
+        })
+        setStage(0); setPage('confirmation')
+      }
+    } catch (err: any) {
+      lock.current = false; setBusy(false)
+      setError(err.message || 'Failed to submit order. Please try again.')
+    }
   }
-  const lookup = () => {
+  const lookup = async () => {
     if (!lookupRef.trim()) { setLookupState('incorrect'); return }
-    // Session-only fixture; no server lookup or real authentication is implemented.
-    if (!receipt || lookupRef.trim().toUpperCase() !== receipt.reference) { setLookupState('not-found'); return }
-    if (!code.trim()) { setLookupState('verification'); return }
-    if (code.trim().toUpperCase() !== receipt.accessCode) { setLookupState('incorrect'); return }
-    setLookupState('found')
+    try {
+      const res = await api.getOrder(lookupRef.trim())
+      if (res.success && res.order) {
+        setReceipt({
+          reference: res.order.orderNumber,
+          accessCode: res.order.id.slice(-6).toUpperCase(),
+          mode: res.order.type === 'Pickup' ? 'pickup' : 'table',
+          lines: res.order.items.map(i => ({
+            item: {
+              id: i.menuItemId,
+              name: i.name,
+              price: i.price,
+              category: 'main',
+              availability: 'available',
+            },
+            quantity: i.quantity,
+          })),
+          subtotal: res.order.subtotal,
+          created: res.order.createdAt,
+        })
+        setLookupState('found')
+      } else {
+        setLookupState('not-found')
+      }
+    } catch (e) {
+      setLookupState('not-found')
+    }
   }
   const title = page === 'details' ? <>A little about <span>you.</span></> : page === 'review' ? <>One last <span>look.</span></> : page === 'lookup' ? <>Your order,<br /><span>close at hand.</span></> : page === 'confirmation' ? <>We’ve kept it<br /><span>all together.</span></> : <>Every step,<br /><span>made clear.</span></>
   return <dialog ref={dialog} className="order-flow" aria-labelledby="fulfilment-title" onCancel={event => { event.preventDefault(); if (!busy) close() }}>
