@@ -1,0 +1,10 @@
+{
+  "description": "Connect and communicate effortlessly with a simple, user-friendly messaging platform designed for seamless conversations and quick interactions.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

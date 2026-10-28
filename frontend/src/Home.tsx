@@ -1,0 +1,47 @@
+import { Icon, Logo, Mark, Modal } from './shared-ui'
+import { useLanguage } from './language'
+import { useEffect, useState } from 'react'
+import { FindUsSection, GlobalFooter } from './LocationComponents'
+import { SiteLink } from './site-routing'
+
+const photo = (id: string, _width = 1000) => `/images/${id.replace('photo-', '')}.jpg`
+const heroPhoto = '/images/ethiopian-sharing-platter.jpg'
+const foods = [
+  { name: 'A taste of tradition', type: 'Food', price: '320', image: heroPhoto, description: 'Ethiopian platter · Sample menu item' },
+  { name: 'Something to share', type: 'Food', price: '280', image: heroPhoto, description: 'A meal together · Sample menu item' },
+  { name: 'The perfect coffee moment', type: 'Drinks', price: '60', image: photo('photo-1447933601403-0c6688de566e', 700), description: 'Coffee · Sample menu item' },
+]
+
+export default function App() {
+  const [mobileNav, setMobileNav] = useState(false)
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') setMobileNav(false) }
+    const onResize = () => { if (window.innerWidth > 1024) setMobileNav(false) }
+    window.addEventListener('keydown', onKey)
+    window.addEventListener('resize', onResize)
+    return () => { window.removeEventListener('keydown', onKey); window.removeEventListener('resize', onResize) }
+  }, [])
+  const [modal, setModal] = useState<string | null>(null)
+  const { language, setLanguage } = useLanguage()
+  const showMenu = () => { window.location.hash = 'menu' }
+  return <>
+    <div className="announcement"><span>A place to gather. A meal to remember.</span><span className="announcement-location"><Icon name="pin" size={13} /> Bale Robe, Oromia</span></div>
+    <header className="header"><div className="container nav-inner"><Logo /><nav className={mobileNav ? 'navigation open' : 'navigation'} aria-label="Main navigation"><a href="#menu" onClick={() => setMobileNav(false)}>Our Menu</a><a href="#about" onClick={() => setMobileNav(false)}>Our Story</a><a href="#find-us" onClick={() => setMobileNav(false)}>Find Us</a><SiteLink href="/contact" onClick={() => setMobileNav(false)}>Contact</SiteLink></nav><div className="nav-actions"><button className="language-button" onClick={() => setModal('language')} aria-label="Choose Afaan Oromo or Amharic"><Icon name="globe" size={17} /><span>{language === 'am' ? 'አማርኛ / Afaan Oromo' : 'Afaan Oromo / አማርኛ'}</span><Icon name="down" size={13} /></button><button className="button primary nav-order" onClick={showMenu}>Order Food<Icon name="arrow" size={17} /></button><button className="icon-button mobile-toggle" aria-label="Toggle navigation" aria-expanded={mobileNav} onClick={() => setMobileNav(!mobileNav)}><Icon name={mobileNav ? 'close' : 'menu'} /></button></div></div></header>
+    <main>
+      <section className="hero"><div className="hero-copy"><div className="eyebrow"><span /> A WARM WELCOME TO ILILLII</div><h1>Good food.<br />Great <span>company.</span></h1><div className="hero-buttons"><button className="button primary" onClick={showMenu}>Explore Our Menu<Icon name="arrow" size={18} /></button><a className="button secondary" href="#find-us"><Icon name="pin" size={18} />Find Us</a></div><div className="hero-footnote"><span className="mini-mark"><Mark /></span><span>Rooted in our community.<br /><strong>Made for moments together.</strong></span></div></div><div className="hero-image"><img src={heroPhoto} alt="A generous Ethiopian sharing platter served on injera" fetchPriority="high" /><div className="image-shade" /><span className="image-label">GOOD FOOD BRINGS US TOGETHER</span><div className="round-seal"><span>COME HUNGRY</span><Mark /><span>LEAVE HAPPY</span></div><div className="photo-caption"><span className="photo-caption-line" />A shared table. A shared moment.</div></div></section>
+      <section className="ways container" aria-labelledby="ways-heading"><div className="ways-intro"><span className="eyebrow">YOUR TABLE, YOUR WAY</span><h2 id="ways-heading">How will you<br />join us?</h2></div>{[{ icon: 'meal', name: 'Dine In', description: 'Settle in. Share a meal. Feel at home.' }, { icon: 'bag', name: 'Pickup', description: 'Your favourites, ready to take with you.' }, { icon: 'delivery', name: 'Delivery', description: 'Good food, a little closer to you.' }].map(method => <button className="method-card" key={method.name} onClick={() => setModal(method.name)}><span className="method-icon"><Icon name={method.icon} size={25} /></span><span className="method-content"><strong>{method.name}</strong></span><Icon name="arrow" size={18} /></button>)}</section>
+      <section className="featured" id="menu"><div className="container"><div className="section-heading"><div><span className="eyebrow">A LITTLE SOMETHING TO LOOK FORWARD TO</span><h2>Find your next favourite.</h2></div><button className="text-button" onClick={showMenu}>Explore the menu<Icon name="arrow" size={19} /></button></div><div className="food-grid">{foods.map((food, index) => <button className="food-card" key={food.name} onClick={showMenu}><div className="food-photo"><img src={food.image} alt={index === 2 ? 'Roasted coffee beans in warm light' : 'Illustrative Ethiopian meal served for sharing'} loading="lazy" /><span className="food-badge">{index === 2 ? 'A MOMENT TO SLOW DOWN' : index === 0 ? 'MADE FOR SHARING' : 'COMFORT ON A PLATE'}</span><span className="food-arrow"><Icon name="arrow" /></span></div><div className="food-info"><div><h3>{food.name}</h3></div><span className="price">{food.price}<small>ETB · sample</small></span></div></button>)}</div><p className="sample-note"><span className="note-dot" />A taste of what’s to come. Items, images and prices are illustrative samples, not a confirmed menu.</p></div></section>
+      <section className="hospitality container" id="about"><div className="hospitality-image"><img src={photo('photo-1517248135467-4c7edcad34c4', 1000)} alt="Warm restaurant interior with tables set for gathering; illustrative photography" loading="lazy" /><span className="hospitality-stamp"><Mark /><span>THERE’S ALWAYS<br />ROOM AT OUR TABLE</span></span></div><div className="hospitality-copy"><span className="eyebrow">MORE THAN A MEAL</span><h2>A familiar place.<br />A warm welcome.</h2><div className="hospitality-signoff"><Icon name="heart" size={21} /><span>Food. People. A sense of belonging.</span></div></div></section>
+      <FindUsSection />
+      <section className="closing"><Mark /><button className="text-button" onClick={showMenu}>Let’s find your favourite<Icon name="arrow" size={18} /></button></section>
+    </main>
+    <GlobalFooter />
+    {modal && <Modal title={modal === 'language' ? 'Choose your language' : modal === 'brand' ? 'The Ilillii brand' : modal === 'directions' ? 'Find Ilillii Hotel' : modal === 'contact' ? 'Let’s get in touch' : `${modal} at Ilillii`} close={() => setModal(null)}>
+      {modal === 'language' ? <><div className="language-options">{[{ id: 'om', label: 'Afaan Oromo' }, { id: 'am', label: 'አማርኛ — Amharic' }].map(item => <button className={`language-option ${language === item.id ? 'selected' : ''}`} key={item.id} onClick={() => setLanguage(item.id)}><span>{item.label}<small>Translation awaiting review</small></span>{language === item.id ? <Icon name="check" /> : <Icon name="globe" />}</button>)}</div>{language && null}</> :
+      modal === 'brand' ? <><div className="brand-preview"><Logo /><div className="dark-brand"><Logo light /></div><div className="symbol-preview"><Mark /><span>Shared moments. One meeting point.</span></div></div><div className="swatches">{['Brand red', 'Deep red', 'Warm ivory', 'Warm gold'].map((name, i) => <div key={name}><span className={`swatch swatch-${i}`} />{name}</div>)}</div><p className="modal-description">An editable SVG meeting-point symbol paired with a custom-spaced wordmark. Manrope supports Latin and Afaan Oromo; Noto Sans Ethiopic provides Ethiopic script coverage. Status colors are paired with labels and icons.</p></> :
+      modal === 'directions' ? <p className="modal-description">Ilillii Hotel is in Bale Robe, Oromia, Ethiopia. The exact Google Maps pin has not yet been confirmed. Directions will be enabled when the hotel provides its verified location.</p> :
+      modal === 'contact' ? <p className="modal-description">The hotel’s phone number and official social media accounts are awaiting confirmation. Calling will be available here once a verified number is added.</p> :
+      <><div className="method-modal-icon"><Icon name={modal === 'Dine In' ? 'meal' : modal === 'Pickup' ? 'bag' : 'delivery'} size={32} /></div><p className="modal-description">{modal === 'Dine In' ? 'Join us for food and drinks at Ilillii Hotel in Bale Robe. Table QR ordering is planned for a future phase.' : modal === 'Pickup' ? 'Explore the sample menu for inspiration. Pickup ordering will be enabled once the hotel confirms its menu and service details.' : 'Delivery is subject to service availability. Areas, fees and ordering details will be shown only after confirmation by the hotel.'}</p><button className="button primary" onClick={showMenu}>Browse sample menu<Icon name="arrow" /></button></>}
+    </Modal>}
+  </>
+}
