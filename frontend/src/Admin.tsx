@@ -17,16 +17,58 @@ const Badge = ({ value, type = 'Order' }: { value: string; type?: 'Payment' | 'O
 type Confirmation = { kind: 'cancel' | 'verify' | 'unable' | 'cash'; order: DemoOrder }
 
 function ActivityChart({ orders }: { orders: DemoOrder[] }) {
+  if (orders.length === 0) {
+    return (
+      <div className="admin-empty" style={{ padding: '35px 20px', minHeight: '160px' }}>
+        <Icon name="chart" size={30} />
+        <h3>No order activity yet</h3>
+        <p>Live order trends and throughput will appear as customers place orders.</p>
+      </div>
+    )
+  }
   const sorted = [...orders].sort((a, b) => a.received.localeCompare(b.received))
   const points = sorted.map((_, i) => `${35 + i * (560 / Math.max(1, sorted.length - 1))},${155 - ((i + 1) / Math.max(1, sorted.length)) * 120}`).join(' ')
   return <div className="admin-activity-chart"><svg viewBox="0 0 630 190" role="img" aria-label={`Cumulative activity for ${orders.length} orders`}><g className="chart-grid"><path d="M35 35h560M35 75h560M35 115h560M35 155h560" /></g><g className="chart-axis"><text x="5" y="39">{orders.length}</text><text x="12" y="159">0</text><text x="35" y="182">Earliest order</text><text x="490" y="182">Latest order</text></g>{sorted.length > 0 && <><polygon className="chart-area" points={`35,155 ${points} 595,155`} /><polyline className="chart-line" points={points} /><circle cx={sorted.length === 1 ? 35 : 595} cy={35} r="4" className="chart-point" /></>}</svg></div>
 }
 
 export default function Admin() {
-  const { language, setLanguage } = useLanguage()
-  const [page, setPage] = useState<AdminPage>('Overview')
-  const [role, setRole] = useState<Role>('Owner')
-  const [orders, setOrders] = useState<DemoOrder[]>(createDemoOrders)
+  const { language } = useLanguage()
+
+  // Authenticated user state
+  const getStoredUser = () => {
+    try {
+      return JSON.parse(localStorage.getItem('ilillii_user') || 'null')
+    } catch {
+      return null
+    }
+  }
+
+  const [currentUser, setCurrentUser] = useState<any>(getStoredUser)
+  const isStaffAuth = Boolean(
+    currentUser &&
+    (currentUser.isStaff || ['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'owner'].includes(currentUser.role))
+  )
+
+  const mapUserToRole = (user: any): Role => {
+    if (!user) return 'Owner'
+    if (user.role === 'kitchen') return 'Kitchen Staff'
+    if (user.role === 'cashier') return 'Payment Reviewer'
+    if (user.role === 'waiter') return 'Order/Service Staff'
+    if (user.role === 'manager') return 'Manager'
+    return 'Owner'
+  }
+
+  const mapUserToInitialPage = (user: any): AdminPage => {
+    if (!user) return 'Overview'
+    if (user.role === 'kitchen') return 'Kitchen Board'
+    if (user.role === 'cashier') return 'Payments'
+    if (user.role === 'waiter') return 'Orders'
+    return 'Overview'
+  }
+
+  const [page, setPage] = useState<AdminPage>(() => mapUserToInitialPage(getStoredUser()))
+  const [role, setRole] = useState<Role>(() => mapUserToRole(getStoredUser()))
+  const [orders, setOrders] = useState<DemoOrder[]>([])
   const [mobile, setMobile] = useState(false)
   const [narrow, setNarrow] = useState(() => window.innerWidth <= 1024)
   const [query, setQuery] = useState('')
@@ -45,6 +87,53 @@ export default function Admin() {
   const profileMenuRef = useRef<HTMLDivElement>(null)
   const [signedOut, setSignedOut] = useState(false)
   const [viewState, setViewState] = useState('ready')
+
+  // Staff login state for unauthenticated users
+  const [loginId, setLoginId] = useState('')
+  const [loginPass, setLoginPass] = useState('')
+  const [loginBusy, setLoginBusy] = useState(false)
+  const [loginErr, setLoginErr] = useState('')
+
+  const handleStaffLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoginErr('')
+    if (!loginId.trim() || !loginPass.trim()) {
+      setLoginErr('Please provide your staff username/phone and password.')
+      return
+    }
+    setLoginBusy(true)
+    try {
+      const res = await api.login(loginId.trim(), loginPass)
+      setLoginBusy(false)
+      if (res.success && res.user) {
+        if (!res.user.isStaff && !['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'owner'].includes(res.user.role)) {
+          setLoginErr('Access restricted: This account does not have staff permissions.')
+          return
+        }
+        localStorage.setItem('ilillii_token', res.token)
+        localStorage.setItem('ilillii_user', JSON.stringify(res.user))
+        setCurrentUser(res.user)
+        const mappedRole = mapUserToRole(res.user)
+        setRole(mappedRole)
+        setPage(mapUserToInitialPage(res.user))
+        setSignedOut(false)
+        window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+      } else {
+        setLoginErr(res.message || 'Incorrect staff credentials.')
+      }
+    } catch (err: any) {
+      setLoginBusy(false)
+      setLoginErr(err.message || 'Incorrect staff credentials. Please try again.')
+    }
+  }
+
+  const handleSignOut = () => {
+    localStorage.removeItem('ilillii_token')
+    localStorage.removeItem('ilillii_user')
+    setCurrentUser(null)
+    setSignedOut(true)
+    window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+  }
 
   const loadOrders = async () => {
     try {
