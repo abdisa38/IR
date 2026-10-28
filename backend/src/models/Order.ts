@@ -17,11 +17,13 @@ export interface IOrder extends Document {
   items: IOrderItem[]
   subtotal: number
   total: number
-  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+  status: 'pending' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'cancelled'
   paymentStatus: 'unpaid' | 'paid' | 'pay_after_eating'
   paymentTiming: 'pre_pay' | 'post_pay' | 'pay_before' | 'pay_after'
   paymentMethod?: string
   note?: string
+  source?: 'table_qr' | 'web_direct'
+  parentOrderId?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -50,10 +52,17 @@ const OrderSchema = new Schema<IOrder>(
     status: {
       type: String,
       required: true,
-      enum: ['pending', 'preparing', 'ready', 'completed', 'cancelled'],
+      enum: ['pending', 'accepted', 'preparing', 'ready', 'completed', 'cancelled'],
       default: 'pending',
       index: true,
     },
+    source: {
+      type: String,
+      enum: ['table_qr', 'web_direct'],
+      default: 'web_direct',
+      index: true,
+    },
+    parentOrderId: { type: String, trim: true },
     paymentStatus: {
       type: String,
       required: true,

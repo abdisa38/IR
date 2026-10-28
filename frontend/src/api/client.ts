@@ -103,11 +103,13 @@ export interface ApiOrder {
   items: ApiOrderItem[]
   subtotal: number
   total: number
-  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled'
+  status: 'pending' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'cancelled'
   paymentStatus: 'unpaid' | 'paid' | 'pay_after_eating'
   paymentTiming: 'pre_pay' | 'post_pay'
   paymentMethod?: string
   note?: string
+  source?: 'table_qr' | 'web_direct'
+  parentOrderId?: string
   createdAt: string
   updatedAt: string
 }
@@ -220,6 +222,8 @@ export const api = {
     note?: string
     paymentTiming?: 'pre_pay' | 'post_pay'
     paymentMethod?: string
+    source?: 'table_qr' | 'web_direct'
+    parentOrderId?: string
   }) {
     return request<{ success: boolean; order: ApiOrder }>('/orders', {
       method: 'POST',
@@ -227,7 +231,14 @@ export const api = {
     })
   },
 
-  async updateOrderStatus(id: string, status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled') {
+  async addItemsToOrder(id: string, items: { menuItemId?: string; name: string; price: number; quantity: number; image?: string }[], note?: string) {
+    return request<{ success: boolean; message: string; order: ApiOrder }>(`/orders/${id}/add-items`, {
+      method: 'POST',
+      body: JSON.stringify({ items, note }),
+    })
+  },
+
+  async updateOrderStatus(id: string, status: 'pending' | 'accepted' | 'preparing' | 'ready' | 'completed' | 'cancelled') {
     return request<{ success: boolean; order: ApiOrder }>(`/orders/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status }),

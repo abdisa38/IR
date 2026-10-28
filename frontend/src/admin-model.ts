@@ -20,14 +20,37 @@ export const canAccess = (role: Role, page: AdminPage) => permissions[role].incl
 export const canSeeMoney = (role: Role) => ['Owner', 'Manager', 'Payment Reviewer'].includes(role)
 export const canSeeCustomer = (role: Role) => ['Owner', 'Manager', 'Order/Service Staff'].includes(role)
 export type OrderStatus = 'New' | 'Accepted' | 'Preparing' | 'Ready' | 'Completed' | 'Cancelled'
-export type DemoOrder = { id: string; type: 'Dine-in' | 'Pickup'; status: OrderStatus; payment: PaymentStatus; method: 'Cash' | 'CBE transfer' | 'Telebirr'; received: string; table?: string; customer: string; phone: string; items: { id: string; name: string; price: number; quantity: number }[]; note?: string; activity: string[]; reviewer?: string; reviewedAt?: string; transferReference?: string; fee: number | null }
+export type DemoOrder = {
+  id: string
+  type: 'Dine-in' | 'Pickup'
+  status: OrderStatus
+  payment: PaymentStatus
+  method: 'Cash' | 'CBE transfer' | 'Telebirr'
+  received: string
+  table?: string
+  customer: string
+  phone: string
+  items: { id: string; name: string; price: number; quantity: number }[]
+  note?: string
+  activity: string[]
+  reviewer?: string
+  reviewedAt?: string
+  transferReference?: string
+  fee: number | null
+  source?: 'table_qr' | 'web_direct'
+  parentOrderId?: string
+}
 export const orderTotal = (order: DemoOrder) => order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
-export const orderStatusLabel = (order: DemoOrder) => order.status === 'New' ? 'Submitted' : order.status === 'Ready' ? order.type === 'Dine-in' ? 'Ready to Serve' : 'Ready for Pickup' : order.status
+export const orderStatusLabel = (order: DemoOrder) =>
+  order.status === 'New' ? 'Submitted' :
+  order.status === 'Accepted' ? 'Accepted' :
+  order.status === 'Preparing' ? 'Preparing' :
+  order.status === 'Ready' ? (order.type === 'Dine-in' ? 'Ready to Serve' : 'Ready for Pickup') :
+  order.status
 export function createDemoOrders(): DemoOrder[] {
   return []
 }
 export function nextOrderStatus(order: DemoOrder): { status: OrderStatus; label: string } | null {
-  if (order.type !== 'Dine-in' && order.payment !== 'Paid') return null
   if (order.status === 'New') return { status: 'Accepted', label: 'Accept order' }
   if (order.status === 'Accepted') return { status: 'Preparing', label: 'Start preparation' }
   if (order.status === 'Preparing') return { status: 'Ready', label: 'Mark ready' }
