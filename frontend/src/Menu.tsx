@@ -123,6 +123,31 @@ export default function Menu() {
   const results = items.filter(item => (category === 'all' || item.category === category) && item.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   useDialog(cartRef, panel)
   useEffect(() => {
+    const handleClear = () => setCart({})
+    window.addEventListener('ilillii-clear-cart', handleClear)
+    return () => window.removeEventListener('ilillii-clear-cart', handleClear)
+  }, [])
+
+  useEffect(() => {
+    const checkTableUrl = () => {
+      const params = new URLSearchParams(window.location.search)
+      const t = params.get('table') || params.get('demoTable')
+      const isQr = params.get('source') === 'qr'
+      if (t) {
+        setQr({ table: t.trim(), invalid: false })
+        setMode('Dine in')
+        localStorage.setItem('ilillii_table', t.trim())
+        if (isQr) {
+          localStorage.setItem('ilillii_table_source', 'qr')
+        }
+      }
+    }
+    checkTableUrl()
+    window.addEventListener('popstate', checkTableUrl)
+    return () => window.removeEventListener('popstate', checkTableUrl)
+  }, [])
+
+  useEffect(() => {
     const leaveMenu = () => {
       if (sitePage() !== 'menu') { setPanel(false); setCheckout(false); setDineInCheckout(false); setModal(null); setDetails(null); setTableHelp(false) }
       else if (window.location.search.includes('demoTable=') || window.location.search.includes('table=')) setQr(tableFromUrl(window.location.search))
@@ -188,7 +213,23 @@ export default function Menu() {
     <Suspense fallback={dineInCheckout ? <p role="status">Loading order details…</p> : null}><OrderFlow open={dineInCheckout} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setDineInCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
     {tableHelp && <Modal title="Let’s check your table." close={() => setTableHelp(false)}><p className="modal-description">Ask staff to confirm your table and provide its correct QR code. You can keep browsing; your cart is unchanged. Dine-in requires a table reference. Pickup orders are also available from checkout without a table.</p><button className="button secondary" onClick={() => { setTableHelp(false); setQrOptions(true) }}>Open demo table options</button></Modal>}
     {modal && <Modal title={modal === 'language' ? 'Feel at home.' : 'A considered menu preview'} close={() => setModal(null)}>
-      {modal === 'language' ? <><div className="language-options">{[{ id: 'om', name: 'Afaan Oromo' }, { id: 'am', name: 'አማርኛ — Amharic' }].map(item => <button key={item.id} className={`language-option ${language === item.id ? 'selected' : ''}`} onClick={() => setLanguage(item.id)}><span>{item.name}<small>Copy awaiting local review</small></span><Icon name={language === item.id ? 'check' : 'globe'} /></button>)}</div></> : <><p className="modal-description">Product photos are reserved until their matches are confirmed. URL table numbers are not treated as valid without a verified table registry. There is no database, real order submission or payment integration.</p><h3 className="state-preview-title">Unavailable component state</h3><ProductCard item={{ id: 'state-preview', name: 'Item name · component preview', price: 0, category: 'main', availability: 'unavailable' }} quantity={0} update={() => {}} details={() => {}} language={language} /></>}
+      {modal === 'language' ? (
+        <div className="language-options">
+          {languageOptions.map(option => (
+            <button
+              key={option.id}
+              className={`language-option ${language === option.id ? 'selected' : ''}`}
+              onClick={() => {
+                setLanguage(option.id)
+                setModal(null)
+              }}
+            >
+              <span>{option.native} — {option.label}</span>
+              <Icon name={language === option.id ? 'check' : 'globe'} />
+            </button>
+          ))}
+        </div>
+      ) : <><p className="modal-description">Product photos are reserved until their matches are confirmed. URL table numbers are not treated as valid without a verified table registry. There is no database, real order submission or payment integration.</p><h3 className="state-preview-title">Unavailable component state</h3><ProductCard item={{ id: 'state-preview', name: 'Item name · component preview', price: 0, category: 'main', availability: 'unavailable' }} quantity={0} update={() => {}} details={() => {}} language={language} /></>}
     </Modal>}
     {details && <Modal title={language === 'am' && details.translations?.am ? details.translations.am : details.name} close={() => setDetails(null)}>
       {details.confirmedImage && <div className="modal-item-photo"><img src={details.confirmedImage} alt={details.name} /></div>}
