@@ -3,6 +3,7 @@ import { Icon, Logo, Modal, useDialog } from './shared-ui'
 import { formatBirr } from './menu-data'
 import type { MenuItem } from './menu-data'
 import { orderStages, validateGuest } from './order-prototype'
+import { api } from './api/client'
 import './order.css'
 import { CompactCheckoutAmount, StatusBadge } from './ui-patterns'
 
@@ -47,29 +48,49 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
   useEffect(() => { if (error && open) dialog.current?.querySelector('[role="alert"]')?.scrollIntoView({ block: 'center' }) }, [error, open])
   const go = (next: Step) => { setError(''); setStep(next) }
 
-  const submit = () => {
+  const submit = async () => {
     if (submitting.current || snapshot) return
     const validation = validateGuest(name, phone)
     if (validation || !lines.length) { setError(validation || 'At least one menu item is needed. Return to the menu to check your order.'); return }
     submitting.current = true
     setBusy(true)
     setError('')
-    timer.current = setTimeout(() => {
+    try {
+      const res = await api.createOrder({
+        items: lines.map(l => ({
+          menuItemId: l.item.id,
+          name: l.item.name,
+          price: l.item.price,
+          quantity: l.quantity,
+          image: l.item.confirmedImage || '',
+        })),
+        type: 'Dine in',
+        table: table || '1',
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        note,
+        paymentTiming: 'post_pay',
+        paymentMethod: 'Pay after eating',
+      })
       setBusy(false)
       submitting.current = false
-      if (scenario !== 'normal') {
-        const messages: Record<string, string> = {
-          network: 'Connection interrupted · demonstration. Your cart and details are safe in this open session. Reconnect, then retry.',
-          failure: 'Order could not be sent · demonstration. Your cart is unchanged; try again or ask staff.',
-          unavailable: 'An item needs an availability check · demonstration. No order was sent. Edit your order and ask staff before trying again.',
-          duplicate: 'A matching order may already exist · demonstration. Do not submit again until staff check. Your cart has been kept.',
-        }
-        setError(messages[scenario])
-        return
+      if (res.success && res.order) {
+        setSnapshot({
+          reference: res.order.orderNumber,
+          table: res.order.table || table || 'Table',
+          name: res.order.customerName || name.trim(),
+          phone: res.order.customerPhone || phone.trim(),
+          note,
+          lines: lines.map(line => ({ ...line })),
+          total: res.order.total,
+        })
+        setStep('confirmation')
       }
-      setSnapshot({ reference: `DEMO-ILL-${crypto.randomUUID().slice(0, 8).toUpperCase()}`, table: table || 'Table', name: name.trim(), phone: phone.trim(), note, lines: lines.map(line => ({ ...line })), total })
-      setStep('confirmation')
-    }, 800)
+    } catch (err: any) {
+      setBusy(false)
+      submitting.current = false
+      setError(err.message || 'Failed to place order with kitchen. Please try again.')
+    }
   }
   const currentIndex = step === 'details' ? 0 : 1
   return <dialog ref={dialog} className="order-flow" aria-labelledby="order-page-title" onCancel={event => { event.preventDefault(); if (!busy) close() }}>

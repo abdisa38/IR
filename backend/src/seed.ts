@@ -1,0 +1,615 @@
+import dns from 'node:dns'
+import mongoose from 'mongoose'
+import dotenv from 'dotenv'
+import { MenuItem } from './models/MenuItem.js'
+import { Staff } from './models/Staff.js'
+import { Order } from './models/Order.js'
+import { Settings } from './models/Settings.js'
+
+dotenv.config()
+
+try {
+  dns.setServers(['8.8.8.8', '1.1.1.1'])
+} catch (e) {
+  console.warn('DNS override error:', e)
+}
+
+const rawMenuItems = [
+  // --- Main Dishes ---
+  {
+    id: 'main-1',
+    name: 'Ispeeshaal Goodinii',
+    amharicName: 'ስፔሻል ጎደኒ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1400,
+    image: '/images/menu/ispeeshaal-goodinii.jpg',
+    description: 'Special roasted beef ribs seasoned with traditional Bale spices, served sizzling hot.',
+    houseSpecial: true,
+    displayOrder: 1,
+  },
+  {
+    id: 'main-2',
+    name: 'Foon Waddii, 1 kg',
+    amharicName: 'የተጠበሰ ሥጋ 1 ኪ.ግ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 2600,
+    image: '/images/menu/foon-waddii.jpg',
+    description: 'Full kilogram of prime roasted beef tibs sautéed with onions, rosemary, and awaze.',
+    houseSpecial: true,
+    displayOrder: 2,
+  },
+  {
+    id: 'main-3',
+    name: 'Foon Waddii, 1/2 kg',
+    amharicName: 'የተጠበሰ ሥጋ 1/2 ኪ.ግ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1300,
+    image: '/images/menu/foon-waddii.jpg',
+    description: 'Half kilogram of succulent roasted beef tibs served with mitmita and fresh injera.',
+    houseSpecial: false,
+    displayOrder: 3,
+  },
+  {
+    id: 'main-4',
+    name: 'Foon Waddii, 1/4 kg',
+    amharicName: 'የተጠበሰ ሥጋ 1/4 ኪ.ግ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 650,
+    image: '/images/menu/foon-waddii.jpg',
+    description: 'Quarter kilogram portion of freshly sautéed beef tibs.',
+    houseSpecial: false,
+    displayOrder: 4,
+  },
+  {
+    id: 'main-5',
+    name: 'Dulat',
+    amharicName: 'ዱለት',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 500,
+    image: '/images/menu/dulat.jpg',
+    description: 'Finely minced tripe, liver, and lean beef cooked with spiced butter, garlic, and hot green peppers.',
+    houseSpecial: false,
+    displayOrder: 5,
+  },
+  {
+    id: 'main-6',
+    name: 'Tibit',
+    amharicName: 'ጥብስ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1500,
+    image: '/images/menu/tibit.jpg',
+    description: 'Classic Ethiopian beef tibs tossed with sliced onions, jalapeños, and spiced butter.',
+    houseSpecial: false,
+    displayOrder: 6,
+  },
+  {
+    id: 'main-7',
+    name: 'Kitfoo',
+    amharicName: 'ክትፎ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1500,
+    image: '/images/menu/kitfoo.jpg',
+    description: 'Finely minced prime beef seasoned with aromatic niter kibbeh (clarified spiced butter) and mitmita.',
+    houseSpecial: true,
+    displayOrder: 7,
+  },
+  {
+    id: 'main-8',
+    name: 'Gon Lagoonnii',
+    amharicName: 'ጎን ለጎን',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 2500,
+    image: '/images/menu/gon-lagoonnii.jpg',
+    description: 'Generous signature sharing meat platter served with traditional condiments.',
+    houseSpecial: true,
+    displayOrder: 8,
+  },
+  {
+    id: 'main-9',
+    name: 'Ispeeshaal Qurxii',
+    amharicName: 'ስፔሻል ዓሣ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1300,
+    image: '/images/menu/ispeeshaal-qurxii.jpg',
+    description: 'Special spiced fish prepared with Ethiopian herbs and served with tangy sauce.',
+    houseSpecial: true,
+    displayOrder: 9,
+  },
+  {
+    id: 'main-10',
+    name: 'Gored Gored',
+    amharicName: 'ጎረድ ጎረድ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1500,
+    image: '/images/menu/gored-gored.jpg',
+    description: 'Prime cubed raw or very lightly seared beef served with awaze dipping paste and spiced butter.',
+    houseSpecial: true,
+    displayOrder: 10,
+  },
+  {
+    id: 'main-11',
+    name: 'Shekla Tibs',
+    amharicName: 'ሸክላ ጥብስ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1500,
+    image: '/images/menu/shekla-tibs.jpg',
+    description: 'Sizzling tender beef tibs served over a traditional clay pot with hot charcoal embers.',
+    houseSpecial: true,
+    displayOrder: 11,
+  },
+  {
+    id: 'main-12',
+    name: 'Gaze Sayt',
+    amharicName: 'ጋዜ ሳይት',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1400,
+    image: '/images/menu/gaze-sayt.jpg',
+    description: 'Local specialty pan-roasted beef prepared with Bale mountain herbs.',
+    houseSpecial: false,
+    displayOrder: 12,
+  },
+  {
+    id: 'main-13',
+    name: 'Gaze Sayt Shekla',
+    amharicName: 'ጋዜ ሳይት በሸክላ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1500,
+    image: '/images/menu/gaze-sayt-shekla.jpg',
+    description: 'Local specialty sizzling meat served in a traditional clay dish.',
+    houseSpecial: false,
+    displayOrder: 13,
+  },
+  {
+    id: 'main-14',
+    name: 'Liwit',
+    amharicName: 'ልውጥ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 700,
+    image: '/images/menu/liwit.jpg',
+    description: 'Traditional slow-cooked seasoned beef specialty prepared with rich spices.',
+    houseSpecial: false,
+    displayOrder: 14,
+  },
+  {
+    id: 'main-15',
+    name: 'Senber',
+    amharicName: 'ሰንበር',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 700,
+    image: '/images/menu/senber.jpg',
+    description: 'Savory sliced seasoned beef spleen and cut meat sautéed with caramelized onions.',
+    houseSpecial: false,
+    displayOrder: 15,
+  },
+  {
+    id: 'main-16',
+    name: 'Wolande',
+    amharicName: 'ወላንዴ',
+    category: 'food',
+    categoryLabel: 'Main dishes',
+    price: 1200,
+    image: '/images/menu/wolande.jpg',
+    description: 'Tender, flavorful traditional meat stew simmered with fragrant Ethiopian spices.',
+    houseSpecial: false,
+    displayOrder: 16,
+  },
+
+  // --- Additional Dishes ---
+  {
+    id: 'additional-1',
+    name: 'Ispeeshaal Illillii',
+    amharicName: 'ስፔሻል እሊሊ',
+    category: 'food',
+    categoryLabel: 'Additional dishes',
+    price: 400,
+    image: '/images/ethiopian-sharing-platter.jpg',
+    description: 'The signature Ilillii combination platter loaded with vibrant lentils, shiro, and greens.',
+    houseSpecial: true,
+    displayOrder: 17,
+  },
+  {
+    id: 'additional-2',
+    name: 'Gommana Tibsii',
+    amharicName: 'ጎመን ጥብስ',
+    category: 'food',
+    categoryLabel: 'Additional dishes',
+    price: 200,
+    image: '/images/menu/gommana-tibsii.jpg',
+    description: 'Fresh collard greens chopped and braised with garlic, onions, and Ethiopian peppers.',
+    houseSpecial: false,
+    displayOrder: 18,
+  },
+  {
+    id: 'additional-3',
+    name: 'Shiroo Fasaasii',
+    amharicName: 'ፈሳሽ ሽሮ',
+    category: 'food',
+    categoryLabel: 'Additional dishes',
+    price: 200,
+    image: '/images/menu/shiroo-fasaasii.jpg',
+    description: 'Smooth, warm chickpea and split pea puree slow-cooked with garlic, ginger, and berbere.',
+    houseSpecial: false,
+    displayOrder: 19,
+  },
+  {
+    id: 'additional-4',
+    name: 'Bey-Aynat',
+    amharicName: 'በያይነቱ',
+    category: 'food',
+    categoryLabel: 'Additional dishes',
+    price: 200,
+    image: '/images/menu/bey-aynat.jpg',
+    description: 'An authentic fasting feast of colorful vegetable and legume dishes served on freshly baked injera.',
+    houseSpecial: true,
+    displayOrder: 20,
+  },
+  {
+    id: 'additional-5',
+    name: 'Tagabinoo',
+    amharicName: 'ተጋቢኖ',
+    category: 'food',
+    categoryLabel: 'Additional dishes',
+    price: 250,
+    image: '/images/menu/tagabinoo.jpg',
+    description: 'Thick, roasted chickpea flour stew served bubbling hot in a traditional clay bowl.',
+    houseSpecial: false,
+    displayOrder: 21,
+  },
+
+  // --- Drinks ---
+  {
+    id: 'drinks-1',
+    name: 'Biiraa',
+    amharicName: 'ቢራ',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 120,
+    image: '/images/menu/biiraa.jpg',
+    description: 'Chilled local Ethiopian bottled lager beer.',
+    houseSpecial: false,
+    displayOrder: 22,
+  },
+  {
+    id: 'drinks-2',
+    name: 'Baddallee',
+    amharicName: 'በደሌ',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 150,
+    image: '/images/menu/baddallee.jpg',
+    description: 'Bedele Premium Beer, brewed from pure highland spring water.',
+    houseSpecial: false,
+    displayOrder: 23,
+  },
+  {
+    id: 'drinks-3',
+    name: 'Henikan',
+    amharicName: 'ሄኒከን',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 150,
+    image: '/images/menu/henikan.jpg',
+    description: 'Heineken premium malt lager, cold and refreshing.',
+    houseSpecial: false,
+    displayOrder: 24,
+  },
+  {
+    id: 'drinks-4',
+    name: 'Aradaa',
+    amharicName: 'አራዳ',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 150,
+    image: '/images/menu/aradaa.jpg',
+    description: 'Crisp and invigorating Arada beverage.',
+    houseSpecial: false,
+    displayOrder: 25,
+  },
+  {
+    id: 'drinks-5',
+    name: 'Lallaafaa',
+    amharicName: 'ለስላሳ',
+    category: 'cold-drinks',
+    categoryLabel: 'Drinks',
+    price: 80,
+    image: '/images/menu/lallaafaa.png',
+    description: 'Assorted chilled soft drinks and sodas.',
+    houseSpecial: false,
+    displayOrder: 26,
+  },
+  {
+    id: 'drinks-6',
+    name: 'Bishaan, 2 L',
+    amharicName: 'ውኃ 2 ሊትር',
+    category: 'cold-drinks',
+    categoryLabel: 'Drinks',
+    price: 70,
+    image: '/images/menu/bishaan.jpg',
+    description: 'Natural pure mineral bottled drinking water, 2 liters.',
+    houseSpecial: false,
+    displayOrder: 27,
+  },
+  {
+    id: 'drinks-7',
+    name: 'Wuskii',
+    amharicName: 'ውስኪ',
+    category: 'spirits',
+    categoryLabel: 'Drinks',
+    price: 8000,
+    image: '/images/menu/wuskii.jpg',
+    description: 'Selected premium bottle whisky.',
+    houseSpecial: false,
+    displayOrder: 28,
+  },
+  {
+    id: 'drinks-8',
+    name: 'Kaamila(a)t',
+    amharicName: 'ካሚላት',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 1200,
+    image: '/images/menu/kaamilaat.jpg',
+    description: 'Camellat rich sweet Ethiopian red wine.',
+    houseSpecial: false,
+    displayOrder: 29,
+  },
+  {
+    id: 'drinks-9',
+    name: 'Akeeshaa',
+    amharicName: 'አኬሻ',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 2000,
+    image: '/images/menu/akeeshaa.jpg',
+    description: 'Acacia premium Ethiopian bottled wine.',
+    houseSpecial: false,
+    displayOrder: 30,
+  },
+  {
+    id: 'drinks-10',
+    name: 'Gabbataa',
+    amharicName: 'ገበታ',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 2000,
+    image: '/images/menu/gabbataa.jpg',
+    description: 'Gebeta classic highland Ethiopian wine.',
+    houseSpecial: false,
+    displayOrder: 31,
+  },
+  {
+    id: 'drinks-11',
+    name: 'Awaash',
+    amharicName: 'አዋሽ',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 600,
+    image: '/images/menu/awaash.jpg',
+    description: 'Awash Ethiopian heritage wine, full bottle.',
+    houseSpecial: false,
+    displayOrder: 32,
+  },
+  {
+    id: 'drinks-12',
+    name: 'Awaash Xiqaa',
+    amharicName: 'አዋሽ አነስተኛ',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 300,
+    image: '/images/menu/awaash.jpg',
+    description: 'Awash Ethiopian wine, half / small bottle.',
+    houseSpecial: false,
+    displayOrder: 33,
+  },
+  {
+    id: 'drinks-13',
+    name: 'Minii Jin',
+    amharicName: 'ሚኒ ጂን',
+    category: 'spirits',
+    categoryLabel: 'Drinks',
+    price: 350,
+    image: '/images/menu/minii-jin.png',
+    description: 'Mini bottle dry gin.',
+    houseSpecial: false,
+    displayOrder: 34,
+  },
+  {
+    id: 'drinks-14',
+    name: 'Jaanboo',
+    amharicName: 'ጃምቦ',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 90,
+    image: '/images/menu/jaanboo.jpg',
+    description: 'Fresh Ethiopian draft beer in a large jumbo mug.',
+    houseSpecial: false,
+    displayOrder: 35,
+  },
+  {
+    id: 'drinks-15',
+    name: 'Single Jaanboo',
+    amharicName: 'ነጠላ ጃምቦ',
+    category: 'beer-wine',
+    categoryLabel: 'Drinks',
+    price: 70,
+    image: '/images/menu/jaanboo.jpg',
+    description: 'Fresh draft beer served in a single glass.',
+    houseSpecial: false,
+    displayOrder: 36,
+  },
+]
+
+const initialStaff = [
+  {
+    name: 'Abdisa Awel',
+    role: 'Manager',
+    phone: '0909511588',
+    email: 'abdisaawel313@gmail.com',
+    status: 'Active',
+    shift: 'All Day',
+    assignedTables: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+  },
+  {
+    name: 'Biftu Tolesa',
+    role: 'Waiter',
+    phone: '0911223344',
+    status: 'Active',
+    shift: 'Day Shift',
+    assignedTables: ['1', '2', '3', '4'],
+  },
+  {
+    name: 'Gemechu Desta',
+    role: 'Kitchen',
+    phone: '0922334455',
+    status: 'Active',
+    shift: 'Day Shift',
+    assignedTables: [],
+  },
+  {
+    name: 'Hawwi Kebede',
+    role: 'Cashier',
+    phone: '0933445566',
+    status: 'Active',
+    shift: 'Day Shift',
+    assignedTables: [],
+  },
+  {
+    name: 'Tolera Bekele',
+    role: 'Waiter',
+    phone: '0944556677',
+    status: 'On Break',
+    shift: 'Evening Shift',
+    assignedTables: ['5', '6', '7', '8'],
+  },
+]
+
+const initialOrders = [
+  {
+    orderNumber: 'IL-1001',
+    type: 'Dine in',
+    table: '3',
+    customerName: 'Table 3',
+    items: [
+      { menuItemId: 'main-1', name: 'Ispeeshaal Goodinii', price: 1400, quantity: 1, image: '/images/menu/ispeeshaal-goodinii.jpg' },
+      { menuItemId: 'drinks-14', name: 'Jaanboo', price: 90, quantity: 2, image: '/images/menu/jaanboo.jpg' },
+    ],
+    subtotal: 1580,
+    total: 1580,
+    status: 'preparing',
+    paymentStatus: 'pay_after_eating',
+    paymentTiming: 'post_pay',
+    paymentMethod: 'Pay after eating',
+    note: 'Well roasted ribs with extra awaze',
+  },
+  {
+    orderNumber: 'IL-1002',
+    type: 'Dine in',
+    table: '7',
+    customerName: 'Table 7',
+    items: [
+      { menuItemId: 'main-7', name: 'Kitfoo', price: 1500, quantity: 2, image: '/images/menu/kitfoo.jpg' },
+      { menuItemId: 'additional-4', name: 'Bey-Aynat', price: 200, quantity: 1, image: '/images/menu/bey-aynat.jpg' },
+      { menuItemId: 'drinks-6', name: 'Bishaan, 2 L', price: 70, quantity: 1, image: '/images/menu/bishaan.jpg' },
+    ],
+    subtotal: 3270,
+    total: 3270,
+    status: 'pending',
+    paymentStatus: 'pay_after_eating',
+    paymentTiming: 'post_pay',
+    paymentMethod: 'Pay after eating',
+    note: 'One kitfo leb-leb (medium warm)',
+  },
+  {
+    orderNumber: 'IL-1003',
+    type: 'Pickup',
+    customerName: 'Solomon G.',
+    customerPhone: '0912345678',
+    items: [
+      { menuItemId: 'main-11', name: 'Shekla Tibs', price: 1500, quantity: 1, image: '/images/menu/shekla-tibs.jpg' },
+      { menuItemId: 'additional-1', name: 'Ispeeshaal Illillii', price: 400, quantity: 1, image: '/images/ethiopian-sharing-platter.jpg' },
+    ],
+    subtotal: 1900,
+    total: 1900,
+    status: 'ready',
+    paymentStatus: 'paid',
+    paymentTiming: 'pre_pay',
+    paymentMethod: 'Cash',
+    note: 'Pack with double injera and peppers',
+  },
+]
+
+async function seed() {
+  const uri = process.env.MONGODB_URI || ''
+  console.log('Connecting to MongoDB Atlas...')
+  await mongoose.connect(uri)
+  console.log('Connected! Starting database seeding...')
+
+  // 1. Seed Menu Items
+  console.log(`Seeding ${rawMenuItems.length} menu items...`)
+  await MenuItem.deleteMany({})
+  for (const item of rawMenuItems) {
+    await MenuItem.create({
+      ...item,
+      available: true,
+      translations: {
+        or: item.name,
+        am: item.amharicName,
+        en: item.name,
+      },
+    })
+  }
+  console.log(`✅ Successfully seeded ${rawMenuItems.length} menu items!`)
+
+  // 2. Seed Staff
+  console.log(`Seeding staff members...`)
+  await Staff.deleteMany({})
+  for (const s of initialStaff) {
+    await Staff.create(s)
+  }
+  console.log(`✅ Successfully seeded ${initialStaff.length} staff members!`)
+
+  // 3. Seed Orders
+  console.log(`Seeding sample orders...`)
+  await Order.deleteMany({})
+  for (const o of initialOrders) {
+    await Order.create(o)
+  }
+  console.log(`✅ Successfully seeded ${initialOrders.length} orders!`)
+
+  // 4. Seed Settings
+  console.log(`Seeding restaurant settings...`)
+  await Settings.deleteMany({})
+  await Settings.create({
+    restaurantName: 'Ilillii Bar & Restaurant',
+    managerPhone: '0909511588',
+    location: 'Bale Robe around Awraris and around Wako Gutu Square',
+    announcement: 'Welcome to Ilillii Bar & Restaurant · Bale Robe · Open Daily 7:00 AM – 11:30 PM',
+    currency: 'ETB',
+    openingHours: 'Daily 7:00 AM – 11:30 PM',
+  })
+  console.log(`✅ Successfully seeded restaurant settings!`)
+
+  console.log('\n🎉 ALL REAL RESTAURANT DATA SEEDED INTO MONGODB ATLAS SUCCESSFULLY!')
+  await mongoose.disconnect()
+  process.exit(0)
+}
+
+seed().catch(err => {
+  console.error('❌ Seeding failed:', err)
+  process.exit(1)
+})

@@ -5,6 +5,7 @@ import { SiteLink, sitePage } from './site-routing'
 import { QuantityControl, StatePanel } from './ui-patterns'
 import { categories, formatBirr, menuItems } from './menu-data'
 import type { MenuItem } from './menu-data'
+import { api } from './api/client'
 import './menu.css'
 import { GlobalFooter, GlobalHeader } from './LocationComponents'
 const FulfilmentFlow = lazy(() => import('./FulfilmentFlow'))
@@ -66,6 +67,7 @@ function ProductCard({ item, quantity, update, details }: { item: MenuItem; quan
 }
 
 export default function Menu() {
+  const [items, setItems] = useState<MenuItem[]>(menuItems)
   const [category, setCategory] = useState('all')
   const [query, setQuery] = useState('')
   const [cart, setCart] = useState<Cart>({})
@@ -85,10 +87,40 @@ export default function Menu() {
   const [menuState, setMenuState] = useState('ready')
   const cartRef = useRef<HTMLDialogElement>(null)
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+
+  // Fetch real menu items from MongoDB backend
+  useEffect(() => {
+    let active = true
+    api.getMenu().then(res => {
+      if (active && res.success && res.items?.length) {
+        const live: MenuItem[] = res.items.map(item => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          category: (item.category === 'beer-wine' || item.category === 'spirits' || item.category === 'cold-drinks' || item.category === 'hot-drinks')
+            ? 'drinks'
+            : (item.categoryLabel?.toLowerCase().includes('additional') || item.id.startsWith('additional-') ? 'additional' : 'main'),
+          availability: item.available ? 'available' : 'unavailable',
+          confirmedImage: item.image,
+          verifiedDescription: item.description,
+          translations: {
+            am: item.amharicName || item.translations?.am || '',
+            om: item.translations?.or || item.name,
+          },
+          houseSpecial: Boolean(item.houseSpecial),
+        }))
+        setItems(live)
+      }
+    }).catch(err => {
+      console.warn('Backend menu fetch notice; using fallback:', err.message)
+    })
+    return () => { active = false }
+  }, [])
+
   const count = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0)
-  const selected = menuItems.filter(item => cart[item.id] > 0)
+  const selected = items.filter(item => cart[item.id] > 0)
   const subtotal = selected.reduce((sum, item) => sum + item.price * cart[item.id], 0)
-  const results = menuItems.filter(item => (category === 'all' || item.category === category) && item.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+  const results = items.filter(item => (category === 'all' || item.category === category) && item.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   useDialog(cartRef, panel)
   useEffect(() => {
     const leaveMenu = () => {
@@ -116,8 +148,8 @@ export default function Menu() {
       else delete next[id]
       return next
     })
-    const item = menuItems.find(item => item.id === id)!
-    setNotice(`${item.name} ${delta > 0 ? 'added to' : 'quantity reduced in'} your preview cart`)
+    const item = items.find(item => item.id === id) || menuItems.find(item => item.id === id)!
+    setNotice(`${item.name} ${delta > 0 ? 'added to' : 'quantity reduced in'} your cart`)
     clearTimeout(noticeTimer.current)
     noticeTimer.current = setTimeout(() => setNotice(''), 3000)
   }
@@ -133,10 +165,10 @@ export default function Menu() {
       <section className="menu-welcome menu-container"><div className="menu-welcome-copy"><span className="eyebrow"><span />GOOD FOOD, GREAT COMPANY</span><h1>Explore our <span>menu.</span></h1><span className="currency-note"><span>ETB</span>All prices in Ethiopian birr</span></div><div className="menu-editorial"><img src="/images/ethiopian-sharing-platter.jpg" alt="Ethiopian sharing platter" /><div className="editorial-shade" /><span className="editorial-caption">A SHARED TABLE. A SHARED MOMENT.</span><div className="editorial-seal"><Mark /></div></div></section>
       <section id="food-menu" className="menu-container menu-explorer" aria-label="Food and drinks menu">
         <div className="menu-toolbar"><label className="menu-search"><Icon name="search" size={21} /><input aria-label="Search food or drink name" placeholder="What are you in the mood for?" value={query} onChange={e => setQuery(e.target.value)} />{query && <button aria-label="Clear search" onClick={() => setQuery('')}><Icon name="close" size={18} /></button>}<span className="search-hint">Search food & drinks</span></label><span className="browse-tip"><Icon name="bag" size={16} />Browse first. Choose your way later.</span></div>
-        <div className="category-navigation" role="group" aria-label="Filter menu by category"><button className={`menu-category ${category === 'all' ? 'active' : ''}`} aria-pressed={category === 'all'} onClick={() => setCategory('all')}><Icon name="menu" size={17} /><span>All items</span><small>{menuItems.length}</small></button>{categories.map(c => <button key={c.id} className={`menu-category ${category === c.id ? 'active' : ''}`} aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><Icon name={c.icon} size={17} /><span>{c.label}</span><small>{menuItems.filter(item => item.category === c.id).length}</small></button>)}</div>
+        <div className="category-navigation" role="group" aria-label="Filter menu by category"><button className={`menu-category ${category === 'all' ? 'active' : ''}`} aria-pressed={category === 'all'} onClick={() => setCategory('all')}><Icon name="menu" size={17} /><span>All items</span><small>{items.length}</small></button>{categories.map(c => <button key={c.id} className={`menu-category ${category === c.id ? 'active' : ''}`} aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><Icon name={c.icon} size={17} /><span>{c.label}</span><small>{items.filter(item => item.category === c.id).length}</small></button>)}</div>
         <div className="results-heading"><div><h2>{query.trim() ? 'Search results' : category === 'all' ? 'Something for everyone.' : categories.find(c => c.id === category)?.label}</h2><span>{results.length} {results.length === 1 ? 'item' : 'items'}{query.trim() && <> matching “{query}”</>}</span></div><span className="price-reminder">PRICES IN <strong>ETB</strong></span></div>
         {language === 'am' && null}
-        {menuState !== 'ready' ? <StatePanel kind={menuState === 'loading' ? 'loading' : 'error'} title={menuState === 'loading' ? 'Getting the menu ready…' : 'We couldn’t load the menu.'} action={<button className="button primary" onClick={() => setMenuState('ready')}>{menuState === 'loading' ? 'Return to menu preview' : 'Try again'}</button>}></StatePanel> : results.length ? (query.trim() || category !== 'all' ? <div className="product-grid">{results.map(item => <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />)}</div> : categories.map(c => <section className="product-section" key={c.id}><div className="product-section-heading"><span className="section-icon"><Icon name={c.icon} size={20} /></span><div><h3>{c.label}</h3></div><span>{menuItems.filter(item => item.category === c.id).length} items</span></div><div className="product-grid">{menuItems.filter(item => item.category === c.id).map(item => <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />)}</div></section>)) : <div className="menu-empty"><span><Icon name="search" size={32} /></span><h3>No matches just yet.</h3><p>Try a shorter name, check the spelling, or browse all food and drinks.</p><button className="button primary" onClick={resetSearch}>Show all items<Icon name="arrow" size={17} /></button></div>}
+        {menuState !== 'ready' ? <StatePanel kind={menuState === 'loading' ? 'loading' : 'error'} title={menuState === 'loading' ? 'Getting the menu ready…' : 'We couldn’t load the menu.'} action={<button className="button primary" onClick={() => setMenuState('ready')}>{menuState === 'loading' ? 'Return to menu preview' : 'Try again'}</button>}></StatePanel> : results.length ? (query.trim() || category !== 'all' ? <div className="product-grid">{results.map(item => <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />)}</div> : categories.map(c => <section className="product-section" key={c.id}><div className="product-section-heading"><span className="section-icon"><Icon name={c.icon} size={20} /></span><div><h3>{c.label}</h3></div><span>{items.filter(item => item.category === c.id).length} items</span></div><div className="product-grid">{items.filter(item => item.category === c.id).map(item => <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />)}</div></section>)) : <div className="menu-empty"><span><Icon name="search" size={32} /></span><h3>No matches just yet.</h3><p>Try a shorter name, check the spelling, or browse all food and drinks.</p><button className="button primary" onClick={resetSearch}>Show all items<Icon name="arrow" size={17} /></button></div>}
         <div className="menu-help"><Icon name="heart" size={20} /><div><strong>Questions or special orders?</strong></div><SiteLink href="/contact" className="button secondary">Contact Hotel<Icon name="arrow" size={16} /></SiteLink></div>
       </section>
       <section className="menu-service-strip"><div className="menu-container">{[{ name: 'Dine in', icon: 'meal', text: 'Good company, around our table at Ilillii Hotel.' }, { name: 'Pickup / Takeaway', icon: 'bag', text: 'Freshly prepared and packed for pickup at the hotel.' }].map(item => <div key={item.name}><Icon name={item.icon} size={24} /><span><strong>{item.name}</strong></span></div>)}</div></section>
