@@ -67,8 +67,10 @@ export function AuthCard({
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const googleBtnRef = useRef<HTMLDivElement>(null)
+  const googleRegBtnRef = useRef<HTMLDivElement>(null)
 
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+  const GOOGLE_CLIENT_ID_DEFAULT = '719507365901-7ge7qlu3uvj36evr8kpnviceej33q89d.apps.googleusercontent.com'
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID_DEFAULT
 
   // Initialize Google Identity Services
   useEffect(() => {
@@ -116,8 +118,9 @@ export function AuthCard({
             callback: handleGoogleResponse,
             auto_select: false,
           })
-          if (googleBtnRef.current) {
-            window.google.accounts.id.renderButton(googleBtnRef.current, {
+          const btnEl = mode === 'login' ? googleBtnRef.current : googleRegBtnRef.current
+          if (btnEl) {
+            window.google.accounts.id.renderButton(btnEl, {
               theme: 'outline',
               size: 'large',
               width: 380,
@@ -497,7 +500,7 @@ export function AuthCard({
             <span>or continue with</span>
           </div>
 
-          <div style={{ width: '100%', minHeight: '46px', display: 'flex', justifyContent: 'center' }}>
+          <div ref={googleRegBtnRef} style={{ width: '100%', minHeight: '46px', display: 'flex', justifyContent: 'center' }}>
             <button type="button" className="google-auth-btn" onClick={handleGoogleClick}>
               <GoogleLogo />
               <span>Continue with Google</span>
