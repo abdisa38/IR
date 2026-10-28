@@ -1,4 +1,4 @@
-import { useLanguage } from './language'
+import { useLanguage, languageOptions } from './language'
 import { useState, useEffect } from 'react'
 import { Icon, Logo, Mark, Modal } from './shared-ui'
 import { SiteLink } from './site-routing'
