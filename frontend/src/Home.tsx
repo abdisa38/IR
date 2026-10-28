@@ -33,11 +33,73 @@ export default function App() {
     <main>
       <section className="hero"><div className="hero-copy"><div className="eyebrow"><span /> A WARM WELCOME TO ILILLII</div><h1>Good food.<br />Great <span>Restaurant.</span></h1><div className="hero-buttons"><button className="button primary" onClick={showMenu}>Explore Our Menu<Icon name="arrow" size={18} /></button><a className="button secondary" href="#find-us"><Icon name="pin" size={18} />Find Us</a></div><div className="hero-footnote"><span className="mini-mark"><Mark /></span><span>Rooted in our community.<br /><strong>Made for moments together.</strong></span></div></div><div className="hero-image"><img src={heroPhoto} alt="A generous Ethiopian sharing platter served on injera" fetchPriority="high" /><div className="image-shade" /><span className="image-label">GOOD FOOD BRINGS US TOGETHER</span><div className="round-seal"><span>COME HUNGRY</span><Mark /><span>LEAVE HAPPY</span></div><div className="photo-caption"><span className="photo-caption-line" />A shared table. A shared moment.</div></div></section>
       <section className="ways container" aria-labelledby="ways-heading"><div className="ways-intro"><span className="eyebrow">YOUR TABLE, YOUR WAY</span><h2 id="ways-heading">How will you<br />join us?</h2></div>{[{ icon: 'meal', name: 'Dine In', description: 'Settle in. Share a meal. Feel at home at our hotel.' }, { icon: 'bag', name: 'Pickup / Takeaway', description: 'Your favourites, freshly prepared to take with you.' }].map(method => <button className="method-card" key={method.name} onClick={() => setModal(method.name)}><span className="method-icon"><Icon name={method.icon} size={25} /></span><span className="method-content"><strong>{method.name}</strong></span><Icon name="arrow" size={18} /></button>)}</section>
-      <section className="featured" id="menu"><div className="container"><div className="section-heading"><div><span className="eyebrow">A LITTLE SOMETHING TO LOOK FORWARD TO</span><h2>Find your next favourite.</h2></div><button className="text-button" onClick={showMenu}>Explore the menu<Icon name="arrow" size={19} /></button></div><div className="food-grid">{featuredDishes.length > 0 ? featuredDishes.map((food, index) => <button className="food-card" key={food.id} onClick={showMenu}><div className="food-photo"><img src={food.image || heroPhoto} alt={food.name} loading="lazy" /><span className="food-badge">{food.houseSpecial ? 'HOUSE SPECIAL' : index === 0 ? 'SIGNATURE DISH' : 'CHEF RECOMMENDATION'}</span><span className="food-arrow"><Icon name="arrow" /></span></div><div className="food-info"><div><h3>{food.amharicName ? `${food.name} / ${food.amharicName}` : food.name}</h3></div><span className="price">{food.price}<small>ETB</small></span></div></button>) : [
-        { name: 'Kitfoo / ክትፎ', price: '450', image: '/images/photo-1544025162-d76694265947.jpg' },
-        { name: 'Tibsi / ጥብስ', price: '380', image: '/images/photo-1555939594-58d7cb561ad1.jpg' },
-        { name: 'Special Buna / ቡና', price: '60', image: '/images/447933601403-0c6688de566e.jpg' }
-      ].map((food, index) => <button className="food-card" key={food.name} onClick={showMenu}><div className="food-photo"><img src={food.image} alt={food.name} loading="lazy" /><span className="food-badge">{index === 2 ? 'TRADITIONAL COFFEE' : 'SPECIAL HOUSE FOOD'}</span><span className="food-arrow"><Icon name="arrow" /></span></div><div className="food-info"><div><h3>{food.name}</h3></div><span className="price">{food.price}<small>ETB</small></span></div></button>)}</div><p className="sample-note"><span className="note-dot" />Freshly prepared daily with authentic Bale Robe spices and ingredients.</p></div></section>
+      <section className="featured" id="menu">
+        <div className="container">
+          <div className="section-heading">
+            <div>
+              <span className="eyebrow">A LITTLE SOMETHING TO LOOK FORWARD TO</span>
+              <h2>Find your next favourite.</h2>
+            </div>
+            <button className="text-button" onClick={showMenu}>Explore the menu<Icon name="arrow" size={19} /></button>
+          </div>
+          <div className="food-grid">
+            {featuredDishes.length > 0 ? featuredDishes.map((food, index) => (
+              <button className="food-card" key={food.id} onClick={showMenu}>
+                <div className="food-photo">
+                  <img
+                    src={food.image || heroPhoto}
+                    alt={food.name}
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.currentTarget
+                      if (!target.src.endsWith(heroPhoto)) {
+                        target.src = heroPhoto
+                      }
+                    }}
+                  />
+                  <span className="food-badge">{food.houseSpecial ? 'SPECIAL HOUSE FOOD' : index === 0 ? 'SIGNATURE DISH' : 'CHEF RECOMMENDATION'}</span>
+                  <span className="food-arrow"><Icon name="arrow" /></span>
+                </div>
+                <div className="food-info">
+                  <div>
+                    <h3>{food.amharicName ? `${food.name} / ${food.amharicName}` : food.name}</h3>
+                  </div>
+                  <span className="price">{food.price}<small>ETB</small></span>
+                </div>
+              </button>
+            )) : [
+              { name: 'Kitfoo / ክትፎ', price: '1500', image: '/images/menu/kitfoo.jpg' },
+              { name: 'Foon Waddii / የተጠበሰ ሥጋ', price: '1300', image: '/images/menu/foon-waddii.jpg' },
+              { name: 'Ispeeshaal Goodinii / ስፔሻል ጎደኒ', price: '1400', image: '/images/menu/ispeeshaal-goodinii.jpg' }
+            ].map((food) => (
+              <button className="food-card" key={food.name} onClick={showMenu}>
+                <div className="food-photo">
+                  <img
+                    src={food.image}
+                    alt={food.name}
+                    loading="lazy"
+                    onError={(e) => {
+                      const target = e.currentTarget
+                      if (!target.src.endsWith(heroPhoto)) {
+                        target.src = heroPhoto
+                      }
+                    }}
+                  />
+                  <span className="food-badge">SPECIAL HOUSE FOOD</span>
+                  <span className="food-arrow"><Icon name="arrow" /></span>
+                </div>
+                <div className="food-info">
+                  <div>
+                    <h3>{food.name}</h3>
+                  </div>
+                  <span className="price">{food.price}<small>ETB</small></span>
+                </div>
+              </button>
+            ))}
+          </div>
+          <p className="sample-note"><span className="note-dot" />Freshly prepared daily with authentic Bale Robe spices and ingredients.</p>
+        </div>
+      </section>
       <section className="hospitality container" id="about"><div className="hospitality-image"><img src={'/images/1517248135467-4c7edcad34c4.jpg'} alt="Warm restaurant interior with tables set for gathering" loading="lazy" /><span className="hospitality-stamp"><Mark /><span>THERE’S ALWAYS<br />ROOM AT OUR TABLE</span></span></div><div className="hospitality-copy"><span className="eyebrow">MORE THAN A MEAL</span><h2>A familiar place.<br />A warm welcome.</h2><div className="hospitality-signoff"><Icon name="heart" size={21} /><span>Food. People. A sense of belonging.</span></div></div></section>
       <FindUsSection />
       <section className="closing"><Mark /><button className="text-button" onClick={showMenu}>Let’s find your favourite<Icon name="arrow" size={18} /></button></section>
