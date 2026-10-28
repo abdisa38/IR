@@ -84,6 +84,8 @@ export function AuthCard({
       try {
         const res = await api.googleAuth(response.credential, googleClientId)
         if (res.success && res.user) {
+          localStorage.setItem('ilillii_user', JSON.stringify(res.user))
+          if (res.token) localStorage.setItem('ilillii_token', res.token)
           localStorage.setItem(
             'ilillii_customer',
             JSON.stringify({
@@ -94,6 +96,16 @@ export function AuthCard({
             })
           )
           window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+
+          if (res.user.isStaff || ['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'owner'].includes(res.user.role)) {
+            setSuccess('Welcome! Signing into Ilillii Staff Workspace…')
+            setTimeout(() => {
+              window.location.hash = 'admin'
+              window.dispatchEvent(new HashChangeEvent('hashchange'))
+            }, 300)
+            return
+          }
+
           setSuccess(`Welcome, ${res.user.name}! Signed in with Google.`)
           setTimeout(() => {
             if (onSuccess) onSuccess(res.user)
@@ -101,7 +113,7 @@ export function AuthCard({
               window.location.hash = 'menu'
               window.dispatchEvent(new HashChangeEvent('hashchange'))
             }
-          }, 600)
+          }, 400)
         }
       } catch (err: any) {
         setError(err.message || 'Google sign-in failed. Please try again.')
@@ -184,6 +196,8 @@ export function AuthCard({
       const res = await api.login(cleanId, loginPassword)
       setBusy(false)
       if (res.success && res.user) {
+        localStorage.setItem('ilillii_user', JSON.stringify(res.user))
+        if (res.token) localStorage.setItem('ilillii_token', res.token)
         localStorage.setItem(
           'ilillii_customer',
           JSON.stringify({
@@ -195,12 +209,12 @@ export function AuthCard({
         )
         window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
 
-        if (res.user.isStaff || ['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'staff'].includes(res.user.role)) {
+        if (res.user.isStaff || ['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'owner', 'staff'].includes(res.user.role)) {
           setSuccess('Signing in to Ilillii Staff Workspace…')
           setTimeout(() => {
             window.location.hash = 'admin'
             window.dispatchEvent(new HashChangeEvent('hashchange'))
-          }, 600)
+          }, 300)
           return
         }
 
