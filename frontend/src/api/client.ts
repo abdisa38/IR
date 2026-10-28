@@ -35,10 +35,25 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
   try {
     const response = await fetch(url, { ...options, headers })
-    const data = await response.json()
+    const contentType = response.headers.get('content-type') || ''
+
+    let data: any = null
+    if (contentType.includes('application/json')) {
+      data = await response.json()
+    } else {
+      const text = await response.text()
+      if (!response.ok) {
+        throw new Error(
+          response.status === 405
+            ? 'Endpoint method not allowed (405). Please check backend routing.'
+            : `API Server returned ${response.status}: ${response.statusText}`
+        )
+      }
+      throw new Error(`Expected JSON from API, but received ${contentType || 'HTML response'}.`)
+    }
 
     if (!response.ok) {
-      throw new Error(data.message || `Request failed with status ${response.status}`)
+      throw new Error(data?.message || `Request failed with status ${response.status}`)
     }
 
     return data as T
