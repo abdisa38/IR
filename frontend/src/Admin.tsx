@@ -267,12 +267,95 @@ export default function Admin() {
       notify(`Payment action error: ${err.message}`)
     }
   }
-  const orderTable = (data: DemoOrder[]) => <><div className="admin-mobile-orders">{data.map(order => <article className="admin-mobile-order" key={order.id}><div><button className="admin-order-link" onClick={() => setSelected(order)} style={{ fontWeight: 700, fontSize: '15px' }}>{order.customer || order.id}</button><span>{order.id} · {time(order.received)}</span></div><span className="admin-order-type"><Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={16} />{order.type}{order.table && ` · Table ${order.table}`}</span><p>{order.items.map(item => `${item.quantity} × ${item.name}`).join(', ')}</p><div className="mobile-order-statuses"><Badge value={order.payment} type="Payment" /><Badge value={orderStatusLabel(order)} /></div><div className="mobile-order-action">{financial && <strong>{formatBirr(orderTotal(order))} <small>ETB</small></strong>}<button className="button secondary" onClick={() => setSelected(order)} aria-label={`View order ${order.id}`}>View order<Icon name="arrow" size={16} /></button></div></article>)}{data.length === 0 && <div className="admin-empty"><Icon name="search" size={28} /><h3>No matching orders.</h3><p>Try another filter or clear your search.</p></div>}</div><div className="admin-table-wrap admin-order-table"><table className="admin-table"><thead><tr><th>Customer & Order</th><th>Received</th><th>Order type</th><th>Items</th>{financial && <th>Total</th>}<th>Payment</th><th>Order status</th><th /></tr></thead><tbody>{data.map(order => <tr key={order.id}><td><button className="admin-order-link" onClick={() => setSelected(order)} style={{ fontWeight: 700, display: 'block', textAlign: 'left', color: 'var(--color-ink)' }}>{order.customer ? order.customer : order.id}</button><small style={{ color: 'var(--color-muted)', display: 'block', marginTop: '2px' }}>{order.id}{order.table ? ` · Table ${order.table}` : ' · Pickup'}</small></td><td>{time(order.received)}</td><td><span className={`admin-order-type type-${order.type.toLowerCase()}`}><Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={14} />{order.type}</span></td><td><span className="admin-item-summary">{order.items.map(item => `${item.quantity} × ${item.name}`).join(', ')}</span></td>{financial && <td><strong>{formatBirr(orderTotal(order))}</strong><small>ETB</small></td>}<td><Badge value={order.payment} type="Payment" /></td><td><Badge value={orderStatusLabel(order)} /></td><td><button className="icon-button" aria-label={`View ${order.id}`} onClick={() => setSelected(order)}><Icon name="arrow" size={15} /></button></td></tr>)}</tbody></table>{data.length === 0 && <div className="admin-empty"><Icon name="search" size={28} /><h3>No matching orders.</h3><p>Try another filter or clear your search.</p></div>}</div></>
+  const orderTable = (data: DemoOrder[]) => <><div className="admin-mobile-orders">{data.map(order => <article className="admin-mobile-order" key={order.id}><div><button className="admin-order-link" onClick={() => setSelected(order)} style={{ fontWeight: 700, fontSize: '15px' }}>{order.customer || order.id}</button><span>{order.id} · {time(order.received)}</span></div><span className="admin-order-type"><Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={16} />{order.type}{order.table && ` · Table ${order.table}`}</span><p>{order.items.map(item => `${item.quantity} × ${item.name}`).join(', ')}</p><div className="mobile-order-statuses"><Badge value={order.payment} type="Payment" /><Badge value={orderStatusLabel(order)} /></div><div className="mobile-order-action">{financial && <strong>{formatBirr(orderTotal(order))} <small>ETB</small></strong>}<button className="button secondary" onClick={() => setSelected(order)} aria-label={`View order ${order.id}`}>View order<Icon name="arrow" size={16} /></button></div></article>)}{data.length === 0 && <div className="admin-empty"><Icon name="bag" size={28} /><h3>No orders yet.</h3><p>New orders placed by customers will appear here in real time.</p></div>}</div><div className="admin-table-wrap admin-order-table"><table className="admin-table"><thead><tr><th>Customer & Order</th><th>Received</th><th>Order type</th><th>Items</th>{financial && <th>Total</th>}<th>Payment</th><th>Order status</th><th /></tr></thead><tbody>{data.map(order => <tr key={order.id}><td><button className="admin-order-link" onClick={() => setSelected(order)} style={{ fontWeight: 700, display: 'block', textAlign: 'left', color: 'var(--color-ink)' }}>{order.customer ? order.customer : order.id}</button><small style={{ color: 'var(--color-muted)', display: 'block', marginTop: '2px' }}>{order.id}{order.table ? ` · Table ${order.table}` : ' · Pickup'}</small></td><td>{time(order.received)}</td><td><span className={`admin-order-type type-${order.type.toLowerCase()}`}><Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={14} />{order.type}</span></td><td><span className="admin-item-summary">{order.items.map(item => `${item.quantity} × ${item.name}`).join(', ')}</span></td>{financial && <td><strong>{formatBirr(orderTotal(order))}</strong><small>ETB</small></td>}<td><Badge value={order.payment} type="Payment" /></td><td><Badge value={orderStatusLabel(order)} /></td><td><button className="icon-button" aria-label={`View ${order.id}`} onClick={() => setSelected(order)}><Icon name="arrow" size={15} /></button></td></tr>)}</tbody></table>{data.length === 0 && <div className="admin-empty"><Icon name="bag" size={28} /><h3>No orders yet.</h3><p>New orders placed by customers will appear here in real time.</p></div>}</div></>
   const reportOrders = scoped.filter(order => order.status === 'Completed' && order.payment === 'Paid' && order.fee !== null)
   const bestSellers = useMemo(() => {
     const map = new Map<string, number>(); reportOrders.forEach(order => order.items.forEach(item => map.set(item.name, (map.get(item.name) || 0) + item.quantity))); return [...map].sort((a, b) => b[1] - a[1])
   }, [orders, period])
   const subtitle: Record<AdminPage, string> = { Overview: 'A clear view of your restaurant, one order at a time.', Orders: 'Keep every meal moving, from arrival to the table.', 'Kitchen Board': 'Just the essentials. Clear orders. Good food.', 'Menu Management': 'Keep your food and drink menu clear and up to date.', Categories: 'Organize your menu in a way that feels familiar.', Payments: 'Trusted checks before any payment is marked paid.', 'Tables & QR Codes': 'A simple connection between every table and its order.', Reports: 'Understand recorded activity, without guesswork.', 'Staff & Permissions': 'The right access for each member of your team.', 'Hotel Settings': 'Verified business details, kept in one place.' }
+
+  if (!isStaffAuth) {
+    return (
+      <div className="admin-signed-out-page">
+        <div className="admin-signed-out-card" style={{ maxWidth: '440px', padding: '36px 32px' }}>
+          <Logo />
+          <div className="signed-out-icon-wrap" style={{ background: '#fdf2e9', color: 'var(--color-brand)' }}>
+            <Icon name="shield" size={32} />
+          </div>
+          <h1>Staff Workspace Login</h1>
+          <p className="signed-out-subtitle" style={{ marginBottom: '18px' }}>
+            This workspace is strictly reserved for authorized Ilillii Hotel team members. Please enter your credentials to open your dashboard.
+          </p>
+
+          {currentUser && !isStaffAuth && (
+            <div className="auth-alert-error" style={{ marginBottom: '14px', textAlign: 'left', fontSize: '12px' }}>
+              <Icon name="info" size={16} />
+              <span>Signed in as customer ({currentUser.name}). Staff credentials are required for this workspace.</span>
+            </div>
+          )}
+
+          {loginErr && (
+            <div className="auth-alert-error" style={{ marginBottom: '14px', textAlign: 'left', fontSize: '12px' }}>
+              <Icon name="info" size={16} />
+              <span>{loginErr}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleStaffLogin} className="auth-form" style={{ width: '100%', textAlign: 'left' }}>
+            <label className="auth-field">
+              <div className="auth-field-header">
+                <span>Staff Username or Phone</span>
+              </div>
+              <input
+                type="text"
+                placeholder="e.g. admin, manager, or 0909511588"
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
+                autoComplete="username"
+                required
+              />
+            </label>
+
+            <label className="auth-field" style={{ marginTop: '12px' }}>
+              <div className="auth-field-header">
+                <span>Password</span>
+              </div>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={loginPass}
+                onChange={(e) => setLoginPass(e.target.value)}
+                autoComplete="current-password"
+                required
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="button primary"
+              disabled={loginBusy}
+              style={{ width: '100%', marginTop: '18px', justifyContent: 'center' }}
+            >
+              {loginBusy ? 'Verifying…' : 'Sign In to Workspace'}
+              <Icon name="arrow" size={16} />
+            </button>
+          </form>
+
+          <div className="signed-out-actions" style={{ marginTop: '20px' }}>
+            <SiteLink href="/#menu" className="button secondary" style={{ width: '100%', justifyContent: 'center' }}>
+              <Icon name="meal" size={16} />
+              Back to Customer Menu
+            </SiteLink>
+          </div>
+
+          <div className="signed-out-footer" style={{ marginTop: '18px' }}>
+            <small>Manager Contact: 0909511588 · Bale Robe, Oromia</small>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (signedOut) {
     return (
       <div className="admin-signed-out-page">
@@ -283,7 +366,7 @@ export default function Admin() {
           </div>
           <h1>Session Ended</h1>
           <p className="signed-out-subtitle">
-            Thank you for your service at Ilillii Hotel today. You have safely signed out of the management workspace.
+            You have safely signed out of the Ilillii Hotel management workspace.
           </p>
           <div className="signed-out-location-badge">
             <Icon name="pin" size={14} />
@@ -300,7 +383,7 @@ export default function Admin() {
             </SiteLink>
           </div>
           <div className="signed-out-footer">
-            <small>Manager Hotline: 0909511588 · Daily 6:30 AM – 11:00 PM</small>
+            <small>Manager Hotline: 0909511588 · Daily 7:00 AM – 11:30 PM</small>
           </div>
         </div>
       </div>
@@ -308,7 +391,7 @@ export default function Admin() {
   }
   return <div className="admin-app">
     {mobile && <button className="admin-mobile-scrim" aria-label="Close navigation" onClick={() => setMobile(false)} />}
-    <aside id="staff-dashboard-navigation" inert={narrow && !mobile} className={`admin-sidebar ${mobile ? 'sidebar-open' : ''}`}><div className="admin-sidebar-brand"><Logo /><span>RESTAURANT WORKSPACE</span></div><div className="admin-location"><span className="admin-location-icon"><Icon name="pin" size={17} /></span><div><strong>Ilillii Hotel</strong><small>Bale Robe, Oromia</small></div><span className="admin-location-dot" /></div><nav aria-label="Dashboard navigation">{navigation.map(item => canAccess(role, item.page) ? <div key={item.page}>{item.section && <span className="admin-nav-label">{item.section}</span>}<button className={page === item.page ? 'active' : ''} onClick={() => navigate(item.page)} aria-current={page === item.page ? 'page' : undefined}><Icon name={item.icon} size={18} /><span>{item.page}</span>{item.page === 'Orders' && <small>{orders.filter(order => order.status === 'New').length}</small>}{item.page === 'Payments' && <span className="admin-nav-notice" />}</button></div> : null)}</nav><div className="admin-sidebar-bottom"><SiteLink href="/#home"><Icon name="globe" size={17} />View public website<Icon name="arrow" size={14} /></SiteLink><button onClick={() => setSignedOut(true)} title="Sign out of workspace"><Icon name="logout" size={17} />Sign out</button><div onClick={() => setSignedOut(true)} style={{ cursor: 'pointer' }} title="Click to Sign Out"><span className="admin-avatar">IH</span><span><strong>Ilillii Management</strong><small>{role} · Sign out</small></span><Icon name="logout" size={15} /></div></div></aside>
+    <aside id="staff-dashboard-navigation" inert={narrow && !mobile} className={`admin-sidebar ${mobile ? 'sidebar-open' : ''}`}><div className="admin-sidebar-brand"><Logo /><span>RESTAURANT WORKSPACE</span></div><div className="admin-location"><span className="admin-location-icon"><Icon name="pin" size={17} /></span><div><strong>Ilillii Hotel</strong><small>Bale Robe, Oromia</small></div><span className="admin-location-dot" /></div><nav aria-label="Dashboard navigation">{navigation.map(item => canAccess(role, item.page) ? <div key={item.page}>{item.section && <span className="admin-nav-label">{item.section}</span>}<button className={page === item.page ? 'active' : ''} onClick={() => navigate(item.page)} aria-current={page === item.page ? 'page' : undefined}><Icon name={item.icon} size={18} /><span>{item.page}</span>{item.page === 'Orders' && <small>{orders.filter(order => order.status === 'New').length}</small>}{item.page === 'Payments' && <span className="admin-nav-notice" />}</button></div> : null)}</nav><div className="admin-sidebar-bottom"><SiteLink href="/#home"><Icon name="globe" size={17} />View public website<Icon name="arrow" size={14} /></SiteLink><button onClick={handleSignOut} title="Sign out of workspace"><Icon name="logout" size={17} />Sign out</button><div onClick={handleSignOut} style={{ cursor: 'pointer' }} title="Click to Sign Out"><span className="admin-avatar">IH</span><span><strong>{currentUser?.name || 'Ilillii Staff'}</strong><small>{role} · Sign out</small></span><Icon name="logout" size={15} /></div></div></aside>
     <div className="admin-workspace" inert={mobile && narrow}><header className="admin-topbar"><div><button className="icon-button admin-menu-toggle" aria-label="Open navigation" aria-expanded={mobile} aria-controls="staff-dashboard-navigation" onClick={() => setMobile(true)}><Icon name="menu" size={20} /></button><span>Workspace</span><Icon name="chevron-right" size={13} /><strong>{page}</strong></div><div><span className="admin-demo-pill">STAFF WORKSPACE</span><button className="admin-notification" aria-label="View notifications" onClick={() => setOverlay('notifications')}><Icon name="bell" size={20} /><span /></button>
       <div className="admin-profile-menu-wrap" ref={profileMenuRef}>
         <button
@@ -317,7 +400,7 @@ export default function Admin() {
           onClick={() => setProfileMenuOpen(!profileMenuOpen)}
         >
           <span className="admin-avatar">IH</span>
-          <span>Ilillii {role}<small>Bale Robe</small></span>
+          <span>{currentUser?.name || `Ilillii ${role}`}<small>{role}</small></span>
           <Icon name="down" size={13} />
         </button>
         {profileMenuOpen && (
@@ -325,8 +408,8 @@ export default function Admin() {
             <div className="admin-dropdown-user">
               <span className="admin-dropdown-avatar">IH</span>
               <div className="admin-dropdown-user-info">
-                <strong>Ilillii {role}</strong>
-                <small>Bale Robe, Oromia</small>
+                <strong>{currentUser?.name || `Ilillii ${role}`}</strong>
+                <small>{role} · Bale Robe</small>
               </div>
             </div>
             <div className="admin-dropdown-divider" />
@@ -343,7 +426,7 @@ export default function Admin() {
               className="admin-dropdown-logout-btn"
               onClick={() => {
                 setProfileMenuOpen(false)
-                setSignedOut(true)
+                handleSignOut()
               }}
             >
               <Icon name="logout" size={16} />
