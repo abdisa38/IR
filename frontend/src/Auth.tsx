@@ -195,7 +195,7 @@ export function AuthCard({
         )
         window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
 
-        if (res.user.isStaff || ['admin', 'kitchen'].includes(res.user.role)) {
+        if (res.user.isStaff || ['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'staff'].includes(res.user.role)) {
           setSuccess('Signing in to Ilillii Staff Workspace…')
           setTimeout(() => {
             window.location.hash = 'admin'
@@ -401,11 +401,6 @@ export function AuthCard({
             >
               Sign up
             </button>
-          </div>
-
-          <div className="auth-staff-link">
-            <span>Hotel team?</span>
-            <SiteLink href="/#admin">Open Staff Workspace →</SiteLink>
           </div>
         </form>
       ) : (

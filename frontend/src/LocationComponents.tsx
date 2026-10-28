@@ -270,5 +270,64 @@ export function GlobalHeader({
 export function GlobalFooter() {
   const [languageOpen, setLanguageOpen] = useState(false)
   const { language, setLanguage } = useLanguage()
-  return <footer className="global-footer"><div className="container"><div className="global-footer-top"><div><Logo light /><span className="footer-hospitality-line">A table for everyone.</span></div><div><span className="footer-title">COME ON IN</span><SiteLink href="/#home">Home</SiteLink><SiteLink href="/#menu">Menu</SiteLink><SiteLink href="/contact">Contact</SiteLink><SiteLink href="/#login">Sign In / Register</SiteLink><SiteLink href="/#menu">Order Food<Icon name="arrow" size={13} /></SiteLink></div><div><span className="footer-title">FIND YOUR WAY</span><span>Around Awraris, near General Wako Gutu Square</span><span>Bale Robe, Oromia, Ethiopia</span><span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', margin: '4px 0' }}><Icon name="phone" size={13} /><a href="tel:0909511588" style={{ color: 'inherit', textDecoration: 'underline' }}>0909511588</a></span><ContactAction kind="directions" className="footer-action" /><ContactAction kind="call" className="footer-action" /></div><div><span className="footer-title">FEEL AT HOME</span><button className="footer-action" onClick={() => setLanguageOpen(true)}><Icon name="globe" size={15} />{language === 'am' ? 'አማርኛ / Afaan Oromo' : 'Afaan Oromo / አማርኛ'}</button><small>Local-language copy.</small><span className="footer-mini-mark"><Mark /></span></div></div><div className="global-footer-bottom"><span>© {new Date().getFullYear()} Ilillii Hotel. All rights reserved.</span><span>Food. People. A sense of belonging.</span><SiteLink href="/#login">Staff & Customer Portal<Icon name="arrow" size={13} /></SiteLink><SiteLink href="/design-system">Design system<Icon name="arrow" size={13} /></SiteLink></div></div>{languageOpen && <Modal title="Feel at home." close={() => setLanguageOpen(false)}><div className="language-options">{[{ id: 'om', label: 'Afaan Oromo' }, { id: 'am', label: 'አማርኛ — Amharic' }].map(option => <button key={option.id} className={`language-option ${language === option.id ? 'selected' : ''}`} onClick={() => setLanguage(option.id)}><span>{option.label}</span><Icon name={language === option.id ? 'check' : 'globe'} /></button>)}</div></Modal>}</footer>
+  return (
+    <footer className="global-footer">
+      <div className="container">
+        <div className="global-footer-top">
+          <div className="footer-brand-wrap">
+            <Logo light />
+            <p className="footer-addr">
+              Around Awraris, near General Wako Gutu Square · Bale Robe, Oromia
+            </p>
+            <a href="tel:0909511588" className="footer-phone">
+              <Icon name="phone" size={13} />
+              <span>0909511588</span>
+            </a>
+          </div>
+
+          <div className="footer-links-group">
+            <span className="footer-title">EXPLORE</span>
+            <div className="footer-nav-row">
+              <SiteLink href="/#home">Home</SiteLink>
+              <SiteLink href="/#menu">Menu</SiteLink>
+              <SiteLink href="/contact">Contact</SiteLink>
+              <SiteLink href="/#login">Sign In</SiteLink>
+            </div>
+          </div>
+
+          <div className="footer-lang-group">
+            <span className="footer-title">LANGUAGE</span>
+            <button className="footer-action footer-compact-lang" onClick={() => setLanguageOpen(true)}>
+              <Icon name="globe" size={14} />
+              <span>{language === 'am' ? 'አማርኛ' : 'Afaan Oromo'}</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="global-footer-bottom">
+          <span>© {new Date().getFullYear()} Ilillii Hotel. All rights reserved.</span>
+          <span>Bale Robe, Oromia, Ethiopia · Open Daily 7:00 AM – 11:30 PM</span>
+        </div>
+      </div>
+      {languageOpen && (
+        <Modal title="Choose language" close={() => setLanguageOpen(false)}>
+          <div className="language-options">
+            {[{ id: 'om', label: 'Afaan Oromo' }, { id: 'am', label: 'አማርኛ — Amharic' }].map(option => (
+              <button
+                key={option.id}
+                className={`language-option ${language === option.id ? 'selected' : ''}`}
+                onClick={() => {
+                  setLanguage(option.id as any)
+                  setLanguageOpen(false)
+                }}
+              >
+                <span>{option.label}</span>
+                <Icon name={language === option.id ? 'check' : 'globe'} />
+              </button>
+            ))}
+          </div>
+        </Modal>
+      )}
+    </footer>
+  )
 }

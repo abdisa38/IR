@@ -114,10 +114,13 @@ router.post('/login', async (req: Request, res: Response) => {
     const lower = cleanId.toLowerCase()
 
     // Handle staff credentials check
-    const staffRoles = ['admin', 'owner', 'manager', 'kitchen', 'cashier']
-    if (staffRoles.includes(lower) && (password === 'ilillii2026' || password === 'admin' || password === 'manager' || password.length >= 4)) {
+    const staffRoles = ['admin', 'owner', 'manager', 'kitchen', 'cashier', 'waiter']
+    const isDirectStaff = staffRoles.includes(lower) || cleanId === '0909511588' || lower === 'abdisaawel313@gmail.com'
+    if (isDirectStaff && (password === 'ilillii2026' || password === 'admin' || password === 'manager' || password.length >= 4)) {
+      const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin'
+      const staffName = (cleanId === '0909511588' || lower === 'abdisaawel313@gmail.com') ? 'Abdisa Awel (Manager)' : `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)}`
       const staffToken = jwt.sign(
-        { id: `staff-${lower}`, name: lower.toUpperCase(), role: lower === 'kitchen' ? 'kitchen' : 'admin' },
+        { id: `staff-${lower}`, name: staffName, role: assignedRole },
         JWT_SECRET,
         { expiresIn: '30d' }
       )
@@ -127,8 +130,8 @@ router.post('/login', async (req: Request, res: Response) => {
         token: staffToken,
         user: {
           id: `staff-${lower}`,
-          name: `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)} (Staff)`,
-          role: lower === 'kitchen' ? 'kitchen' : 'admin',
+          name: staffName,
+          role: assignedRole,
           isStaff: true,
         },
       })
@@ -157,6 +160,7 @@ router.post('/login', async (req: Request, res: Response) => {
       })
     }
 
+    const isStaffMember = user.role && user.role !== 'customer'
     const token = jwt.sign(
       { id: user.id, name: user.name, role: user.role, phone: user.phone, email: user.email },
       JWT_SECRET,
@@ -173,6 +177,7 @@ router.post('/login', async (req: Request, res: Response) => {
         phone: user.phone,
         email: user.email,
         role: user.role,
+        isStaff: isStaffMember,
         avatar: user.avatar,
         authProvider: user.authProvider,
       },

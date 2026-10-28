@@ -24,43 +24,7 @@ export type DemoOrder = { id: string; type: 'Dine-in' | 'Pickup'; status: OrderS
 export const orderTotal = (order: DemoOrder) => order.items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 export const orderStatusLabel = (order: DemoOrder) => order.status === 'New' ? 'Submitted' : order.status === 'Ready' ? order.type === 'Dine-in' ? 'Ready to Serve' : 'Ready for Pickup' : order.status
 export function createDemoOrders(): DemoOrder[] {
-  const customerNames = [
-    'Abdi Tolosa',
-    'Bontu Gemechu',
-    'Chala Kebede',
-    'Derartu Tulu',
-    'Eskinder Nega',
-    'Fatuma Roba',
-    'Girma Wolde',
-    'Hawine Desta',
-    'Ibsa Ahmed',
-  ]
-  const fixtures: [DemoOrder['type'], OrderStatus, PaymentStatus, DemoOrder['method'], number, number][] = [
-    ['Dine-in', 'New', 'Unpaid', 'Cash', 0, 2], ['Pickup', 'New', 'Paid', 'Telebirr', 3, 1],
-    ['Dine-in', 'Accepted', 'Paid', 'CBE transfer', 10, 2], ['Dine-in', 'Preparing', 'Unpaid', 'Cash', 5, 1],
-    ['Pickup', 'Ready', 'Paid', 'Telebirr', 2, 2], ['Dine-in', 'Ready', 'Paid', 'Telebirr', 11, 3],
-    ['Pickup', 'New', 'Verification Pending', 'CBE transfer', 4, 1], ['Dine-in', 'Completed', 'Paid', 'Cash', 6, 1],
-    ['Pickup', 'Cancelled', 'Failed', 'Telebirr', 1, 1],
-  ]
-  return fixtures.map(([type, status, payment, method, index, quantity], i) => {
-    const item = menuItems[index]
-    return {
-      id: `IL-${1042 + i}`,
-      type,
-      status,
-      payment,
-      method,
-      received: new Date(Date.now() - (i * 11 + 4) * 60000).toISOString(),
-      table: type === 'Dine-in' ? ['05', '08', '12', '03', '07'][i % 5] : undefined,
-      customer: customerNames[i % customerNames.length],
-      phone: '0909511588',
-      items: [{ id: item.id, name: item.name, price: item.price, quantity }],
-      note: i === 0 ? 'Note: please bring the drinks with the meal.' : undefined,
-      activity: ['Order received'],
-      transferReference: method === 'CBE transfer' ? `CBE-${200 + i}` : undefined,
-      fee: 0,
-    }
-  })
+  return []
 }
 export function nextOrderStatus(order: DemoOrder): { status: OrderStatus; label: string } | null {
   if (order.type !== 'Dine-in' && order.payment !== 'Paid') return null
