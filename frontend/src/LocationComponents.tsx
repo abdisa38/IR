@@ -1,5 +1,5 @@
 import { useLanguage } from './language'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Icon, Logo, Mark, Modal } from './shared-ui'
 import { SiteLink } from './site-routing'
 import './location.css'

@@ -7,7 +7,6 @@ import type { Fulfilment } from './fulfilment-model'
 import { api } from './api/client'
 import './fulfilment.css'
 import { CompactCheckoutAmount, StatusBadge } from './ui-patterns'
-import { AuthCard } from './Auth'
 
 type Line = { item: MenuItem; quantity: number }
 type Receipt = { reference: string; accessCode: string; mode: Fulfilment; lines: Line[]; subtotal: number; created: string }
@@ -176,17 +175,27 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
           <button className="continue-button" onClick={() => setModal('cancel')}>Request cancellation</button>{cancellation && <p className="cancellation-note" role="status">Cancellation request received. Our team will verify and contact you.</p>}
         </>}
         {page === 'lookup' && (
-          <AuthCard
-            initialTab="login"
-            onLookup={(ref, codeVal) => {
-              setLookupRef(ref)
-              setCode(codeVal)
-              lookup()
-              if (receipt && ref.trim().toUpperCase() === receipt.reference) {
-                go('tracking')
-              }
-            }}
-          />
+          <div className="lookup-box" style={{ padding: '16px 0' }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 750, margin: '0 0 6px', color: 'var(--color-ink)' }}>Track your order</h2>
+            <p style={{ fontSize: '13px', color: 'var(--color-muted)', margin: '0 0 16px' }}>Enter your order reference code (e.g. IL-1004) to view live preparation status.</p>
+            {lookupState === 'not-found' && <div className="auth-alert-error" role="alert" style={{ marginBottom: '14px' }}><Icon name="info" size={16} /><span>Order reference not found. Please verify the code.</span></div>}
+            <form onSubmit={(e) => { e.preventDefault(); lookup() }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <label className="auth-field" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600 }}>Order reference code</span>
+                <input
+                  type="text"
+                  placeholder="e.g. IL-1004"
+                  value={lookupRef}
+                  onChange={(e) => setLookupRef(e.target.value)}
+                  required
+                  style={{ height: '46px', paddingInline: '14px', border: '1px solid var(--color-line)', borderRadius: '8px', fontSize: '14px' }}
+                />
+              </label>
+              <button type="submit" className="button primary order-full" disabled={busy} style={{ width: '100%', height: '48px', justifyContent: 'center' }}>
+                <Icon name="search" size={16} />Find My Order
+              </button>
+            </form>
+          </div>
         )}
       </div>{page !== 'lookup' && <aside className="order-summary-card"><div className="summary-heading"><Icon name="bag" size={20} /><h2>Your meal</h2>{!isReceipt && <button disabled={busy} onClick={close}>Edit</button>}</div><div className="summary-table"><span>Pickup at Ilillii Hotel</span></div><div className="summary-lines">{shownLines.map(line => <div key={line.item.id}><span>{line.quantity} ×</span><div><strong>{line.item.name}</strong><small>{formatBirr(line.item.price)} ETB each</small></div><b>{formatBirr(line.item.price * line.quantity)}</b></div>)}</div><div className="summary-subtotal"><span>Subtotal</span><strong>{formatBirr(total)} ETB</strong></div><div className="summary-total"><span>Total</span><strong>{formatBirr(total)} <small>ETB</small></strong></div><div className="summary-assurance"><Icon name="heart" size={17} /><span>Good food, your way.<br />Freshly prepared at Ilillii.</span></div></aside>}</div>
     </div>
