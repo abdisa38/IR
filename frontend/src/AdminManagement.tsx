@@ -9,7 +9,7 @@ import { Pagination } from './ui-patterns'
 type ManagedItem = { id: string; name: string; amharic: string; category: string; price: number; description: string; availability: string; image?: string }
 type ManagedCategory = { id: string; name: string; original: string; active: boolean }
 export function AdminMenu({ notify }: { notify: (text: string) => void }) {
-  const [items, setItems] = useState<ManagedItem[]>(() => menuItems.map(item => ({ ...item, amharic: '', description: '', availability: 'Awaiting verification' })))
+  const [items, setItems] = useState<ManagedItem[]>(() => menuItems.map(item => ({ ...item, amharic: item.translations?.am || '', description: item.verifiedDescription || '', availability: item.availability === 'available' ? 'Available' : 'Awaiting verification', image: item.confirmedImage })))
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
   const [page, setPage] = useState(1)
