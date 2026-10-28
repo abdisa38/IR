@@ -4,6 +4,7 @@ import type { MenuItem } from './menu-data'
 import { formatBirr } from './menu-data'
 import { canStartPayment, foodStatusesFor, receiptHeading } from './payment-model'
 import type { PaymentMethod, PaymentStatus } from './payment-model'
+import { languageOptions } from './language'
 import './payment.css'
 
 type Page = 'methods' | 'transition' | 'result' | 'bank' | 'transfer' | 'verification' | 'receipt' | 'staff' | 'tracking'
