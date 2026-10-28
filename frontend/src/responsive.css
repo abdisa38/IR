@@ -54,7 +54,7 @@ body .order-flow, body .cart-drawer { scroll-padding-block: 100px 120px; }
 body .order-field input, body .order-field textarea, body .contact-field input, body .contact-field textarea { scroll-margin-block: 120px; }
 body .order-nav { position: sticky; top: 0; z-index: 9; background: white; }
 body .cart-drawer { padding-bottom: max(24px, env(safe-area-inset-bottom)); }
-body .bottom-cart { padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+body .bottom-cart { box-sizing: border-box; }
 body .summary-lines > div > div, body .cart-line-content, body .review-details dd { min-inline-size: 0; }
 body .summary-lines strong, body .cart-line h3 { overflow-wrap: anywhere; }
 body .summary-lines b, body .cart-line > strong { flex-shrink: 0; }
@@ -185,7 +185,7 @@ body .global-footer-bottom { flex-wrap: wrap; }
   body .cart-line-content { flex: 1 1 150px; }
   body .cart-line > strong { margin-inline-start: auto; }
   body .cart-summary { padding-bottom: 12px; }
-  body .bottom-cart { gap: 12px; padding-inline: var(--page-gutter); }
+  body .bottom-cart { gap: 12px; }
   body .bottom-cart > div { min-width: 0; }
   body .bottom-cart button { flex-shrink: 0; min-width: 110px; }
   body .bottom-cart > div > span { font-size: var(--text-meta) !important; }
