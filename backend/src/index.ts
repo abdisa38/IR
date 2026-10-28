@@ -31,6 +31,21 @@ app.use((req: Request, _res: Response, next) => {
   next()
 })
 
+// Root endpoint
+app.get('/', (_req: Request, res: Response) => {
+  res.json({
+    status: 'ok',
+    service: 'Ilillii Bar & Restaurant API is Live 🚀',
+    endpoints: {
+      health: '/api/health',
+      menu: '/api/menu',
+      orders: '/api/orders',
+      auth: '/api/auth'
+    },
+    timestamp: new Date().toISOString()
+  })
+})
+
 // Health check endpoint
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
