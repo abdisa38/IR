@@ -17,14 +17,7 @@ const PORT = process.env.PORT || 5000
 // Middleware
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow all origins in dev, or requests from localhost and deployed vercel links
-      if (!origin || origin.includes('localhost') || origin.includes('vercel.app')) {
-        callback(null, true)
-      } else {
-        callback(null, true)
-      }
-    },
+    origin: true,
     credentials: true,
   })
 )
