@@ -5,11 +5,32 @@
 
 const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api` : '/api'
 
+export function getStoredToken(): string | null {
+  try {
+    return localStorage.getItem('ilillii_token')
+  } catch (e) {
+    return null
+  }
+}
+
+export function setStoredToken(token: string | null) {
+  try {
+    if (token) {
+      localStorage.setItem('ilillii_token', token)
+    } else {
+      localStorage.removeItem('ilillii_token')
+    }
+  } catch (e) {}
+}
+
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
-  const headers = {
+  const token = getStoredToken()
+
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...((options.headers as Record<string, string>) || {}),
   }
 
   try {
@@ -259,4 +280,59 @@ export const api = {
       body: JSON.stringify(settings),
     })
   },
+
+  // Auth
+  async login(identifier: string, password: string) {
+    const res = await request<{ success: boolean; message: string; token: string; user: ApiUser }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ identifier, password }),
+    })
+    if (res.token) {
+      setStoredToken(res.token)
+    }
+    return res
+  },
+
+  async register(userData: { name: string; phone: string; email?: string; password: string }) {
+    const res = await request<{ success: boolean; message: string; token: string; user: ApiUser }>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    })
+    if (res.token) {
+      setStoredToken(res.token)
+    }
+    return res
+  },
+
+  async googleAuth(credential: string, clientId?: string) {
+    const res = await request<{ success: boolean; message: string; token: string; user: ApiUser }>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential, clientId }),
+    })
+    if (res.token) {
+      setStoredToken(res.token)
+    }
+    return res
+  },
+
+  async getMe() {
+    return request<{ success: boolean; user: ApiUser; orders: ApiOrder[] }>('/auth/me')
+  },
+
+  logout() {
+    setStoredToken(null)
+    localStorage.removeItem('ilillii_customer')
+    window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+  },
+}
+
+export interface ApiUser {
+  id: string
+  name: string
+  phone?: string
+  email?: string
+  role: 'customer' | 'staff' | 'manager' | 'admin'
+  avatar?: string
+  authProvider?: string
+  isStaff?: boolean
 }

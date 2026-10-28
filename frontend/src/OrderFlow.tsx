@@ -38,6 +38,15 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
     if (open && !snapshot) {
       setStep('details')
       setError('')
+      // Pre-fill customer details if previously saved
+      try {
+        const saved = localStorage.getItem('ilillii_customer')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (parsed.name && !name) setName(parsed.name)
+          if (parsed.phone && !phone) setPhone(parsed.phone)
+        }
+      } catch (e) {}
     }
   }, [open, snapshot])
 
@@ -75,6 +84,20 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
       setBusy(false)
       submitting.current = false
       if (res.success && res.order) {
+        try {
+          localStorage.setItem(
+            'ilillii_customer',
+            JSON.stringify({
+              name: name.trim(),
+              phone: phone.trim(),
+              lastOrder: res.order.orderNumber,
+              table: res.order.table || table,
+              updatedAt: new Date().toISOString(),
+            })
+          )
+          window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+        } catch (e) {}
+
         setSnapshot({
           reference: res.order.orderNumber,
           table: res.order.table || table || 'Table',

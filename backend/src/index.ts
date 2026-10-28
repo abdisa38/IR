@@ -7,6 +7,7 @@ import orderRoutes from './routes/orders.js'
 import staffRoutes from './routes/staff.js'
 import analyticsRoutes from './routes/analytics.js'
 import settingsRoutes from './routes/settings.js'
+import authRoutes from './routes/auth.js'
 
 dotenv.config()
 
@@ -53,6 +54,7 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/staff', staffRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/auth', authRoutes)
 
 // 404 handler for API routes
 app.use('/api/*', (req: Request, res: Response) => {

@@ -50,7 +50,28 @@ export function GlobalHeader({
 }) {
   const [mobileNav, setMobileNav] = useState(false)
   const [languageOpen, setLanguageOpen] = useState(false)
+  const [customer, setCustomer] = useState<{ name?: string; phone?: string; email?: string; avatar?: string; lastOrder?: string } | null>(null)
+  const [profileOpen, setProfileOpen] = useState(false)
   const { language, setLanguage } = useLanguage()
+
+  const updateCustomerState = () => {
+    try {
+      const saved = localStorage.getItem('ilillii_customer')
+      if (saved) {
+        setCustomer(JSON.parse(saved))
+      } else {
+        setCustomer(null)
+      }
+    } catch (e) {
+      setCustomer(null)
+    }
+  }
+
+  useEffect(() => {
+    updateCustomerState()
+    window.addEventListener('ilillii-auth-changed', updateCustomerState)
+    return () => window.removeEventListener('ilillii-auth-changed', updateCustomerState)
+  }, [])
 
   return (
     <>
@@ -91,9 +112,29 @@ export function GlobalHeader({
             >
               Contact
             </SiteLink>
-            <SiteLink href="/#login" onClick={() => setMobileNav(false)}>
-              Sign In
-            </SiteLink>
+            {customer?.name ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setProfileOpen(true)
+                  setMobileNav(false)
+                }}
+                className="nav-profile-pill"
+              >
+                <span className="nav-profile-avatar">
+                  {customer.avatar ? (
+                    <img src={customer.avatar} alt={customer.name} />
+                  ) : (
+                    customer.name.charAt(0).toUpperCase()
+                  )}
+                </span>
+                <span>{customer.name.split(' ')[0]}</span>
+              </button>
+            ) : (
+              <SiteLink href="/#login" onClick={() => setMobileNav(false)}>
+                Sign In
+              </SiteLink>
+            )}
           </nav>
           <div className="nav-actions">
             <button
@@ -147,6 +188,78 @@ export function GlobalHeader({
                 <Icon name={language === option.id ? 'check' : 'globe'} />
               </button>
             ))}
+          </div>
+        </Modal>
+      )}
+
+      {profileOpen && customer && (
+        <Modal title="Your Guest Profile" close={() => setProfileOpen(false)}>
+          <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
+            <div
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: 'var(--color-brand)',
+                color: 'white',
+                fontSize: '22px',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 12px',
+                overflow: 'hidden',
+                boxShadow: '0 4px 12px rgba(184, 32, 50, 0.2)',
+              }}
+            >
+              {customer.avatar ? (
+                <img src={customer.avatar} alt={customer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                customer.name ? customer.name.charAt(0).toUpperCase() : 'G'
+              )}
+            </div>
+            <h2 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 750, color: 'var(--color-ink)' }}>{customer.name}</h2>
+            {customer.phone && <p style={{ margin: '0 0 2px', fontSize: '13px', color: 'var(--color-muted)' }}>📞 {customer.phone}</p>}
+            {customer.email && <p style={{ margin: '0', fontSize: '13px', color: 'var(--color-muted)' }}>✉️ {customer.email}</p>}
+          </div>
+
+          {customer.lastOrder && (
+            <div style={{ background: '#fcf8f4', border: '1px solid var(--color-line)', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                <strong style={{ fontSize: '13px', color: 'var(--color-ink)' }}>Recent Order</strong>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-brand)', background: 'white', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--color-line)' }}>
+                  {customer.lastOrder}
+                </span>
+              </div>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-muted)', lineHeight: 1.4 }}>
+                Saved under your name. When you place an order, our kitchen and service team immediately see your order details.
+              </p>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <SiteLink
+              href="/#menu"
+              className="button primary"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => setProfileOpen(false)}
+            >
+              Order Food<Icon name="arrow" size={16} />
+            </SiteLink>
+            <button
+              type="button"
+              className="button secondary"
+              style={{ width: '100%', justifyContent: 'center' }}
+              onClick={() => {
+                localStorage.removeItem('ilillii_customer')
+                localStorage.removeItem('ilillii_token')
+                setCustomer(null)
+                setProfileOpen(false)
+                window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+              }}
+            >
+              Switch Account / Sign Out
+            </button>
           </div>
         </Modal>
       )}

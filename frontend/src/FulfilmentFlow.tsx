@@ -41,6 +41,14 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
     if (open && !previousOpen.current) {
       setPage(entry === 'lookup' ? 'lookup' : receipt ? 'tracking' : 'details')
       setError('')
+      try {
+        const saved = localStorage.getItem('ilillii_customer')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          if (parsed.name && !name) setName(parsed.name)
+          if (parsed.phone && !phone) setPhone(parsed.phone)
+        }
+      } catch (e) {}
     }
     previousOpen.current = open
   }, [open, entry, receipt])
@@ -80,6 +88,20 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
       })
       lock.current = false; setBusy(false)
       if (res.success && res.order) {
+        try {
+          localStorage.setItem(
+            'ilillii_customer',
+            JSON.stringify({
+              name: name.trim(),
+              phone: phone.trim(),
+              lastOrder: res.order.orderNumber,
+              mode: 'Pickup',
+              updatedAt: new Date().toISOString(),
+            })
+          )
+          window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+        } catch (e) {}
+
         setReceipt({
           reference: res.order.orderNumber,
           accessCode: res.order.id.slice(-6).toUpperCase(),

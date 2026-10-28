@@ -1,22 +1,52 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Icon, Logo } from './shared-ui'
 import { SiteLink } from './site-routing'
 import { useLanguage } from './language'
 import { GlobalFooter } from './LocationComponents'
+import { api, type ApiUser } from './api/client'
 import './auth.css'
 
-export type AuthTab = 'login' | 'register' | 'lookup'
+export type AuthMode = 'login' | 'register'
+
+declare global {
+  interface Window {
+    google?: any
+  }
+}
+
+export function GoogleLogo() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 48 48">
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
+    </svg>
+  )
+}
 
 export function AuthCard({
-  initialTab = 'login',
-  onLookup,
+  initialMode = 'login',
   standalone = false,
+  onSuccess,
 }: {
-  initialTab?: AuthTab
-  onLookup?: (ref: string, code: string) => void
+  initialMode?: AuthMode
   standalone?: boolean
+  onSuccess?: (user: ApiUser) => void
 }) {
-  const [tab, setTab] = useState<AuthTab>(initialTab)
+  const [mode, setMode] = useState<AuthMode>(initialMode)
   const { language, setLanguage } = useLanguage()
 
   // Sign In state
@@ -32,15 +62,106 @@ export function AuthCard({
   const [regPassword, setRegPassword] = useState('')
   const [regConfirmPassword, setRegConfirmPassword] = useState('')
 
-  // Order Lookup state
-  const [lookupRef, setLookupRef] = useState('')
-  const [lookupCode, setLookupCode] = useState('')
-
-  // Feedback & alerts
+  // State management
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const googleBtnRef = useRef<HTMLDivElement>(null)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
+
+  // Initialize Google Identity Services
+  useEffect(() => {
+    let scriptLoaded = false
+
+    const handleGoogleResponse = async (response: any) => {
+      if (!response.credential) return
+      setBusy(true)
+      setError('')
+      setSuccess('')
+      try {
+        const res = await api.googleAuth(response.credential, googleClientId)
+        if (res.success && res.user) {
+          localStorage.setItem(
+            'ilillii_customer',
+            JSON.stringify({
+              name: res.user.name,
+              phone: res.user.phone || '',
+              email: res.user.email || '',
+              avatar: res.user.avatar || '',
+            })
+          )
+          window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+          setSuccess(`Welcome, ${res.user.name}! Signed in with Google.`)
+          setTimeout(() => {
+            if (onSuccess) onSuccess(res.user)
+            if (standalone) {
+              window.location.hash = 'menu'
+              window.dispatchEvent(new HashChangeEvent('hashchange'))
+            }
+          }, 600)
+        }
+      } catch (err: any) {
+        setError(err.message || 'Google sign-in failed. Please try again.')
+      } finally {
+        setBusy(false)
+      }
+    }
+
+    const initGoogle = () => {
+      if (window.google?.accounts?.id && googleClientId) {
+        try {
+          window.google.accounts.id.initialize({
+            client_id: googleClientId,
+            callback: handleGoogleResponse,
+            auto_select: false,
+          })
+          if (googleBtnRef.current) {
+            window.google.accounts.id.renderButton(googleBtnRef.current, {
+              theme: 'outline',
+              size: 'large',
+              width: 380,
+              text: mode === 'login' ? 'signin_with' : 'signup_with',
+              shape: 'rectangular',
+            })
+          }
+        } catch (e) {
+          console.warn('Google accounts initialization note:', e)
+        }
+      }
+    }
+
+    if (!document.getElementById('google-client-script')) {
+      const script = document.createElement('script')
+      script.id = 'google-client-script'
+      script.src = 'https://accounts.google.com/gsi/client'
+      script.async = true
+      script.defer = true
+      script.onload = () => {
+        scriptLoaded = true
+        initGoogle()
+      }
+      document.body.appendChild(script)
+    } else {
+      initGoogle()
+    }
+  }, [mode, googleClientId])
+
+  const handleGoogleClick = () => {
+    if (!googleClientId) {
+      // Guide the user that client ID is ready to be entered
+      setError(
+        'Google Client ID is not configured yet. Add VITE_GOOGLE_CLIENT_ID to your environment variables to enable one-click Google login.'
+      )
+      return
+    }
+
+    if (window.google?.accounts?.id) {
+      window.google.accounts.id.prompt()
+    }
+  }
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setSuccess('')
@@ -55,28 +176,47 @@ export function AuthCard({
       return
     }
 
-    // Staff or admin bypass
-    const lower = cleanId.toLowerCase()
-    if (['admin', 'owner', 'manager', 'kitchen', 'staff'].includes(lower)) {
-      setSuccess('Signing in to Ilillii Staff Workspace…')
-      setTimeout(() => {
-        window.location.hash = 'admin'
-        window.dispatchEvent(new HashChangeEvent('hashchange'))
-      }, 600)
-      return
-    }
+    setBusy(true)
+    try {
+      const res = await api.login(cleanId, loginPassword)
+      setBusy(false)
+      if (res.success && res.user) {
+        localStorage.setItem(
+          'ilillii_customer',
+          JSON.stringify({
+            name: res.user.name,
+            phone: res.user.phone || '',
+            email: res.user.email || '',
+            avatar: res.user.avatar || '',
+          })
+        )
+        window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
 
-    // Customer sign-in simulation
-    setSuccess(`Welcome back! Signed in as ${cleanId}.`)
-    setTimeout(() => {
-      if (standalone) {
-        window.location.hash = 'menu'
-        window.dispatchEvent(new HashChangeEvent('hashchange'))
+        if (res.user.isStaff || ['admin', 'kitchen'].includes(res.user.role)) {
+          setSuccess('Signing in to Ilillii Staff Workspace…')
+          setTimeout(() => {
+            window.location.hash = 'admin'
+            window.dispatchEvent(new HashChangeEvent('hashchange'))
+          }, 600)
+          return
+        }
+
+        setSuccess(`Welcome back, ${res.user.name}!`)
+        setTimeout(() => {
+          if (onSuccess) onSuccess(res.user)
+          if (standalone) {
+            window.location.hash = 'menu'
+            window.dispatchEvent(new HashChangeEvent('hashchange'))
+          }
+        }, 700)
       }
-    }, 800)
+    } catch (err: any) {
+      setBusy(false)
+      setError(err.message || 'Incorrect login details. Please check your phone/email and password.')
+    }
   }
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     setSuccess('')
@@ -98,24 +238,38 @@ export function AuthCard({
       return
     }
 
-    setSuccess(`Account created for ${regName.trim()}! Signing you in…`)
-    setTimeout(() => {
-      setTab('login')
-      setLoginIdentifier(regPhone.trim())
-    }, 1200)
-  }
-
-  const handleLookup = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    if (!lookupRef.trim()) {
-      setError('Please enter your order reference (e.g. DEMO-ILL-…).')
-      return
-    }
-    if (onLookup) {
-      onLookup(lookupRef.trim(), lookupCode.trim())
-    } else {
-      setSuccess(`Looking up order ${lookupRef.trim()}…`)
+    setBusy(true)
+    try {
+      const res = await api.register({
+        name: regName.trim(),
+        phone: regPhone.trim(),
+        email: regEmail.trim() || undefined,
+        password: regPassword,
+      })
+      setBusy(false)
+      if (res.success && res.user) {
+        localStorage.setItem(
+          'ilillii_customer',
+          JSON.stringify({
+            name: res.user.name,
+            phone: res.user.phone || '',
+            email: res.user.email || '',
+            avatar: res.user.avatar || '',
+          })
+        )
+        window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+        setSuccess(`Account created for ${res.user.name}! Redirecting…`)
+        setTimeout(() => {
+          if (onSuccess) onSuccess(res.user)
+          if (standalone) {
+            window.location.hash = 'menu'
+            window.dispatchEvent(new HashChangeEvent('hashchange'))
+          }
+        }, 700)
+      }
+    } catch (err: any) {
+      setBusy(false)
+      setError(err.message || 'Failed to create account. Please try again.')
     }
   }
 
@@ -123,56 +277,12 @@ export function AuthCard({
     <div className="auth-card">
       <div className="auth-card-head">
         <Logo />
-        <h1>
-          {tab === 'login'
-            ? 'Sign in to Ilillii'
-            : tab === 'register'
-              ? 'Create an account'
-              : 'Find your order'}
-        </h1>
+        <h1>{mode === 'login' ? 'Sign in to Ilillii' : 'Create an account'}</h1>
         <p>
-          {tab === 'login'
+          {mode === 'login'
             ? 'Manage your orders, table bookings and preferences.'
-            : tab === 'register'
-              ? 'Join Ilillii Hotel for express ordering and saved details.'
-              : 'Enter your order reference code to track its status.'}
+            : 'Join Ilillii Hotel for express ordering and saved details.'}
         </p>
-      </div>
-
-      <div className="auth-tabs" role="tablist">
-        <button
-          type="button"
-          className={`auth-tab ${tab === 'login' ? 'active' : ''}`}
-          onClick={() => {
-            setTab('login')
-            setError('')
-            setSuccess('')
-          }}
-        >
-          Sign In
-        </button>
-        <button
-          type="button"
-          className={`auth-tab ${tab === 'register' ? 'active' : ''}`}
-          onClick={() => {
-            setTab('register')
-            setError('')
-            setSuccess('')
-          }}
-        >
-          Register
-        </button>
-        <button
-          type="button"
-          className={`auth-tab ${tab === 'lookup' ? 'active' : ''}`}
-          onClick={() => {
-            setTab('lookup')
-            setError('')
-            setSuccess('')
-          }}
-        >
-          Track Order
-        </button>
       </div>
 
       {error && (
@@ -189,11 +299,13 @@ export function AuthCard({
         </div>
       )}
 
-      {tab === 'login' && (
+      {mode === 'login' ? (
         <form className="auth-form" onSubmit={handleLogin} noValidate>
           <label className="auth-field">
-            Phone number or email
-            <span>Required</span>
+            <div className="auth-field-header">
+              <span>Phone number or email</span>
+              <span className="field-badge">Required</span>
+            </div>
             <input
               type="text"
               autoComplete="username"
@@ -205,8 +317,10 @@ export function AuthCard({
           </label>
 
           <label className="auth-field">
-            Password
-            <span>Required</span>
+            <div className="auth-field-header">
+              <span>Password</span>
+              <span className="field-badge">Required</span>
+            </div>
             <div style={{ position: 'relative' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -230,6 +344,7 @@ export function AuthCard({
                   color: 'var(--color-muted)',
                   cursor: 'pointer',
                   fontSize: '11px',
+                  fontWeight: 600,
                 }}
               >
                 {showPassword ? 'Hide' : 'Show'}
@@ -249,22 +364,39 @@ export function AuthCard({
             <button
               type="button"
               className="auth-link"
-              style={{ background: 'none', border: 0, cursor: 'pointer' }}
               onClick={() => setError('Password reset instructions will be sent to your phone/email.')}
             >
               Forgot password?
             </button>
           </div>
 
-          <button type="submit" className="button primary auth-submit-btn">
-            Sign In
-            <Icon name="arrow" size={16} />
+          <button type="submit" className="button primary auth-submit-btn" disabled={busy}>
+            {busy ? 'Signing in…' : 'Sign In'}
+            {!busy && <Icon name="arrow" size={16} />}
           </button>
 
-          <div className="auth-switch-text">
+          <div className="auth-divider">
+            <span>or continue with</span>
+          </div>
+
+          <div ref={googleBtnRef} style={{ width: '100%', minHeight: '46px', display: 'flex', justifyContent: 'center' }}>
+            <button type="button" className="google-auth-btn" onClick={handleGoogleClick}>
+              <GoogleLogo />
+              <span>Continue with Google</span>
+            </button>
+          </div>
+
+          <div className="auth-bottom-switch">
             Don’t have an account?
-            <button type="button" onClick={() => setTab('register')}>
-              Create one now
+            <button
+              type="button"
+              onClick={() => {
+                setMode('register')
+                setError('')
+                setSuccess('')
+              }}
+            >
+              Sign up
             </button>
           </div>
 
@@ -273,13 +405,13 @@ export function AuthCard({
             <SiteLink href="/#admin">Open Staff Workspace →</SiteLink>
           </div>
         </form>
-      )}
-
-      {tab === 'register' && (
+      ) : (
         <form className="auth-form" onSubmit={handleRegister} noValidate>
           <label className="auth-field">
-            Full name
-            <span>Required</span>
+            <div className="auth-field-header">
+              <span>Full name</span>
+              <span className="field-badge">Required</span>
+            </div>
             <input
               type="text"
               autoComplete="name"
@@ -291,8 +423,10 @@ export function AuthCard({
           </label>
 
           <label className="auth-field">
-            Phone number
-            <span>Required</span>
+            <div className="auth-field-header">
+              <span>Phone number</span>
+              <span className="field-badge">Required</span>
+            </div>
             <input
               type="tel"
               autoComplete="tel"
@@ -304,8 +438,10 @@ export function AuthCard({
           </label>
 
           <label className="auth-field">
-            Email address
-            <span>Optional</span>
+            <div className="auth-field-header">
+              <span>Email address</span>
+              <span className="field-badge">Optional</span>
+            </div>
             <input
               type="email"
               autoComplete="email"
@@ -317,8 +453,10 @@ export function AuthCard({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             <label className="auth-field">
-              Password
-              <span>Required</span>
+              <div className="auth-field-header">
+                <span>Password</span>
+                <span className="field-badge">Required</span>
+              </div>
               <input
                 type="password"
                 placeholder="At least 4 chars"
@@ -328,8 +466,10 @@ export function AuthCard({
               />
             </label>
             <label className="auth-field">
-              Confirm
-              <span>Required</span>
+              <div className="auth-field-header">
+                <span>Confirm</span>
+                <span className="field-badge">Required</span>
+              </div>
               <input
                 type="password"
                 placeholder="Repeat password"
@@ -341,60 +481,41 @@ export function AuthCard({
           </div>
 
           <label className="auth-field">
-            Preferred language
+            <span>Preferred language</span>
             <select value={language} onChange={(e) => setLanguage(e.target.value)}>
               <option value="om">Afaan Oromo</option>
               <option value="am">አማርኛ (Amharic)</option>
             </select>
           </label>
 
-          <button type="submit" className="button primary auth-submit-btn">
-            Create Account
-            <Icon name="arrow" size={16} />
+          <button type="submit" className="button primary auth-submit-btn" disabled={busy}>
+            {busy ? 'Creating account…' : 'Create Account'}
+            {!busy && <Icon name="arrow" size={16} />}
           </button>
 
-          <div className="auth-switch-text">
-            Already have an account?
-            <button type="button" onClick={() => setTab('login')}>
-              Sign In
+          <div className="auth-divider">
+            <span>or continue with</span>
+          </div>
+
+          <div style={{ width: '100%', minHeight: '46px', display: 'flex', justifyContent: 'center' }}>
+            <button type="button" className="google-auth-btn" onClick={handleGoogleClick}>
+              <GoogleLogo />
+              <span>Continue with Google</span>
             </button>
           </div>
-        </form>
-      )}
 
-      {tab === 'lookup' && (
-        <form className="auth-form" onSubmit={handleLookup} noValidate>
-          <label className="auth-field">
-            Order reference
-            <span>Required</span>
-            <input
-              type="text"
-              placeholder="e.g. DEMO-ILL-…"
-              value={lookupRef}
-              onChange={(e) => setLookupRef(e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="auth-field">
-            Private access code
-            <span>Optional</span>
-            <input
-              type="password"
-              placeholder="Access code from receipt"
-              value={lookupCode}
-              onChange={(e) => setLookupCode(e.target.value)}
-            />
-          </label>
-
-          <button type="submit" className="button primary auth-submit-btn">
-            Find My Order
-            <Icon name="search" size={16} />
-          </button>
-
-          <div className="auth-switch-text">
-            Need to place an order?
-            <SiteLink href="/#menu">Browse Menu</SiteLink>
+          <div className="auth-bottom-switch">
+            Already have an account?
+            <button
+              type="button"
+              onClick={() => {
+                setMode('login')
+                setError('')
+                setSuccess('')
+              }}
+            >
+              Sign in
+            </button>
           </div>
         </form>
       )}
@@ -418,7 +539,7 @@ export default function AuthPage() {
       </header>
 
       <main className="auth-main">
-        <AuthCard initialTab={isRegister ? 'register' : 'login'} standalone />
+        <AuthCard initialMode={isRegister ? 'register' : 'login'} standalone />
       </main>
 
       <GlobalFooter />
