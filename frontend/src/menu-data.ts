@@ -8,6 +8,7 @@ export type MenuItem = {
   verifiedDescription?: string
   confirmedImage?: string
   translations?: { am?: string; om?: string }
+  houseSpecial?: boolean
 }
 
 export const categories: { id: CategoryId; label: string; draftLabel: string; icon: string }[] = [
@@ -22,6 +23,7 @@ type ItemDef = {
   image?: string
   description?: string
   amharic?: string
+  houseSpecial?: boolean
 }
 
 const main: ItemDef[] = [
@@ -31,6 +33,7 @@ const main: ItemDef[] = [
     image: '/images/menu/ispeeshaal-goodinii.jpg',
     amharic: 'ስፔሻል ጎደኒ',
     description: 'Special roasted beef ribs seasoned with traditional Bale spices, served sizzling hot.',
+    houseSpecial: true,
   },
   {
     name: 'Foon Waddii, 1 kg',
@@ -38,6 +41,7 @@ const main: ItemDef[] = [
     image: '/images/menu/foon-waddii.jpg',
     amharic: 'የተጠበሰ ሥጋ 1 ኪ.ግ',
     description: 'Full kilogram of prime roasted beef tibs sautéed with onions, rosemary, and awaze.',
+    houseSpecial: true,
   },
   {
     name: 'Foon Waddii, 1/2 kg',
@@ -73,6 +77,7 @@ const main: ItemDef[] = [
     image: '/images/menu/kitfoo.jpg',
     amharic: 'ክትፎ',
     description: 'Finely minced prime beef seasoned with aromatic niter kibbeh (clarified spiced butter) and mitmita.',
+    houseSpecial: true,
   },
   {
     name: 'Gon Lagoonnii',
@@ -80,6 +85,7 @@ const main: ItemDef[] = [
     image: '/images/menu/gon-lagoonnii.jpg',
     amharic: 'ጎን ለጎን',
     description: 'Generous signature sharing meat platter served with traditional condiments.',
+    houseSpecial: true,
   },
   {
     name: 'Ispeeshaal Qurxii',
@@ -87,6 +93,7 @@ const main: ItemDef[] = [
     image: '/images/menu/ispeeshaal-qurxii.jpg',
     amharic: 'ስፔሻል ዓሣ',
     description: 'Special spiced fish prepared with Ethiopian herbs and served with tangy sauce.',
+    houseSpecial: true,
   },
   {
     name: 'Gored Gored',
@@ -94,6 +101,7 @@ const main: ItemDef[] = [
     image: '/images/menu/gored-gored.jpg',
     amharic: 'ጎረድ ጎረድ',
     description: 'Prime cubed raw or very lightly seared beef served with awaze dipping paste and spiced butter.',
+    houseSpecial: true,
   },
   {
     name: 'Shekla Tibs',
@@ -101,6 +109,7 @@ const main: ItemDef[] = [
     image: '/images/menu/shekla-tibs.jpg',
     amharic: 'ሸክላ ጥብስ',
     description: 'Sizzling tender beef tibs served over a traditional clay pot with hot charcoal embers.',
+    houseSpecial: true,
   },
   {
     name: 'Gaze Sayt',
@@ -146,6 +155,7 @@ const additional: ItemDef[] = [
     image: '/images/ethiopian-sharing-platter.jpg',
     amharic: 'ስፔሻል እሊሊ',
     description: 'The signature Ilillii combination platter loaded with vibrant lentils, shiro, and greens.',
+    houseSpecial: true,
   },
   {
     name: 'Gommana Tibsii',
@@ -167,6 +177,7 @@ const additional: ItemDef[] = [
     image: '/images/menu/bey-aynat.jpg',
     amharic: 'በያይነቱ',
     description: 'An authentic fasting feast of colorful vegetable and legume dishes served on freshly baked injera.',
+    houseSpecial: true,
   },
   {
     name: 'Tagabinoo',
@@ -297,6 +308,7 @@ export const menuItems: MenuItem[] = (
     confirmedImage: item.image,
     verifiedDescription: item.description,
     translations: item.amharic ? { am: item.amharic, om: item.name } : undefined,
+    houseSpecial: Boolean(item.houseSpecial),
   }))
 )
 

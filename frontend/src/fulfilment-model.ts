@@ -1,5 +1,5 @@
 import { isValidPhone } from './validation'
-export type Fulfilment = 'pickup' | 'delivery'
+export type Fulfilment = 'pickup' | 'dine'
 export type GuestAddress = { area: string; landmark: string; directions: string }
 export function validateOffsite(name: string, phone: string) {
   if (!name.trim()) return 'Please enter your name.'
@@ -12,6 +12,6 @@ export function validateAddress(address: GuestAddress) {
   if (!address.directions.trim()) return 'Add your house, building or other identifying directions.'
   return ''
 }
-export function fulfilmentStages(mode: Fulfilment) {
-  return ['Submitted', 'Accepted', 'Preparing', mode === 'pickup' ? 'Ready for Pickup' : 'Out for Delivery', 'Completed']
+export function fulfilmentStages(mode: Fulfilment = 'pickup') {
+  return ['Submitted', 'Accepted', 'Preparing', mode === 'dine' ? 'Ready to Serve' : 'Ready for Pickup', 'Completed']
 }

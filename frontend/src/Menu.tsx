@@ -6,27 +6,63 @@ import { QuantityControl, StatePanel } from './ui-patterns'
 import { categories, formatBirr, menuItems } from './menu-data'
 import type { MenuItem } from './menu-data'
 import './menu.css'
-import { GlobalFooter } from './LocationComponents'
+import { GlobalFooter, GlobalHeader } from './LocationComponents'
 const FulfilmentFlow = lazy(() => import('./FulfilmentFlow'))
-const PaymentExperience = lazy(() => import('./PaymentExperience'))
+const OrderFlow = lazy(() => import('./OrderFlow'))
 import { demoTables, tableFromUrl } from './order-prototype'
 
 type Cart = Record<string, number>
 function Quantity({ item, quantity, update }: { item: MenuItem; quantity: number; update: (id: string, delta: number) => void }) {
   return <QuantityControl label={item.name} quantity={quantity} onChange={delta => update(item.id, delta)} />
 }
-function ProductCard({ item, quantity, update, details, language }: { item: MenuItem; quantity: number; update: (id: string, delta: number) => void; details: () => void; language: string }) {
+function ProductCard({ item, quantity, update, details }: { item: MenuItem; quantity: number; update: (id: string, delta: number) => void; details: () => void; language?: string }) {
   const unavailable = item.availability === 'unavailable'
-  const displayName = language === 'am' && item.translations?.am ? item.translations.am : item.name
-  const secondaryName = item.translations?.am ? (language === 'am' ? item.name : item.translations.am) : ''
-  return <article className={`product-card ${quantity ? 'in-cart' : ''} ${unavailable ? 'is-unavailable' : ''}`}>
-    <button className={`product-art art-${item.category}`} onClick={details} aria-label={`View details for ${item.name}`}>
-      {item.confirmedImage ? <img src={item.confirmedImage} alt={item.name} loading="lazy" /> : <><span className="art-orbit" /><span className="art-symbol"><Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={34} /></span><span className="photo-pending">ITEM PHOTO AWAITING VERIFICATION</span></>}
-      <span className="details-dot"><Icon name="info" size={17} /></span>
-      {quantity > 0 && <span className="selected-label"><Icon name="check" size={12} />In your cart</span>}
-    </button>
-    <div className="product-body"><span className="product-category">{categories.find(c => c.id === item.category)?.label}</span><button className="product-name" onClick={details}><h3>{displayName}</h3>{secondaryName && <span className="product-translation">{secondaryName}</span>}</button><span className={`availability-label ${unavailable ? 'unavailable-label' : ''}`}><Icon name={unavailable ? 'close' : item.availability === 'available' ? 'check' : 'info'} size={12} />{unavailable ? 'Unavailable · state preview' : item.availability === 'available' ? 'Available' : 'Availability to confirm'}</span><div className="product-bottom"><span className="product-price">{formatBirr(item.price)}<small>ETB</small></span>{unavailable ? <button className="add-button" disabled>Unavailable</button> : quantity ? <Quantity item={item} quantity={quantity} update={update} /> : <button className="add-button" onClick={() => update(item.id, 1)} aria-label={`Add ${item.name} to preview cart`}><Icon name="plus" size={16} />Add</button>}</div></div>
-  </article>
+  const amharicName = item.translations?.am
+  const fullName = amharicName && amharicName !== item.name
+    ? `${item.name} (${amharicName})`
+    : item.name
+
+  return (
+    <article className={`product-card ${quantity ? 'in-cart' : ''} ${unavailable ? 'is-unavailable' : ''}`}>
+      <button className={`product-art art-${item.category}`} onClick={details} aria-label={`View details for ${item.name}`}>
+        {item.confirmedImage ? (
+          <img src={item.confirmedImage} alt={item.name} loading="lazy" />
+        ) : (
+          <>
+            <span className="art-orbit" />
+            <span className="art-symbol"><Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={34} /></span>
+            <span className="photo-pending">ITEM PHOTO AWAITING VERIFICATION</span>
+          </>
+        )}
+        {item.houseSpecial && (
+          <span className="house-special-pill">House Special</span>
+        )}
+        {quantity > 0 && <span className="selected-label"><Icon name="check" size={12} />In your cart</span>}
+      </button>
+      <div className="product-body">
+        <button className="product-name" onClick={details} title={fullName}>
+          <h3>{fullName}</h3>
+        </button>
+        {item.verifiedDescription && (
+          <p className="product-card-desc">{item.verifiedDescription}</p>
+        )}
+        <div className="product-bottom">
+          <span className="product-price">
+            <small>ETB</small> {formatBirr(item.price)}
+          </span>
+          {unavailable ? (
+            <button className="add-button" disabled>Unavailable</button>
+          ) : quantity ? (
+            <Quantity item={item} quantity={quantity} update={update} />
+          ) : (
+            <button className="add-button" onClick={() => update(item.id, 1)} aria-label={`Add ${item.name} to cart`}>
+              <Icon name="plus" size={15} />Add
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  )
 }
 
 export default function Menu() {
@@ -38,12 +74,12 @@ export default function Menu() {
   const { language, setLanguage } = useLanguage()
   const [details, setDetails] = useState<MenuItem | null>(null)
   const [notice, setNotice] = useState('')
-  const [mode, setMode] = useState('')
+  const [mode, setMode] = useState('Dine in')
   const [qr, setQr] = useState(() => tableFromUrl(window.location.search))
   const [qrOptions, setQrOptions] = useState(false)
   const [checkout, setCheckout] = useState(false)
-  const [paymentPreview, setPaymentPreview] = useState(false)
-  const [checkoutEntry, setCheckoutEntry] = useState<'method' | 'lookup'>('method')
+  const [dineInCheckout, setDineInCheckout] = useState(false)
+  const [checkoutEntry, setCheckoutEntry] = useState<'details' | 'lookup'>('details')
   const [note, setNote] = useState('')
   const [tableHelp, setTableHelp] = useState(false)
   const [menuState, setMenuState] = useState('ready')
@@ -56,7 +92,7 @@ export default function Menu() {
   useDialog(cartRef, panel)
   useEffect(() => {
     const leaveMenu = () => {
-      if (sitePage() !== 'menu') { setPanel(false); setCheckout(false); setPaymentPreview(false); setModal(null); setDetails(null); setTableHelp(false) }
+      if (sitePage() !== 'menu') { setPanel(false); setCheckout(false); setDineInCheckout(false); setModal(null); setDetails(null); setTableHelp(false) }
       else if (window.location.search.includes('demoTable=') || window.location.search.includes('table=')) setQr(tableFromUrl(window.location.search))
     }
     window.addEventListener('popstate', leaveMenu)
@@ -87,8 +123,7 @@ export default function Menu() {
   }
   const resetSearch = () => { setQuery(''); setCategory('all') }
   return <div className={`digital-menu ${count ? 'has-cart' : ''}`}>
-    <div className="menu-topline"><span>A place to gather. A meal to remember.</span><span><Icon name="pin" size={12} />Bale Robe, Oromia</span></div>
-    <header className="menu-header"><div className="menu-container compact-nav"><Logo /><SiteLink className="home-link" href="/#home"><Icon name="arrow" size={15} />Home</SiteLink><SiteLink className="menu-contact-link" href="/contact">Contact</SiteLink><SiteLink className="menu-contact-link" href="/#login">Sign In</SiteLink><div className="menu-header-actions"><button className="menu-language" onClick={() => setModal('language')} aria-label="Choose Afaan Oromo or Amharic"><Icon name="globe" size={17} /><span>{language === 'am' ? 'አማርኛ' : 'Afaan Oromo'}<small> / {language === 'am' ? 'Afaan Oromo' : 'አማርኛ'}</small></span><Icon name="down" size={13} /></button><button className="cart-trigger" onClick={() => setPanel(true)} aria-label={`Open cart, ${count} items`}><Icon name="bag" size={19} /><span>Your cart</span><strong>{count}</strong></button></div></div></header>
+    <GlobalHeader active="menu" cartCount={count} onOpenCart={() => setPanel(true)} />
     <main>
       <section className={`menu-container qr-entry ${qr.table || qr.invalid ? 'contextual-entry' : 'regular-entry'}`}>
         {(qr.table || qr.invalid) && <div className="qr-context"><span className="qr-context-icon"><Icon name="meal" size={25} /></span><div><span className="eyebrow">YOUR TABLE. YOUR TIME.</span><h2>{qr.table ? 'Welcome to Ilillii.' : 'Let’s check your table.'}</h2></div>{qr.table && <span className="table-badge"><Icon name="meal" size={16} />Table {qr.table}<small>DEMO</small></span>}</div>}
@@ -104,7 +139,7 @@ export default function Menu() {
         {menuState !== 'ready' ? <StatePanel kind={menuState === 'loading' ? 'loading' : 'error'} title={menuState === 'loading' ? 'Getting the menu ready…' : 'We couldn’t load the menu.'} action={<button className="button primary" onClick={() => setMenuState('ready')}>{menuState === 'loading' ? 'Return to menu preview' : 'Try again'}</button>}></StatePanel> : results.length ? (query.trim() || category !== 'all' ? <div className="product-grid">{results.map(item => <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />)}</div> : categories.map(c => <section className="product-section" key={c.id}><div className="product-section-heading"><span className="section-icon"><Icon name={c.icon} size={20} /></span><div><h3>{c.label}</h3></div><span>{menuItems.filter(item => item.category === c.id).length} items</span></div><div className="product-grid">{menuItems.filter(item => item.category === c.id).map(item => <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />)}</div></section>)) : <div className="menu-empty"><span><Icon name="search" size={32} /></span><h3>No matches just yet.</h3><p>Try a shorter name, check the spelling, or browse all food and drinks.</p><button className="button primary" onClick={resetSearch}>Show all items<Icon name="arrow" size={17} /></button></div>}
         <div className="menu-help"><Icon name="heart" size={20} /><div><strong>Questions or special orders?</strong></div><SiteLink href="/contact" className="button secondary">Contact Hotel<Icon name="arrow" size={16} /></SiteLink></div>
       </section>
-      <section className="menu-service-strip"><div className="menu-container">{[{ name: 'Dine in', icon: 'meal', text: 'Good company, around our table.' }, { name: 'Pickup', icon: 'bag', text: 'A future way to take your meal with you.' }, { name: 'Delivery', icon: 'delivery', text: 'Subject to confirmed service availability.' }].map(item => <div key={item.name}><Icon name={item.icon} size={24} /><span><strong>{item.name}</strong></span></div>)}</div></section>
+      <section className="menu-service-strip"><div className="menu-container">{[{ name: 'Dine in', icon: 'meal', text: 'Good company, around our table at Ilillii Hotel.' }, { name: 'Pickup / Takeaway', icon: 'bag', text: 'Freshly prepared and packed for pickup at the hotel.' }].map(item => <div key={item.name}><Icon name={item.icon} size={24} /><span><strong>{item.name}</strong></span></div>)}</div></section>
     </main>
     <GlobalFooter />
     {count > 0 && <div className="bottom-cart"><div><span>{count} {count === 1 ? 'item' : 'items'} · Subtotal</span><strong>{formatBirr(subtotal)} <small>ETB</small></strong></div><button onClick={() => setPanel(true)}>View cart<Icon name="arrow" size={19} /></button></div>}
@@ -113,11 +148,13 @@ export default function Menu() {
       <div className="drawer-heading"><div><span className="eyebrow">A LITTLE GOOD FOOD</span><h2>Your cart <span>{count}</span></h2></div><button className="icon-button" onClick={() => setPanel(false)} aria-label="Close cart"><Icon name="close" /></button></div>
       {qr.table && <div className="cart-table-context"><Icon name="meal" size={19} /><span>Table {qr.table} · Dine In</span></div>}
       {count > 0 && <label className="order-field cart-note-field">Order note <span>Optional</span><textarea value={note} maxLength={500} onChange={e => setNote(e.target.value)} rows={2} placeholder="Anything the team should know?" /></label>}
-      {count ? <><div className="cart-lines">{selected.map(item => <div className="cart-line" key={item.id}><span className={`cart-item-symbol art-${item.category}`}>{item.confirmedImage ? <img src={item.confirmedImage} alt={item.name} /> : <Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={22} />}</span><div className="cart-line-content"><h3>{language === 'am' && item.translations?.am ? item.translations.am : item.name}</h3><p>{formatBirr(item.price)} ETB each</p><Quantity item={item} quantity={cart[item.id]} update={update} /></div><strong>{formatBirr(item.price * cart[item.id])}<small>ETB</small></strong></div>)}</div><div className="cart-mode"><span className="eyebrow">YOUR WAY</span><div>{['Dine in', 'Pickup', 'Delivery'].map(value => <button className={mode === value ? 'chosen' : ''} aria-pressed={mode === value} onClick={() => setMode(mode === value ? '' : value)} key={value}>{value}</button>)}</div></div><div className="cart-summary"><div><span>Subtotal</span><strong>{formatBirr(subtotal)} ETB</strong></div><button className="button primary" onClick={() => { setPanel(false); setCheckoutEntry('method'); setCheckout(true) }}>Continue to Checkout<Icon name="arrow" size={18} /></button><button className="continue-button" onClick={() => setPanel(false)}>Continue browsing</button></div></> : <div className="empty-cart"><span><Icon name="bag" size={42} /></span><h3>A good meal starts here.</h3><p>Your cart is empty. Browse the menu and tap “Add” to start your order.</p><button className="button primary" onClick={() => setPanel(false)}>Explore the menu<Icon name="arrow" size={17} /></button></div>}
+      {count ? <><div className="cart-lines">{selected.map(item => <div className="cart-line" key={item.id}><span className={`cart-item-symbol art-${item.category}`}>{item.confirmedImage ? <img src={item.confirmedImage} alt={item.name} /> : <Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={22} />}</span><div className="cart-line-content"><h3>{language === 'am' && item.translations?.am ? item.translations.am : item.name}</h3><p>{formatBirr(item.price)} ETB each</p><Quantity item={item} quantity={cart[item.id]} update={update} /></div><strong>{formatBirr(item.price * cart[item.id])}<small>ETB</small></strong></div>)}</div>
+      <div className="cart-mode"><span className="eyebrow">ORDER SERVICE</span><div>{['Dine in', 'Pickup'].map(value => <button className={mode === value ? 'chosen' : ''} aria-pressed={mode === value} onClick={() => setMode(value)} key={value}>{value === 'Pickup' ? 'Pickup / Takeaway' : value}</button>)}</div></div>
+      <div className="cart-summary"><div><span>Subtotal</span><strong>{formatBirr(subtotal)} ETB</strong></div><button className="button primary" onClick={() => { setPanel(false); if (mode === 'Pickup') { setCheckoutEntry('details'); setCheckout(true) } else { setDineInCheckout(true) } }}>Continue to Order<Icon name="arrow" size={18} /></button><button className="continue-button" onClick={() => setPanel(false)}>Continue browsing</button></div></> : <div className="empty-cart"><span><Icon name="bag" size={42} /></span><h3>A good meal starts here.</h3><p>Your cart is empty. Browse the menu and tap “Add” to start your order.</p><button className="button primary" onClick={() => setPanel(false)}>Explore the menu<Icon name="arrow" size={17} /></button></div>}
     </dialog>
-    <Suspense fallback={checkout ? <p role="status">Loading checkout preview…</p> : null}><FulfilmentFlow open={checkout} entry={checkoutEntry} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
-    <Suspense fallback={null}><PaymentExperience open={paymentPreview} close={() => setPaymentPreview(false)} mode={qr.table ? 'dine' : mode === 'Delivery' ? 'delivery' : 'pickup'} lines={selected.length ? selected.map(item => ({ item, quantity: cart[item.id] })) : [{ item: menuItems[0], quantity: 1 }]} language={language} setLanguage={setLanguage} /></Suspense>
-    {tableHelp && <Modal title="Let’s check your table." close={() => setTableHelp(false)}><p className="modal-description">Ask staff to confirm your table and provide its correct QR code. You can keep browsing; your cart is unchanged. This prototype cannot notify staff or validate real hotel tables. Dine-in requires a table reference. Pickup and delivery demonstrations are available from checkout without a table.</p><button className="button secondary" onClick={() => { setTableHelp(false); setQrOptions(true) }}>Open demo table options</button></Modal>}
+    <Suspense fallback={checkout ? <p role="status">Loading checkout…</p> : null}><FulfilmentFlow open={checkout} entry={checkoutEntry} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
+    <Suspense fallback={dineInCheckout ? <p role="status">Loading order details…</p> : null}><OrderFlow open={dineInCheckout} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setDineInCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
+    {tableHelp && <Modal title="Let’s check your table." close={() => setTableHelp(false)}><p className="modal-description">Ask staff to confirm your table and provide its correct QR code. You can keep browsing; your cart is unchanged. Dine-in requires a table reference. Pickup orders are also available from checkout without a table.</p><button className="button secondary" onClick={() => { setTableHelp(false); setQrOptions(true) }}>Open demo table options</button></Modal>}
     {modal && <Modal title={modal === 'language' ? 'Feel at home.' : 'A considered menu preview'} close={() => setModal(null)}>
       {modal === 'language' ? <><div className="language-options">{[{ id: 'om', name: 'Afaan Oromo' }, { id: 'am', name: 'አማርኛ — Amharic' }].map(item => <button key={item.id} className={`language-option ${language === item.id ? 'selected' : ''}`} onClick={() => setLanguage(item.id)}><span>{item.name}<small>Copy awaiting local review</small></span><Icon name={language === item.id ? 'check' : 'globe'} /></button>)}</div></> : <><p className="modal-description">Product photos are reserved until their matches are confirmed. URL table numbers are not treated as valid without a verified table registry. There is no database, real order submission or payment integration.</p><h3 className="state-preview-title">Unavailable component state</h3><ProductCard item={{ id: 'state-preview', name: 'Item name · component preview', price: 0, category: 'main', availability: 'unavailable' }} quantity={0} update={() => {}} details={() => {}} language={language} /></>}
     </Modal>}

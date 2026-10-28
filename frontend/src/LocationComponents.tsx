@@ -39,6 +39,121 @@ export function MapPreview() {
 export function FindUsSection() {
   return <section className="find-ilillii" id="find-us"><div className="container"><div className="find-section-heading"><span className="eyebrow">GOOD FOOD IS JUST THE BEGINNING</span><h2>Find Ilillii Hotel</h2></div><div className="location-composition"><MapPreview /><div className="visit-information"><span className="eyebrow">YOUR PLACE IN BALE ROBE</span><h3>There’s a place<br />for you here.</h3><div className="visit-detail"><Icon name="pin" size={21} /><div><strong>Around Awraris, near General Wako Gutu Square</strong><span>Bale Robe, Oromia, Ethiopia</span></div></div><div className="visit-detail"><Icon name="phone" size={21} /><div><strong>Manager: 0909511588</strong><a href="tel:0909511588" style={{ color: 'var(--color-brand)', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>Tap to call manager</a></div></div><div className="visit-detail"><Icon name="clock" size={21} /><div><strong>Opening hours</strong><span>Daily: 6:30 AM – 11:00 PM</span></div></div><div className="visit-actions"><ContactAction kind="directions" className="button primary" /><ContactAction kind="call" /></div><SiteLink href="/#menu" className="visit-order-link">Explore our menu & order food<Icon name="arrow" size={17} /></SiteLink></div></div></div></section>
 }
+export function GlobalHeader({
+  active = 'home',
+  cartCount,
+  onOpenCart,
+}: {
+  active?: 'home' | 'menu' | 'contact'
+  cartCount?: number
+  onOpenCart?: () => void
+}) {
+  const [mobileNav, setMobileNav] = useState(false)
+  const [languageOpen, setLanguageOpen] = useState(false)
+  const { language, setLanguage } = useLanguage()
+
+  return (
+    <>
+      <div className="announcement">
+        <span>A place to gather. A meal to remember.</span>
+        <span className="announcement-location">
+          <Icon name="pin" size={13} /> Bale Robe, Oromia
+        </span>
+      </div>
+      <header className="header">
+        <div className="container nav-inner">
+          <Logo />
+          <nav className={mobileNav ? 'navigation open' : 'navigation'} aria-label="Main navigation">
+            <SiteLink
+              href="/#home"
+              className={active === 'home' ? 'active' : ''}
+              onClick={() => setMobileNav(false)}
+            >
+              Home
+            </SiteLink>
+            <SiteLink
+              href="/#menu"
+              className={active === 'menu' ? 'active' : ''}
+              onClick={() => setMobileNav(false)}
+            >
+              Our Menu
+            </SiteLink>
+            <a href="/#about" onClick={() => setMobileNav(false)}>
+              Our Story
+            </a>
+            <a href="/#find-us" onClick={() => setMobileNav(false)}>
+              Find Us
+            </a>
+            <SiteLink
+              href="/contact"
+              className={active === 'contact' ? 'active' : ''}
+              onClick={() => setMobileNav(false)}
+            >
+              Contact
+            </SiteLink>
+            <SiteLink href="/#login" onClick={() => setMobileNav(false)}>
+              Sign In
+            </SiteLink>
+          </nav>
+          <div className="nav-actions">
+            <button
+              className="language-button"
+              onClick={() => setLanguageOpen(true)}
+              aria-label="Choose Afaan Oromo or Amharic"
+            >
+              <Icon name="globe" size={17} />
+              <span>{language === 'am' ? 'አማርኛ / Afaan Oromo' : 'Afaan Oromo / አማርኛ'}</span>
+              <Icon name="down" size={13} />
+            </button>
+            {cartCount !== undefined ? (
+              <button
+                className="cart-trigger button primary nav-order"
+                onClick={onOpenCart}
+                aria-label={`Open cart, ${cartCount} items`}
+              >
+                <Icon name="bag" size={18} />
+                <span>Your cart</span>
+                <strong>{cartCount}</strong>
+              </button>
+            ) : (
+              <SiteLink href="/#menu" className="button primary nav-order">
+                Order Food<Icon name="arrow" size={17} />
+              </SiteLink>
+            )}
+            <button
+              className="icon-button mobile-toggle"
+              aria-label="Toggle navigation"
+              aria-expanded={mobileNav}
+              onClick={() => setMobileNav(!mobileNav)}
+            >
+              <Icon name={mobileNav ? 'close' : 'menu'} />
+            </button>
+          </div>
+        </div>
+      </header>
+      {languageOpen && (
+        <Modal title="Feel at home." close={() => setLanguageOpen(false)}>
+          <div className="language-options">
+            {[
+              { id: 'om', label: 'Afaan Oromo' },
+              { id: 'am', label: 'አማርኛ — Amharic' },
+            ].map(option => (
+              <button
+                key={option.id}
+                className={`language-option ${language === option.id ? 'selected' : ''}`}
+                onClick={() => setLanguage(option.id)}
+              >
+                <span>{option.label}</span>
+                <Icon name={language === option.id ? 'check' : 'globe'} />
+              </button>
+            ))}
+          </div>
+        </Modal>
+      )}
+    </>
+  )
+}
+
 export function GlobalFooter() {
   const [languageOpen, setLanguageOpen] = useState(false)
   const { language, setLanguage } = useLanguage()
