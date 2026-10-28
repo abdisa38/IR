@@ -1,0 +1,10 @@
+{
+  "name": "ilillii-bar-and-restaurant",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix frontend",
+    "dev": "npm run dev --prefix frontend",
+    "preview": "npm run preview --prefix frontend"
+  }
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+build/
+.cache/
+.env*
+.vite/
+.vercel/
+*.log
+.DS_Store
+Thumbs.db
