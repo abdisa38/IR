@@ -1,0 +1,16 @@
+{
+  "name": "Ilillii Bar and Restaurant",
+  "short_name": "Ilillii",
+  "description": "Authentic dining, table QR ordering and drinks at Ilillii Hotel in Bale Robe, Oromia, Ethiopia.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFF8F3",
+  "theme_color": "#B82032",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+# robots.txt for https://frontend-psi-ten-87.vercel.app/
+User-agent: *
+Allow: /
+Disallow: /#admin
+
+Sitemap: https://frontend-psi-ten-87.vercel.app/sitemap.xml
