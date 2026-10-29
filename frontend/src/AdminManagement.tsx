@@ -637,9 +637,9 @@ export function getProductionQrUrl(tableId: string): string {
   if (typeof window !== 'undefined') {
     const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname
     const origin = isLocal ? 'https://frontend-psi-ten-87.vercel.app' : window.location.origin
-    return `${origin}/?table=${encodeURIComponent(tableId)}&source=qr#menu`
+    return `${origin}/?table=${encodeURIComponent(tableId)}&source=qr`
   }
-  return `https://frontend-psi-ten-87.vercel.app/?table=${encodeURIComponent(tableId)}&source=qr#menu`
+  return `https://frontend-psi-ten-87.vercel.app/?table=${encodeURIComponent(tableId)}&source=qr`
 }
 
 function TableQrCode({ table }: { table: string }) {

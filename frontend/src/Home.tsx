@@ -11,6 +11,28 @@ export default function App() {
   const [modal, setModal] = useState<string | null>(null)
   const { language, setLanguage, t } = useLanguage()
   const [featuredDishes, setFeaturedDishes] = useState<ApiMenuItem[]>([])
+  const [scannedTable, setScannedTable] = useState<string | null>(null)
+
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search)
+      const table = params.get('table')
+      const source = params.get('source')
+      if (table) {
+        localStorage.setItem('ilillii_table', table)
+        sessionStorage.setItem('ilillii_table', table)
+        if (source === 'qr') {
+          localStorage.setItem('ilillii_table_source', 'qr')
+          sessionStorage.setItem('ilillii_table_source', 'qr')
+          setScannedTable(table)
+        }
+      } else {
+        const stored = localStorage.getItem('ilillii_table')
+        const storedSource = localStorage.getItem('ilillii_table_source')
+        if (stored && storedSource === 'qr') setScannedTable(stored)
+      }
+    } catch (e) {}
+  }, [])
 
   useEffect(() => {
     let mounted = true

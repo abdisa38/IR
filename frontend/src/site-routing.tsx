@@ -14,5 +14,6 @@ export function sitePage() {
   if (['#login', '#register', '#signin', '#signup'].includes(window.location.hash) || ['/login', '/register', '/signin', '/signup'].includes(window.location.pathname.replace(/\/$/, ''))) return 'auth'
   if (['#home', '#about', '#find-us'].includes(window.location.hash)) return 'home'
   if (['#menu', '#food-menu'].includes(window.location.hash)) return 'menu'
-  return window.location.pathname.replace(/\/$/, '') === '/contact' || window.location.hash === '#contact' ? 'contact' : 'menu'
+  if (window.location.pathname.replace(/\/$/, '') === '/contact' || window.location.hash === '#contact') return 'contact'
+  return 'home'
 }
