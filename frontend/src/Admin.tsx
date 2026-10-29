@@ -130,8 +130,11 @@ export default function Admin() {
   const handleSignOut = () => {
     localStorage.removeItem('ilillii_token')
     localStorage.removeItem('ilillii_user')
+    localStorage.removeItem('ilillii_customer')
+    sessionStorage.clear()
     setCurrentUser(null)
     setSignedOut(true)
+    setIsStaffAuth(false)
     window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
   }
 
@@ -589,7 +592,17 @@ export default function Admin() {
               <Icon name="user" size={16} />
               Sign Back In
             </button>
-            <SiteLink href="/#menu" className="button secondary">
+            <SiteLink
+              href="/#menu"
+              className="button secondary"
+              onClick={() => {
+                localStorage.removeItem('ilillii_token')
+                localStorage.removeItem('ilillii_user')
+                localStorage.removeItem('ilillii_customer')
+                sessionStorage.clear()
+                window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+              }}
+            >
               <Icon name="meal" size={16} />
               Go to Customer Menu
             </SiteLink>

@@ -56,6 +56,22 @@ export function GlobalHeader({
 
   const updateCustomerState = () => {
     try {
+      const token = localStorage.getItem('ilillii_token')
+      const userStr = localStorage.getItem('ilillii_user')
+      if (!token && !userStr) {
+        localStorage.removeItem('ilillii_customer')
+        setCustomer(null)
+        return
+      }
+      if (userStr) {
+        const u = JSON.parse(userStr)
+        if (u.isStaff || ['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'owner'].includes(u.role)) {
+          // Staff/admin accounts must not appear as customer guest profile in public header
+          localStorage.removeItem('ilillii_customer')
+          setCustomer(null)
+          return
+        }
+      }
       const saved = localStorage.getItem('ilillii_customer')
       if (saved) {
         setCustomer(JSON.parse(saved))
@@ -72,6 +88,26 @@ export function GlobalHeader({
     window.addEventListener('ilillii-auth-changed', updateCustomerState)
     return () => window.removeEventListener('ilillii-auth-changed', updateCustomerState)
   }, [])
+
+  useEffect(() => {
+    if (mobileNav) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileNav(false)
+        setProfileOpen(false)
+        setLanguageOpen(false)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', handleKey)
+    }
+  }, [mobileNav])
 
   return (
     <>
@@ -411,6 +447,8 @@ export function GlobalHeader({
               onClick={() => {
                 localStorage.removeItem('ilillii_customer')
                 localStorage.removeItem('ilillii_token')
+                localStorage.removeItem('ilillii_user')
+                sessionStorage.clear()
                 setCustomer(null)
                 setProfileOpen(false)
                 window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
