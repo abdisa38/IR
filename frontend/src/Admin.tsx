@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Icon, Logo, Modal } from './shared-ui'
-import { SiteLink } from './site-routing'
 import { formatBirr } from './menu-data'
 import { canAccess, canSeeCustomer, canSeeMoney, createDemoOrders, navigation, nextOrderStatus, orderTotal, orderStatusLabel, recordedSales, roles } from './admin-model'
 import type { AdminPage, DemoOrder, OrderStatus, PaymentStatus, Role } from './admin-model'
@@ -85,47 +84,7 @@ export default function Admin() {
   const [overlay, setOverlay] = useState<'notifications' | null>(null)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
-  const [signedOut, setSignedOut] = useState(false)
   const [viewState, setViewState] = useState('ready')
-
-  // Staff login state for unauthenticated users
-  const [loginId, setLoginId] = useState('')
-  const [loginPass, setLoginPass] = useState('')
-  const [loginBusy, setLoginBusy] = useState(false)
-  const [loginErr, setLoginErr] = useState('')
-
-  const handleStaffLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoginErr('')
-    if (!loginId.trim() || !loginPass.trim()) {
-      setLoginErr('Please provide your staff username/phone and password.')
-      return
-    }
-    setLoginBusy(true)
-    try {
-      const res = await api.login(loginId.trim(), loginPass)
-      setLoginBusy(false)
-      if (res.success && res.user) {
-        if (!res.user.isStaff && !['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'owner'].includes(res.user.role)) {
-          setLoginErr('Access restricted: This account does not have staff permissions.')
-          return
-        }
-        localStorage.setItem('ilillii_token', res.token)
-        localStorage.setItem('ilillii_user', JSON.stringify(res.user))
-        setCurrentUser(res.user)
-        const mappedRole = mapUserToRole(res.user)
-        setRole(mappedRole)
-        setPage(mapUserToInitialPage(res.user))
-        setSignedOut(false)
-        window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
-      } else {
-        setLoginErr(res.message || 'Incorrect staff credentials.')
-      }
-    } catch (err: any) {
-      setLoginBusy(false)
-      setLoginErr(err.message || 'Incorrect staff credentials. Please try again.')
-    }
-  }
 
   const handleSignOut = () => {
     localStorage.removeItem('ilillii_token')
@@ -133,9 +92,9 @@ export default function Admin() {
     localStorage.removeItem('ilillii_customer')
     sessionStorage.clear()
     setCurrentUser(null)
-    setSignedOut(true)
-    setIsStaffAuth(false)
     window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+    window.location.hash = 'login'
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
   }
 
   useEffect(() => {
@@ -145,7 +104,8 @@ export default function Admin() {
         setCurrentUser(u)
         setRole(mapUserToRole(u))
         setPage(mapUserToInitialPage(u))
-        setSignedOut(false)
+      } else {
+        setCurrentUser(null)
       }
     }
     syncUser()
@@ -158,6 +118,13 @@ export default function Admin() {
       window.removeEventListener('storage', syncUser)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isStaffAuth) {
+      window.location.hash = 'login'
+      window.dispatchEvent(new HashChangeEvent('hashchange'))
+    }
+  }, [isStaffAuth])
 
   const loadOrders = async () => {
     try {
@@ -505,129 +472,7 @@ export default function Admin() {
   const subtitle: Record<AdminPage, string> = { Overview: 'A clear view of your restaurant, one order at a time.', Orders: 'Keep every meal moving, from arrival to the table.', 'Menu Management': 'Keep your food and drink menu clear and up to date.', Categories: 'Organize your menu in a way that feels familiar.', Payments: 'Trusted checks before any payment is marked paid.', 'Tables & QR Codes': 'A simple connection between every table and its order.', Reports: 'Understand recorded activity, without guesswork.', 'Staff & Permissions': 'The right access for each member of your team.', 'Hotel Settings': 'Verified business details, kept in one place.' }
 
   if (!isStaffAuth) {
-    return (
-      <div className="admin-signed-out-page">
-        <div className="admin-signed-out-card" style={{ maxWidth: '440px', padding: '36px 32px' }}>
-          <Logo />
-          <div className="signed-out-icon-wrap" style={{ background: '#fdf2e9', color: 'var(--color-brand)' }}>
-            <Icon name="shield" size={32} />
-          </div>
-          <h1>Staff Workspace Login</h1>
-          <p className="signed-out-subtitle" style={{ marginBottom: '18px' }}>
-            This workspace is strictly reserved for authorized Ilillii Hotel team members. Please enter your credentials to open your dashboard.
-          </p>
-
-          {currentUser && !isStaffAuth && (
-            <div className="auth-alert-error" style={{ marginBottom: '14px', textAlign: 'left', fontSize: '12px' }}>
-              <Icon name="info" size={16} />
-              <span>Signed in as customer ({currentUser.name}). Staff credentials are required for this workspace.</span>
-            </div>
-          )}
-
-          {loginErr && (
-            <div className="auth-alert-error" style={{ marginBottom: '14px', textAlign: 'left', fontSize: '12px' }}>
-              <Icon name="info" size={16} />
-              <span>{loginErr}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleStaffLogin} className="auth-form" style={{ width: '100%', textAlign: 'left' }}>
-            <label className="auth-field">
-              <div className="auth-field-header">
-                <span>Staff Username or Phone</span>
-              </div>
-              <input
-                type="text"
-                placeholder="e.g. admin, manager, or 0909511588"
-                value={loginId}
-                onChange={(e) => setLoginId(e.target.value)}
-                autoComplete="username"
-                required
-              />
-            </label>
-
-            <label className="auth-field" style={{ marginTop: '12px' }}>
-              <div className="auth-field-header">
-                <span>Password</span>
-              </div>
-              <input
-                type="password"
-                placeholder="Enter password"
-                value={loginPass}
-                onChange={(e) => setLoginPass(e.target.value)}
-                autoComplete="current-password"
-                required
-              />
-            </label>
-
-            <button
-              type="submit"
-              className="button primary"
-              disabled={loginBusy}
-              style={{ width: '100%', marginTop: '18px', justifyContent: 'center' }}
-            >
-              {loginBusy ? 'Verifying…' : 'Sign In to Workspace'}
-              <Icon name="arrow" size={16} />
-            </button>
-          </form>
-
-          <div className="signed-out-actions" style={{ marginTop: '20px' }}>
-            <SiteLink href="/#menu" className="button secondary" style={{ width: '100%', justifyContent: 'center' }}>
-              <Icon name="meal" size={16} />
-              Back to Customer Menu
-            </SiteLink>
-          </div>
-
-          <div className="signed-out-footer" style={{ marginTop: '18px' }}>
-            <small>Phone: 0909511588 · Bale Robe, Oromia</small>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (signedOut) {
-    return (
-      <div className="admin-signed-out-page">
-        <div className="admin-signed-out-card">
-          <Logo />
-          <div className="signed-out-icon-wrap">
-            <Icon name="check" size={32} />
-          </div>
-          <h1>Session Ended</h1>
-          <p className="signed-out-subtitle">
-            You have safely signed out of the Ilillii Hotel management workspace.
-          </p>
-          <div className="signed-out-location-badge">
-            <Icon name="pin" size={14} />
-            <span>Around Awraris, near General Wako Gutu Square · Bale Robe, Oromia</span>
-          </div>
-          <div className="signed-out-actions">
-            <button className="button primary" onClick={() => setSignedOut(false)}>
-              <Icon name="user" size={16} />
-              Sign Back In
-            </button>
-            <SiteLink
-              href="/#menu"
-              className="button secondary"
-              onClick={() => {
-                localStorage.removeItem('ilillii_token')
-                localStorage.removeItem('ilillii_user')
-                localStorage.removeItem('ilillii_customer')
-                sessionStorage.clear()
-                window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
-              }}
-            >
-              <Icon name="meal" size={16} />
-              Go to Customer Menu
-            </SiteLink>
-          </div>
-          <div className="signed-out-footer">
-            <small>Hotline: 0909511588 · Daily 7:00 AM – 11:30 PM</small>
-          </div>
-        </div>
-      </div>
-    )
+    return null
   }
   return <div className="admin-app">
     {mobile && <button className="admin-mobile-scrim" aria-label="Close navigation" onClick={() => setMobile(false)} />}
