@@ -84,7 +84,7 @@ export function GlobalHeader({
       <header className="header">
         <div className="container nav-inner">
           <Logo />
-          <nav className={mobileNav ? 'navigation open' : 'navigation'} aria-label="Main navigation">
+          <nav className="navigation" aria-label="Main navigation">
             <SiteLink
               href="/#home"
               className={active === 'home' ? 'active' : ''}
@@ -120,10 +120,11 @@ export function GlobalHeader({
                   setMobileNav(false)
                 }}
                 className="nav-profile-pill"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
               >
-                <span className="nav-profile-avatar">
+                <span className="nav-profile-avatar" style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-brand)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: '12px', fontWeight: 700, overflow: 'hidden' }}>
                   {customer.avatar ? (
-                    <img src={customer.avatar} alt={customer.name} />
+                    <img src={customer.avatar} alt={customer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     customer.name.charAt(0).toUpperCase()
                   )}
@@ -172,6 +173,174 @@ export function GlobalHeader({
           </div>
         </div>
       </header>
+
+      {/* Modern Professional Mobile Navigation Sheet */}
+      {mobileNav && (
+        <>
+          <div className="mobile-nav-backdrop" onClick={() => setMobileNav(false)} />
+          <div className="mobile-nav-sheet">
+            <div className="mobile-nav-header">
+              <Logo />
+              <button
+                className="icon-button"
+                onClick={() => setMobileNav(false)}
+                aria-label="Close navigation"
+              >
+                <Icon name="close" size={18} />
+              </button>
+            </div>
+
+            {cartCount !== undefined && cartCount > 0 ? (
+              <button
+                className="mobile-drawer-cta"
+                onClick={() => {
+                  setMobileNav(false)
+                  onOpenCart?.()
+                }}
+              >
+                <Icon name="bag" size={18} />
+                <span>View Your Cart ({cartCount} {cartCount === 1 ? 'item' : 'items'})</span>
+                <Icon name="arrow" size={15} />
+              </button>
+            ) : (
+              <SiteLink
+                href="/#menu"
+                className="mobile-drawer-cta"
+                onClick={() => setMobileNav(false)}
+              >
+                <Icon name="meal" size={18} />
+                <span>Explore Menu & Order Food</span>
+                <Icon name="arrow" size={15} />
+              </SiteLink>
+            )}
+
+            <nav className="mobile-nav-links">
+              <SiteLink
+                href="/#home"
+                className={`mobile-nav-item ${active === 'home' ? 'active' : ''}`}
+                onClick={() => setMobileNav(false)}
+              >
+                <span className="mobile-nav-item-left">
+                  <Icon name="meal" size={18} />
+                  <span>Home</span>
+                </span>
+                <Icon name="arrow" size={14} />
+              </SiteLink>
+              <SiteLink
+                href="/#menu"
+                className={`mobile-nav-item ${active === 'menu' ? 'active' : ''}`}
+                onClick={() => setMobileNav(false)}
+              >
+                <span className="mobile-nav-item-left">
+                  <Icon name="menu" size={18} />
+                  <span>Our Menu</span>
+                </span>
+                <Icon name="arrow" size={14} />
+              </SiteLink>
+              <a
+                href="/#about"
+                className="mobile-nav-item"
+                onClick={() => setMobileNav(false)}
+              >
+                <span className="mobile-nav-item-left">
+                  <Icon name="heart" size={18} />
+                  <span>Our Story</span>
+                </span>
+                <Icon name="arrow" size={14} />
+              </a>
+              <a
+                href="/#find-us"
+                className="mobile-nav-item"
+                onClick={() => setMobileNav(false)}
+              >
+                <span className="mobile-nav-item-left">
+                  <Icon name="pin" size={18} />
+                  <span>Find Us in Bale Robe</span>
+                </span>
+                <Icon name="arrow" size={14} />
+              </a>
+              <SiteLink
+                href="/contact"
+                className={`mobile-nav-item ${active === 'contact' ? 'active' : ''}`}
+                onClick={() => setMobileNav(false)}
+              >
+                <span className="mobile-nav-item-left">
+                  <Icon name="phone" size={18} />
+                  <span>Contact & Hotel Info</span>
+                </span>
+                <Icon name="arrow" size={14} />
+              </SiteLink>
+            </nav>
+
+            {customer?.name ? (
+              <button
+                type="button"
+                className="mobile-guest-card"
+                onClick={() => {
+                  setProfileOpen(true)
+                  setMobileNav(false)
+                }}
+              >
+                <div className="mobile-guest-left">
+                  <div className="mobile-avatar-circle">
+                    {customer.avatar ? (
+                      <img src={customer.avatar} alt={customer.name} />
+                    ) : (
+                      customer.name.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                  <div className="mobile-guest-info">
+                    <strong>{customer.name}</strong>
+                    <span>Guest Profile & Saved Orders</span>
+                  </div>
+                </div>
+                <Icon name="arrow" size={16} />
+              </button>
+            ) : (
+              <SiteLink
+                href="/#login"
+                className="mobile-guest-card"
+                onClick={() => setMobileNav(false)}
+              >
+                <div className="mobile-guest-left">
+                  <div className="mobile-avatar-circle" style={{ background: '#f5ebe1', color: 'var(--color-brand)' }}>
+                    <Icon name="user" size={18} />
+                  </div>
+                  <div className="mobile-guest-info">
+                    <strong>Sign In / Guest Profile</strong>
+                    <span>Track orders & view history</span>
+                  </div>
+                </div>
+                <Icon name="arrow" size={16} />
+              </SiteLink>
+            )}
+
+            <div className="mobile-lang-row">
+              <span className="mobile-lang-label">
+                <Icon name="globe" size={14} /> Language:
+              </span>
+              <div className="mobile-lang-pills">
+                {languageOptions.map(opt => (
+                  <button
+                    key={opt.id}
+                    className={`mobile-lang-pill ${language === opt.id ? 'active' : ''}`}
+                    onClick={() => {
+                      setLanguage(opt.id)
+                    }}
+                  >
+                    {opt.native}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mobile-drawer-footer">
+              <div>Around Awraris, near General Wako Gutu Square · Bale Robe</div>
+              <a href="tel:0909511588">📞 Hotline: 0909511588</a>
+            </div>
+          </div>
+        </>
+      )}
       {languageOpen && (
         <Modal title="Choose Language / Qooqa Filadhaa" close={() => setLanguageOpen(false)}>
           <div className="language-options">

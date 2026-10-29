@@ -296,18 +296,20 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                   <small>Let us know if you have any dietary preferences.</small>
                 </label>
 
-                <button className="button primary order-full" type="submit">
-                  Review your order<Icon name="arrow" size={18} />
-                </button>
-                <p className="order-privacy">
-                  <Icon name="check" size={13} />Your order is sent directly to the kitchen staff.
-                </p>
+                <div className="order-buttons-group">
+                  <button className="button primary order-full" type="submit">
+                    Review your order<Icon name="arrow" size={18} />
+                  </button>
+                  <p className="order-privacy">
+                    <Icon name="check" size={13} />Your order is sent directly to the kitchen staff.
+                  </p>
+                </div>
               </form>
             )}
 
             {step === 'review' && (
               <>
-                <h2>Review order details.</h2>
+                <h2>Review order details</h2>
                 <dl className="review-details">
                   <div><dt>Customer</dt><dd>{name}</dd></div>
                   <div><dt>Table</dt><dd>{table ? `Table ${table}` : 'Table Service'}</dd></div>
@@ -317,17 +319,40 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                   )}
                   {note && <div><dt>Order note</dt><dd>{note}</dd></div>}
                 </dl>
-                <button
-                  className="button primary order-full"
-                  onClick={submit}
-                  disabled={busy || Boolean(snapshot)}
-                  aria-busy={busy}
-                >
-                  {busy ? <><span className="order-spinner" />Placing order…</> : 'Place Order'}
-                  {!busy && <Icon name="arrow" size={18} />}
-                </button>
-                <p className="order-privacy"><Icon name="check" size={13} />Sent directly to kitchen.</p>
-                {error && <button className="continue-button" onClick={close}>Edit order without losing your cart</button>}
+
+                {/* Inline order items summary for clean single-card review */}
+                <div className="review-meal-summary">
+                  <div className="review-meal-title">
+                    <Icon name="bag" size={17} />
+                    <span>Your Meal ({shownLines.reduce((acc, l) => acc + l.quantity, 0)} items)</span>
+                  </div>
+                  <div className="review-meal-items">
+                    {shownLines.map(line => (
+                      <div key={line.item.id} className="review-meal-row">
+                        <span>{line.quantity} × {line.item.name}</span>
+                        <b>{formatBirr(line.item.price * line.quantity)} ETB</b>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="review-meal-total">
+                    <span>Total Amount</span>
+                    <strong>{formatBirr(shownTotal)} ETB</strong>
+                  </div>
+                </div>
+
+                <div className="order-buttons-group">
+                  <button
+                    className="button primary order-full"
+                    onClick={submit}
+                    disabled={busy || Boolean(snapshot)}
+                    aria-busy={busy}
+                  >
+                    {busy ? <><span className="order-spinner" />Placing order…</> : 'Place Order'}
+                    {!busy && <Icon name="arrow" size={18} />}
+                  </button>
+                  <p className="order-privacy"><Icon name="check" size={13} />Sent directly to kitchen.</p>
+                  {error && <button className="continue-button" onClick={close}>Edit order without losing your cart</button>}
+                </div>
               </>
             )}
 
@@ -341,48 +366,50 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                   <span>{snapshot.table ? `Table ${snapshot.table}` : 'Dine In'} · {snapshot.name}</span>
                 </div>
 
-                <button
-                  className="button primary order-full"
-                  style={{ background: '#b82032', color: '#fff', margin: '10px 0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-                  onClick={handleAddMoreDishes}
-                >
-                  <Icon name="plus" size={17} />
-                  Add More Food / Order Additional Dishes
-                </button>
+                <div className="order-buttons-group">
+                  {step === 'tracking' ? (
+                    <>
+                      <ol className="order-timeline">
+                        {orderStages.map((label, index) => (
+                          <li key={label} className={index < stage ? 'done' : index === stage ? 'active' : ''} aria-current={index === stage ? 'step' : undefined}>
+                            <span>{index < stage ? <Icon name="check" size={14} /> : index + 1}</span>
+                            <div><strong>{label}</strong></div>
+                          </li>
+                        ))}
+                      </ol>
+                      <div className="status-refresh">
+                        <p>{refreshed || 'Kitchen status updated.'}</p>
+                        <button className="button secondary" onClick={() => setRefreshed(`Checked at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)}>
+                          Refresh status
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <button className="button secondary order-full" onClick={() => go('tracking')}>
+                      View order status<Icon name="arrow" size={18} />
+                    </button>
+                  )}
 
-                {step === 'tracking' ? (
-                  <>
-                    <ol className="order-timeline">
-                      {orderStages.map((label, index) => (
-                        <li key={label} className={index < stage ? 'done' : index === stage ? 'active' : ''} aria-current={index === stage ? 'step' : undefined}>
-                          <span>{index < stage ? <Icon name="check" size={14} /> : index + 1}</span>
-                          <div><strong>{label}</strong></div>
-                        </li>
-                      ))}
-                    </ol>
-                    <div className="status-refresh">
-                      <p>{refreshed || 'Kitchen status updated.'}</p>
-                      <button className="button secondary" onClick={() => setRefreshed(`Checked at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)}>
-                        Refresh status
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  <button className="button secondary order-full" onClick={() => go('tracking')}>
-                    View order status<Icon name="arrow" size={18} />
+                  <button
+                    className="button primary order-full"
+                    style={{ background: '#b82032', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                    onClick={handleAddMoreDishes}
+                  >
+                    <Icon name="plus" size={17} />
+                    Add More Food / Order Additional Dishes
                   </button>
-                )}
 
-                <a
-                  href="tel:0909511588"
-                  className="button secondary order-full"
-                  style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none', margin: '8px 0' }}
-                >
-                  <Icon name="phone" size={16} />Call Manager (0909511588)
-                </a>
-                <button className="continue-button" onClick={() => setModal('help')}>
-                  Request staff assistance<Icon name="heart" size={16} />
-                </button>
+                  <a
+                    href="tel:0909511588"
+                    className="button secondary order-full"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none' }}
+                  >
+                    <Icon name="phone" size={16} />Call Manager (0909511588)
+                  </a>
+                  <button className="continue-button" onClick={() => setModal('help')}>
+                    Request staff assistance<Icon name="heart" size={16} />
+                  </button>
+                </div>
               </>
             )}
           </div>
