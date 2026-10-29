@@ -349,7 +349,7 @@ body .nav-actions > .language-button > svg:last-child {
     justify-content: space-between !important;
     align-items: center !important;
     padding-inline: 16px !important;
-    padding-block: 10px !important;
+    padding-block: 10px 12px !important;
     min-height: auto !important;
   }
   body header .nav-inner > .logo {
@@ -358,10 +358,46 @@ body .nav-actions > .language-button > svg:last-child {
   body .nav-actions {
     display: inline-flex !important;
     align-items: center !important;
-    gap: 8px !important;
+    gap: 10px !important;
     margin: 0 !important;
     margin-left: auto !important;
     flex-wrap: wrap !important;
+  }
+  /* Pure globe icon on mobile matching reference Image 2 */
+  body .language-button,
+  body .nav-actions > .language-button,
+  body header .language-button {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    min-width: unset !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-height: 36px !important;
+    max-height: 36px !important;
+    display: grid !important;
+    place-items: center !important;
+    color: var(--color-ink) !important;
+    border-radius: 50% !important;
+  }
+  body .language-button:hover {
+    background: rgba(0, 0, 0, 0.05) !important;
+  }
+  body .language-button > span,
+  body .nav-actions > .language-button > span,
+  body .language-button .lang-code-pill,
+  body .language-button > svg:last-child,
+  body .nav-actions > .language-button > svg:last-child {
+    display: none !important;
+  }
+  body .language-button > svg:first-child,
+  body .nav-actions > .language-button > svg:first-child {
+    display: block !important;
+    width: 22px !important;
+    height: 22px !important;
+    color: var(--color-ink) !important;
+    margin: 0 !important;
   }
   body .nav-actions > .cart-trigger {
     height: 38px !important;
@@ -376,7 +412,7 @@ body .nav-actions > .language-button > svg:last-child {
   body .nav-actions > a.nav-order {
     order: 10 !important;
     width: 100% !important;
-    min-height: 46px !important;
+    min-height: 44px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -388,9 +424,24 @@ body .nav-actions > .language-button > svg:last-child {
   body .mobile-toggle {
     display: grid !important;
     width: 40px !important;
-    height: 38px !important;
+    height: 40px !important;
     place-items: center !important;
+    border: 1px solid #ebdcd0 !important;
     border-radius: 10px !important;
+    background: #ffffff !important;
+    color: var(--color-ink) !important;
+  }
+}
+
+@media (max-width: 650px) {
+  body .hero-copy {
+    padding: 24px 20px 24px !important;
+  }
+  body .hero-copy h1 {
+    margin-top: 0 !important;
+    font-size: clamp(40px, 11vw, 54px) !important;
+    line-height: 1.12 !important;
+    letter-spacing: -2px !important;
   }
 }
 

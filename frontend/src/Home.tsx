@@ -65,11 +65,6 @@ export default function App() {
         <div className="hero-copy">
           <div className="eyebrow"><span /> {t('hero.welcome')}</div>
           <h1>{t('hero.titleLine1')}<br />{t('hero.titleLine2')} <span>{t('hero.titleSpan')}</span></h1>
-          {scannedTable && (
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '6px 14px', borderRadius: '9999px', background: '#dcfce7', color: '#15803d', border: '1px solid #bbf7d0', fontSize: '13px', fontWeight: 700, margin: '12px 0 6px', maxWidth: '100%' }}>
-              <Icon name="meal" size={16} /> Table {scannedTable} (QR Code Verified)
-            </div>
-          )}
           <div className="hero-buttons">
             <button className="button primary" onClick={showMenu}>{t('hero.exploreMenu')}<Icon name="arrow" size={18} /></button>
             <a className="button secondary" href="#find-us"><Icon name="pin" size={18} />{t('hero.findUs')}</a>
