@@ -146,13 +146,13 @@ body .global-footer-bottom { flex-wrap: wrap; }
   body .admin-settings-form { max-inline-size: 100%; }
 }
 @media(max-width:600px) {
-  body .nav-inner { display: grid; grid-template-columns: minmax(0, 1fr) 48px 48px; gap: 12px 8px; padding-block: 14px; }
-  body .nav-inner > .logo { grid-column: 1; grid-row: 1; }
-  body .nav-actions { display: contents; }
-  body .nav-actions > .language-button { grid-column: 2; grid-row: 1; display: grid; place-items: center; min-width: 48px; padding: 0; }
+  body .nav-inner { display: flex; flex-direction: column; gap: 10px; padding-block: 12px 14px; }
+  body .nav-top-bar { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+  body .nav-actions { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  body .language-button { width: 36px; height: 36px; display: grid; place-items: center; min-width: unset; padding: 0; }
   body .language-button > svg:last-child { display: none; }
-  body .nav-actions > .mobile-toggle { grid-column: 3; grid-row: 1; width: 48px; height: 48px; }
-  body .nav-actions > .nav-order { grid-column: 1 / -1; grid-row: 2; width: 100%; margin: 0; }
+  body .mobile-toggle { width: 40px; height: 40px; display: grid; place-items: center; }
+  body .mobile-header-order-cta { display: block; width: 100%; margin: 0; }
   body .compact-nav { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; padding-block: 14px; }
   body .compact-nav > .logo { grid-column: 1; grid-row: 1; }
   body .menu-header-actions { grid-column: 2; grid-row: 1; gap: 8px; margin: 0; }
