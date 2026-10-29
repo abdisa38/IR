@@ -631,11 +631,18 @@ export function AdminCategories({ notify }: { notify: (text: string) => void }) 
   )
 }
 
+export function getProductionQrUrl(tableId: string): string {
+  if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || !window.location.hostname
+    const origin = isLocal ? 'https://frontend-psi-ten-87.vercel.app' : window.location.origin
+    return `${origin}/?table=${encodeURIComponent(tableId)}&source=qr#menu`
+  }
+  return `https://frontend-psi-ten-87.vercel.app/?table=${encodeURIComponent(tableId)}&source=qr#menu`
+}
+
 function TableQrCode({ table }: { table: string }) {
   const [dataUrl, setDataUrl] = useState<string>('')
-  const qrTarget = typeof window !== 'undefined'
-    ? `${window.location.origin}/?table=${table}&source=qr#menu`
-    : `https://frontend-psi-ten-87.vercel.app/?table=${table}&source=qr#menu`
+  const qrTarget = getProductionQrUrl(table)
 
   useEffect(() => {
     let active = true
@@ -675,6 +682,9 @@ function TableQrCode({ table }: { table: string }) {
       <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 600, display: 'inline-block', marginTop: '6px' }}>
         Scans to Table {table} Order
       </span>
+      <small style={{ display: 'block', fontSize: '9px', color: '#78716c', marginTop: '2px', wordBreak: 'break-all' }}>
+        {qrTarget}
+      </small>
     </div>
   )
 }
@@ -694,7 +704,7 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
 
   useEffect(() => {
     if (printableTable) {
-      const target = `${window.location.origin}/?table=${printableTable}&source=qr#menu`
+      const target = getProductionQrUrl(printableTable)
       QRCode.toDataURL(target, {
         width: 400,
         margin: 2,
@@ -715,7 +725,7 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
   }
 
   const download = async (id: string) => {
-    const qrTarget = `${window.location.origin}/?table=${id}&source=qr#menu`
+    const qrTarget = getProductionQrUrl(id)
     try {
       const qrDataUrl = await QRCode.toDataURL(qrTarget, {
         width: 600,
@@ -726,7 +736,7 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
       link.href = qrDataUrl
       link.download = `ilillii-table-${id}-qr.png`
       link.click()
-      notify(`Downloaded high-res scannable QR code for Table ${id}`)
+      notify(`Downloaded live QR code for Table ${id} (scans to live site)`)
     } catch (err: any) {
       notify(`QR Download note: ${err.message}`)
     }
@@ -1196,7 +1206,7 @@ export function AdminSettings({ notify }: { notify: (text: string) => void }) {
             />
           </label>
           <label>
-            Manager direct line
+            Hotel phone line
             <input
               value={values.phone}
               onChange={event => setValues({ ...values, phone: event.target.value })}

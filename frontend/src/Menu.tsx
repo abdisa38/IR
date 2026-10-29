@@ -157,21 +157,37 @@ export default function Menu() {
 
   useEffect(() => {
     const checkTableUrl = () => {
-      const params = new URLSearchParams(window.location.search)
-      const t = params.get('table') || params.get('demoTable')
-      const isQr = params.get('source') === 'qr'
-      if (t) {
-        setQr({ table: t.trim(), invalid: false })
+      const parsed = tableFromUrl(window.location.search)
+      const urlStr = window.location.href
+      const isQr = urlStr.includes('source=qr') || window.location.search.includes('source=qr')
+
+      if (parsed.table) {
+        setQr({ table: parsed.table, invalid: false })
         setMode('Dine in')
-        localStorage.setItem('ilillii_table', t.trim())
+        localStorage.setItem('ilillii_table', parsed.table)
+        sessionStorage.setItem('ilillii_table', parsed.table)
         if (isQr) {
           localStorage.setItem('ilillii_table_source', 'qr')
+          sessionStorage.setItem('ilillii_table_source', 'qr')
+        } else {
+          localStorage.setItem('ilillii_table_source', 'manual')
+          sessionStorage.setItem('ilillii_table_source', 'manual')
+        }
+      } else {
+        // Direct website visit without table in URL (e.g. from Google)
+        if (!urlStr.includes('table=') && !sessionStorage.getItem('ilillii_table_source')) {
+          setQr({ table: null, invalid: false })
+          localStorage.removeItem('ilillii_table_source')
         }
       }
     }
     checkTableUrl()
     window.addEventListener('popstate', checkTableUrl)
-    return () => window.removeEventListener('popstate', checkTableUrl)
+    window.addEventListener('hashchange', checkTableUrl)
+    return () => {
+      window.removeEventListener('popstate', checkTableUrl)
+      window.removeEventListener('hashchange', checkTableUrl)
+    }
   }, [])
 
   useEffect(() => {
@@ -210,7 +226,20 @@ export default function Menu() {
     <GlobalHeader active="menu" cartCount={count} onOpenCart={() => setPanel(true)} />
     <main>
       <section className={`menu-container qr-entry ${qr.table || qr.invalid ? 'contextual-entry' : 'regular-entry'}`}>
-        {(qr.table || qr.invalid) && <div className="qr-context"><span className="qr-context-icon"><Icon name="meal" size={25} /></span><div><span className="eyebrow">YOUR TABLE. YOUR TIME.</span><h2>{qr.table ? 'Welcome to Ilillii.' : 'Let’s check your table.'}</h2></div>{qr.table && <span className="table-badge"><Icon name="meal" size={16} />Table {qr.table}</span>}</div>}
+        {(qr.table || qr.invalid) && (
+          <div className="qr-context">
+            <span className="qr-context-icon"><Icon name="meal" size={25} /></span>
+            <div>
+              <span className="eyebrow">{localStorage.getItem('ilillii_table_source') === 'qr' ? 'SCANNED TABLE SERVICE' : 'YOUR TABLE. YOUR TIME.'}</span>
+              <h2>{qr.table ? (localStorage.getItem('ilillii_table_source') === 'qr' ? `Ordering from Table ${qr.table}` : 'Welcome to Ilillii.') : 'Let’s check your table.'}</h2>
+            </div>
+            {qr.table && (
+              <span className="table-badge" style={localStorage.getItem('ilillii_table_source') === 'qr' ? { background: '#dcfce7', color: '#15803d', borderColor: '#bbf7d0', fontWeight: 700 } : {}}>
+                <Icon name="meal" size={16} />Table {qr.table} {localStorage.getItem('ilillii_table_source') === 'qr' ? '· QR Verified' : ''}
+              </span>
+            )}
+          </div>
+        )}
         <div className="qr-entry-actions">{(qr.table || qr.invalid) && <a href="#food-menu" className="button primary">Explore Menu<Icon name="arrow" size={16} /></a>}{count > 0 && <button className="button secondary" onClick={() => setPanel(true)}>View Cart · {count}</button>}<button className="qr-demo-toggle" onClick={() => { setCheckoutEntry('lookup'); setCheckout(true) }}><Icon name="search" size={16} />Find my order</button><button className="qr-demo-toggle" aria-expanded={qrOptions} onClick={() => setQrOptions(!qrOptions)}>Select Table QR<Icon name="down" size={14} /></button>{qr.invalid && <button className="qr-demo-toggle" onClick={() => setTableHelp(true)}>Ask staff for assistance</button>}</div>
         {qrOptions && <div className="qr-demo-options"><strong>Select Table</strong><div>{demoTables.map(table => <button key={table} className={qr.table === table ? 'chosen' : ''} onClick={() => { setQr({ table, invalid: false }); setMode('Dine in') }}>Table {table}</button>)}<button onClick={() => setQr({ table: null, invalid: true })}>Invalid QR</button><button onClick={() => setQr({ table: null, invalid: false })}>Regular menu</button></div></div>}
       </section>
@@ -230,7 +259,12 @@ export default function Menu() {
     <div className={`cart-toast ${notice ? 'visible' : ''}`} role="status" aria-live="polite">{notice && <><Icon name="check" size={17} /><span>{notice}</span></>}</div>
     <dialog className="cart-drawer" ref={cartRef} onCancel={() => setPanel(false)} onClick={e => { if (e.target === e.currentTarget) setPanel(false) }}>
       <div className="drawer-heading"><div><span className="eyebrow">A LITTLE GOOD FOOD</span><h2>Your cart <span>{count}</span></h2></div><button className="icon-button" onClick={() => setPanel(false)} aria-label="Close cart"><Icon name="close" /></button></div>
-      {qr.table && <div className="cart-table-context"><Icon name="meal" size={19} /><span>Table {qr.table} · Dine In</span></div>}
+      {qr.table && (
+        <div className="cart-table-context">
+          <Icon name="meal" size={19} />
+          <span>Table {qr.table} · Dine In {localStorage.getItem('ilillii_table_source') === 'qr' ? '(QR Verified)' : ''}</span>
+        </div>
+      )}
       {count ? <>
         <div className="cart-lines">{selected.map(item => <div className="cart-line" key={item.id}><span className={`cart-item-symbol art-${item.category}`}>{item.confirmedImage ? <img src={getImageUrl(item.confirmedImage)} alt={item.name} onError={(e) => { const target = e.currentTarget; target.onerror = null; target.src = '/images/ethiopian-sharing-platter.jpg' }} /> : <Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={22} />}</span><div className="cart-line-content"><h3>{language === 'am' && item.translations?.am ? item.translations.am : item.name}</h3>{cart[item.id] > 1 && <p>{formatBirr(item.price)} ETB each</p>}<Quantity item={item} quantity={cart[item.id]} update={update} /></div><strong>{formatBirr(item.price * cart[item.id])}<small>ETB</small></strong></div>)}</div>
         <div className="cart-mode">

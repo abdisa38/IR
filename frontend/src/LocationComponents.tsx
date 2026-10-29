@@ -11,10 +11,10 @@ export function ContactAction({ kind, className = 'button secondary' }: { kind: 
         href="tel:0909511588"
         className={className}
         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
-        aria-label="Call Ilillii Hotel Manager at 0909511588"
+        aria-label="Call Ilillii Hotel at 0909511588"
       >
         <Icon name="phone" size={17} />
-        Call Manager (0909511588)
+        Call 0909511588
       </a>
     )
   }
@@ -34,10 +34,10 @@ export function ContactAction({ kind, className = 'button secondary' }: { kind: 
 }
 export function MapPreview() {
   const [state, setState] = useState('placeholder')
-  return <div className="location-map-component"><div className={`location-map-stage map-state-${state}`} aria-live="polite"><div className="location-map-lines" aria-hidden="true" /><div className="location-map-content">{state === 'loading' ? <><span className="map-state-symbol"><Icon name="globe" size={30} /></span><h3>Loading map preview…</h3></> : state === 'error' ? <><span className="map-state-symbol"><Icon name="info" size={30} /></span><h3>Around Awraris, near General Wako Gutu Square</h3><p>Bale Robe, Oromia, Ethiopia.<br />Manager: 0909511588</p><button className="map-retry" onClick={() => setState('placeholder')}>Retry map preview<Icon name="arrow" size={15} /></button></> : state === 'external' ? <><span className="map-state-symbol"><Icon name="arrow" size={28} /></span><h3>Continue in your maps app.</h3><button className="map-retry" onClick={() => setState('placeholder')}>Return to location preview</button></> : <><span className="reserved-location-mark"><Mark /></span><h3>See you in Bale Robe</h3><p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>Around Awraris, near General Wako Gutu Square</p><span className="location-town-tag"><Icon name="pin" size={13} />BALE ROBE · OROMIA</span></>}</div></div></div>
+  return <div className="location-map-component"><div className={`location-map-stage map-state-${state}`} aria-live="polite"><div className="location-map-lines" aria-hidden="true" /><div className="location-map-content">{state === 'loading' ? <><span className="map-state-symbol"><Icon name="globe" size={30} /></span><h3>Loading map preview…</h3></> : state === 'error' ? <><span className="map-state-symbol"><Icon name="info" size={30} /></span><h3>Around Awraris, near General Wako Gutu Square</h3><p>Bale Robe, Oromia, Ethiopia.<br />Phone: 0909511588</p><button className="map-retry" onClick={() => setState('placeholder')}>Retry map preview<Icon name="arrow" size={15} /></button></> : state === 'external' ? <><span className="map-state-symbol"><Icon name="arrow" size={28} /></span><h3>Continue in your maps app.</h3><button className="map-retry" onClick={() => setState('placeholder')}>Return to location preview</button></> : <><span className="reserved-location-mark"><Mark /></span><h3>See you in Bale Robe</h3><p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>Around Awraris, near General Wako Gutu Square</p><span className="location-town-tag"><Icon name="pin" size={13} />BALE ROBE · OROMIA</span></>}</div></div></div>
 }
 export function FindUsSection() {
-  return <section className="find-ilillii" id="find-us"><div className="container"><div className="find-section-heading"><span className="eyebrow">GOOD FOOD IS JUST THE BEGINNING</span><h2>Find Ilillii Hotel</h2></div><div className="location-composition"><MapPreview /><div className="visit-information"><span className="eyebrow">YOUR PLACE IN BALE ROBE</span><h3>There’s a place<br />for you here.</h3><div className="visit-detail"><Icon name="pin" size={21} /><div><strong>Around Awraris, near General Wako Gutu Square</strong><span>Bale Robe, Oromia, Ethiopia</span></div></div><div className="visit-detail"><Icon name="phone" size={21} /><div><strong>Manager: 0909511588</strong><a href="tel:0909511588" style={{ color: 'var(--color-brand)', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>Tap to call manager</a></div></div><div className="visit-detail"><Icon name="clock" size={21} /><div><strong>Opening hours</strong><span>Daily: 6:30 AM – 11:00 PM</span></div></div><div className="visit-actions"><ContactAction kind="directions" className="button primary" /><ContactAction kind="call" /></div><SiteLink href="/#menu" className="visit-order-link">Explore our menu & order food<Icon name="arrow" size={17} /></SiteLink></div></div></div></section>
+  return <section className="find-ilillii" id="find-us"><div className="container"><div className="find-section-heading"><span className="eyebrow">GOOD FOOD IS JUST THE BEGINNING</span><h2>Find Ilillii Hotel</h2></div><div className="location-composition"><MapPreview /><div className="visit-information"><span className="eyebrow">YOUR PLACE IN BALE ROBE</span><h3>There’s a place<br />for you here.</h3><div className="visit-detail"><Icon name="pin" size={21} /><div><strong>Around Awraris, near General Wako Gutu Square</strong><span>Bale Robe, Oromia, Ethiopia</span></div></div><div className="visit-detail"><Icon name="phone" size={21} /><div><strong>Phone: 0909511588</strong><a href="tel:0909511588" style={{ color: 'var(--color-brand)', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>Tap to call</a></div></div><div className="visit-detail"><Icon name="clock" size={21} /><div><strong>Opening hours</strong><span>Daily: 6:30 AM – 11:00 PM</span></div></div><div className="visit-actions"><ContactAction kind="directions" className="button primary" /><ContactAction kind="call" /></div><SiteLink href="/#menu" className="visit-order-link">Explore our menu & order food<Icon name="arrow" size={17} /></SiteLink></div></div></div></section>
 }
 export function GlobalHeader({
   active = 'home',
@@ -52,6 +52,7 @@ export function GlobalHeader({
   const [languageOpen, setLanguageOpen] = useState(false)
   const [customer, setCustomer] = useState<{ name?: string; phone?: string; email?: string; avatar?: string; lastOrder?: string } | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
+  const [historyOpen, setHistoryOpen] = useState(false)
   const { language, setLanguage } = useLanguage()
 
   const updateCustomerState = () => {
@@ -85,8 +86,13 @@ export function GlobalHeader({
 
   useEffect(() => {
     updateCustomerState()
+    const handleOpenHistory = () => setHistoryOpen(true)
     window.addEventListener('ilillii-auth-changed', updateCustomerState)
-    return () => window.removeEventListener('ilillii-auth-changed', updateCustomerState)
+    window.addEventListener('ilillii-open-history', handleOpenHistory)
+    return () => {
+      window.removeEventListener('ilillii-auth-changed', updateCustomerState)
+      window.removeEventListener('ilillii-open-history', handleOpenHistory)
+    }
   }, [])
 
   useEffect(() => {
@@ -175,13 +181,14 @@ export function GlobalHeader({
           </nav>
           <div className="nav-actions">
             <button
+              type="button"
               className="language-button"
               onClick={() => setLanguageOpen(true)}
               aria-label="Choose Language"
             >
-              <Icon name="globe" size={17} />
-              <span>{language === 'om' ? 'Afaan Oromoo' : language === 'am' ? 'አማርኛ' : 'English'}</span>
-              <Icon name="down" size={13} />
+              <Icon name="globe" size={16} />
+              <span className="lang-code-pill">{language === 'om' ? 'Oro' : language === 'am' ? 'Amh' : 'Eng'}</span>
+              <Icon name="down" size={11} />
             </button>
             {cartCount !== undefined ? (
               <button
@@ -306,6 +313,21 @@ export function GlobalHeader({
                 </span>
                 <Icon name="arrow" size={14} />
               </SiteLink>
+              <button
+                type="button"
+                className="mobile-nav-item"
+                style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', font: 'inherit', cursor: 'pointer' }}
+                onClick={() => {
+                  setMobileNav(false)
+                  setHistoryOpen(true)
+                }}
+              >
+                <span className="mobile-nav-item-left">
+                  <Icon name="clock" size={18} />
+                  <span>My Past Orders</span>
+                </span>
+                <Icon name="arrow" size={14} />
+              </button>
             </nav>
 
             {customer?.name ? (
@@ -327,7 +349,7 @@ export function GlobalHeader({
                   </div>
                   <div className="mobile-guest-info">
                     <strong>{customer.name}</strong>
-                    <span>Guest Profile & Saved Orders</span>
+                    <span>Guest Profile</span>
                   </div>
                 </div>
                 <Icon name="arrow" size={16} />
@@ -343,37 +365,17 @@ export function GlobalHeader({
                     <Icon name="user" size={18} />
                   </div>
                   <div className="mobile-guest-info">
-                    <strong>Sign In / Guest Profile</strong>
-                    <span>Track orders & view history</span>
+                    <strong>Sign In</strong>
                   </div>
                 </div>
                 <Icon name="arrow" size={16} />
               </SiteLink>
             )}
 
-            <div className="mobile-lang-row">
-              <span className="mobile-lang-label">
-                <Icon name="globe" size={14} /> Language:
-              </span>
-              <div className="mobile-lang-pills">
-                {languageOptions.map(opt => (
-                  <button
-                    key={opt.id}
-                    className={`mobile-lang-pill ${language === opt.id ? 'active' : ''}`}
-                    onClick={() => {
-                      setLanguage(opt.id)
-                    }}
-                  >
-                    {opt.native}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="mobile-drawer-footer">
               <div>Around Awraris, near General Wako Gutu Square · Bale Robe</div>
               <a href="tel:0909511588" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <Icon name="phone" size={14} /> Hotline: 0909511588
+                <Icon name="phone" size={14} /> Phone: 0909511588
               </a>
             </div>
           </div>
@@ -443,6 +445,17 @@ export function GlobalHeader({
             <button
               type="button"
               className="button secondary"
+              style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+              onClick={() => {
+                setProfileOpen(false)
+                setHistoryOpen(true)
+              }}
+            >
+              <Icon name="clock" size={16} />View Past Orders
+            </button>
+            <button
+              type="button"
+              className="button secondary"
               style={{ width: '100%', justifyContent: 'center' }}
               onClick={() => {
                 localStorage.removeItem('ilillii_customer')
@@ -459,7 +472,136 @@ export function GlobalHeader({
           </div>
         </Modal>
       )}
+
+      {historyOpen && (
+        <PastOrdersModal close={() => setHistoryOpen(false)} />
+      )}
     </>
+  )
+}
+
+interface SavedPastOrder {
+  orderNumber: string
+  date: string
+  total: number
+  table?: string
+  type: string
+  items: Array<{ name: string; quantity: number; price: number }>
+  status?: string
+}
+
+function PastOrdersModal({ close }: { close: () => void }) {
+  const [orders, setOrders] = useState<SavedPastOrder[]>([])
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('ilillii_order_history')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) setOrders(parsed)
+      }
+    } catch (e) {}
+  }, [])
+
+  const startFresh = () => {
+    localStorage.removeItem('ilillii_active_order_id')
+    localStorage.removeItem('ilillii_active_order_time')
+    close()
+    window.location.hash = '#menu'
+    window.dispatchEvent(new CustomEvent('ilillii-clear-cart'))
+  }
+
+  const clearHistory = () => {
+    if (confirm('Clear local past order history on this device?')) {
+      localStorage.removeItem('ilillii_order_history')
+      setOrders([])
+    }
+  }
+
+  return (
+    <Modal title="My Past Orders" close={close}>
+      <div style={{ maxHeight: '68vh', overflowY: 'auto', paddingRight: '4px' }}>
+        <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--color-muted)' }}>
+          Meals and drinks you ordered at Ilillii Hotel.
+        </p>
+
+        {orders.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '32px 16px', background: '#fdfbf7', borderRadius: '12px', border: '1px dashed #e2d9cd' }}>
+            <span style={{ display: 'grid', placeItems: 'center', width: '48px', height: '48px', margin: '0 auto 12px', background: '#f5ebe1', borderRadius: '50%', color: 'var(--color-brand)' }}>
+              <Icon name="bag" size={24} />
+            </span>
+            <h4 style={{ margin: '0 0 4px', fontSize: '15px', color: 'var(--color-ink)' }}>No past orders recorded</h4>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-muted)' }}>
+              When you submit a meal order, a receipt will be kept here so you can review your dishes anytime.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {orders.map((ord, idx) => (
+              <div
+                key={ord.orderNumber || idx}
+                style={{
+                  background: '#fdfbf7',
+                  border: '1px solid #ebdcd0',
+                  borderRadius: '12px',
+                  padding: '14px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <strong style={{ fontSize: '14px', color: 'var(--color-brand)' }}>#{ord.orderNumber}</strong>
+                  <span style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
+                    {ord.date ? new Date(ord.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent'}
+                  </span>
+                </div>
+                <div style={{ fontSize: '12px', color: '#57534e', marginBottom: '8px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ background: '#f5ebe1', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                    {ord.type || 'Dine in'}{ord.table ? ` · Table ${ord.table}` : ''}
+                  </span>
+                  {ord.status && (
+                    <span style={{ background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '4px', fontWeight: 600 }}>
+                      {ord.status}
+                    </span>
+                  )}
+                </div>
+                <div style={{ fontSize: '13px', borderTop: '1px solid #ebdcd0', paddingTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {ord.items?.map((it, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                      <span>{it.quantity} × {it.name}</span>
+                      <span style={{ fontWeight: 600 }}>{(it.price * it.quantity).toLocaleString()} ETB</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #ebdcd0', marginTop: '8px', paddingTop: '8px', fontWeight: 700, fontSize: '14px' }}>
+                  <span>Total</span>
+                  <span style={{ color: 'var(--color-brand)' }}>{ord.total?.toLocaleString()} ETB</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
+          <button
+            type="button"
+            className="button primary"
+            style={{ flex: 1, justifyContent: 'center' }}
+            onClick={startFresh}
+          >
+            Start Fresh Order
+          </button>
+          {orders.length > 0 && (
+            <button
+              type="button"
+              className="button secondary"
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+              onClick={clearHistory}
+            >
+              Clear History
+            </button>
+          )}
+        </div>
+      </div>
+    </Modal>
   )
 }
 

@@ -24,7 +24,26 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
   const [stage, setStage] = useState(0)
   const [modal, setModal] = useState<'language' | 'help' | null>(null)
   const [refreshed, setRefreshed] = useState('')
-  const [activeOrderId, setActiveOrderId] = useState<string | null>(() => localStorage.getItem('ilillii_active_order_id'))
+  const [activeOrderId, setActiveOrderId] = useState<string | null>(() => {
+    const storedActive = localStorage.getItem('ilillii_active_order_id')
+    const storedTime = localStorage.getItem('ilillii_active_order_time')
+    if (storedActive && storedTime) {
+      const ageMs = Date.now() - Number(storedTime)
+      const isExpired = ageMs > 2 * 60 * 60 * 1000 // 2 hours
+      const isDifferentDay = new Date(Number(storedTime)).toDateString() !== new Date().toDateString()
+      if (isExpired || isDifferentDay) {
+        localStorage.removeItem('ilillii_active_order_id')
+        localStorage.removeItem('ilillii_active_order_time')
+        return null
+      }
+      return storedActive
+    }
+    if (storedActive && !storedTime) {
+      localStorage.removeItem('ilillii_active_order_id')
+      return null
+    }
+    return null
+  })
   const [appendToExisting, setAppendToExisting] = useState(true)
   const submitting = useRef(false)
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
@@ -41,7 +60,20 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
       setStep('details')
       setError('')
       const storedActive = localStorage.getItem('ilillii_active_order_id')
-      setActiveOrderId(storedActive)
+      const storedTime = localStorage.getItem('ilillii_active_order_time')
+      if (storedActive && storedTime) {
+        const ageMs = Date.now() - Number(storedTime)
+        if (ageMs > 2 * 60 * 60 * 1000 || new Date(Number(storedTime)).toDateString() !== new Date().toDateString()) {
+          localStorage.removeItem('ilillii_active_order_id')
+          localStorage.removeItem('ilillii_active_order_time')
+          setActiveOrderId(null)
+        } else {
+          setActiveOrderId(storedActive)
+        }
+      } else {
+        localStorage.removeItem('ilillii_active_order_id')
+        setActiveOrderId(null)
+      }
       // Pre-fill customer details if previously saved
       try {
         const saved = localStorage.getItem('ilillii_customer')
@@ -100,6 +132,22 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
       submitting.current = false
       if (orderRes.success && orderRes.order) {
         localStorage.setItem('ilillii_active_order_id', orderRes.order.orderNumber)
+        localStorage.setItem('ilillii_active_order_time', Date.now().toString())
+        try {
+          const historyItem = {
+            orderNumber: orderRes.order.orderNumber,
+            date: new Date().toISOString(),
+            total: orderRes.order.total,
+            table: orderRes.order.table || table || '1',
+            type: 'Dine in',
+            items: linePayload.map(lp => ({ name: lp.name, quantity: lp.quantity, price: lp.price })),
+            status: 'Submitted',
+          }
+          const prevHistory = JSON.parse(localStorage.getItem('ilillii_order_history') || '[]')
+          const filtered = Array.isArray(prevHistory) ? prevHistory.filter((h: any) => h.orderNumber !== orderRes.order.orderNumber) : []
+          localStorage.setItem('ilillii_order_history', JSON.stringify([historyItem, ...filtered].slice(0, 30)))
+        } catch (e) {}
+
         try {
           localStorage.setItem(
             'ilillii_customer',
@@ -146,10 +194,10 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
         <div className="order-shell">
           <Logo />
           <div>
-            <button className="order-lang" onClick={() => setModal('language')}>
-              <Icon name="globe" size={17} />
-              {language === 'om' ? 'Afaan Oromoo' : language === 'am' ? 'አማርኛ' : 'English'}
-              <Icon name="down" size={13} />
+            <button type="button" className="order-lang" onClick={() => setModal('language')}>
+              <Icon name="globe" size={16} />
+              <span className="lang-code-pill">{language === 'om' ? 'Oro' : language === 'am' ? 'Amh' : 'Eng'}</span>
+              <Icon name="down" size={11} />
             </button>
             <span className="table-badge">
               <Icon name="meal" size={15} />
@@ -286,8 +334,33 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                   <div><dt>Customer</dt><dd>{name}</dd></div>
                   <div><dt>Table</dt><dd>{table ? `Table ${table}` : 'Table Service'}</dd></div>
                   {phone && <div><dt>Phone</dt><dd>{phone}</dd></div>}
-                  {activeOrderId && appendToExisting && (
-                    <div><dt>Add to Active Order</dt><dd>#{activeOrderId}</dd></div>
+                  {activeOrderId && (
+                    <div style={{ gridColumn: '1 / -1', background: '#fdfbf7', border: '1px solid #ebdcd0', borderRadius: '10px', padding: '10px 12px', marginTop: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                        <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--color-brand)' }}>
+                          {appendToExisting ? `Adding to Active Order #${activeOrderId}` : 'Separate Fresh Order'}
+                        </span>
+                        <button
+                          type="button"
+                          style={{ background: 'none', border: 'none', color: '#b82032', fontSize: '12px', fontWeight: 600, cursor: 'pointer', textDecoration: 'underline' }}
+                          onClick={() => {
+                            if (appendToExisting) {
+                              setAppendToExisting(false)
+                              setActiveOrderId(null)
+                              localStorage.removeItem('ilillii_active_order_id')
+                              localStorage.removeItem('ilillii_active_order_time')
+                            } else {
+                              setAppendToExisting(true)
+                            }
+                          }}
+                        >
+                          {appendToExisting ? 'Start separate new order' : 'Add to previous order'}
+                        </button>
+                      </div>
+                      <small style={{ color: '#78716c', fontSize: '11px', display: 'block' }}>
+                        {appendToExisting ? 'Kitchen ticket will combine these items with your current table meal.' : 'This will be prepared as an independent new ticket.'}
+                      </small>
+                    </div>
                   )}
                   {note && <div><dt>Order note</dt><dd>{note}</dd></div>}
                 </dl>
@@ -351,12 +424,24 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                     Add More Food / Order Additional Dishes
                   </button>
 
+                  <button
+                    type="button"
+                    className="button secondary order-full"
+                    style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                    onClick={() => {
+                      close()
+                      window.dispatchEvent(new CustomEvent('ilillii-open-history'))
+                    }}
+                  >
+                    <Icon name="clock" size={16} />View My Past Orders
+                  </button>
+
                   <a
                     href="tel:0909511588"
                     className="button secondary order-full"
                     style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none' }}
                   >
-                    <Icon name="phone" size={16} />Call Manager (0909511588)
+                    <Icon name="phone" size={16} />Call 0909511588
                   </a>
                   <button className="continue-button" onClick={() => setModal('help')}>
                     Request staff assistance<Icon name="heart" size={16} />

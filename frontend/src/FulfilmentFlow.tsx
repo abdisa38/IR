@@ -89,6 +89,21 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
       lock.current = false; setBusy(false)
       if (res.success && res.order) {
         try {
+          const historyItem = {
+            orderNumber: res.order.orderNumber,
+            date: new Date().toISOString(),
+            total: res.order.total || res.order.subtotal,
+            table: '',
+            type: 'Pickup / Takeaway',
+            items: linePayload.map(lp => ({ name: lp.name, quantity: lp.quantity, price: lp.price })),
+            status: 'Submitted',
+          }
+          const prevHistory = JSON.parse(localStorage.getItem('ilillii_order_history') || '[]')
+          const filtered = Array.isArray(prevHistory) ? prevHistory.filter((h: any) => h.orderNumber !== res.order.orderNumber) : []
+          localStorage.setItem('ilillii_order_history', JSON.stringify([historyItem, ...filtered].slice(0, 30)))
+        } catch (e) {}
+
+        try {
           localStorage.setItem(
             'ilillii_customer',
             JSON.stringify({
@@ -149,14 +164,14 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
   }
   const title = page === 'details' ? <>A little about <span>you.</span></> : page === 'review' ? <>One last <span>look.</span></> : page === 'lookup' ? <>Your order,<br /><span>close at hand.</span></> : page === 'confirmation' ? <>We’ve kept it<br /><span>all together.</span></> : <>Every step,<br /><span>made clear.</span></>
   return <dialog ref={dialog} className="order-flow" aria-labelledby="fulfilment-title" onCancel={event => { event.preventDefault(); if (!busy) close() }}>
-    <header className="order-nav"><div className="order-shell"><Logo /><div><button className="order-lang" onClick={() => setModal('language')}><Icon name="globe" size={16} />{language === 'om' ? 'Afaan Oromoo' : language === 'am' ? 'አማርኛ' : 'English'}<Icon name="down" size={13} /></button><span className="table-badge"><Icon name="bag" size={15} />{page === 'lookup' ? 'Order' : 'Pickup / Takeaway'}</span></div></div></header>
+    <header className="order-nav"><div className="order-shell"><Logo /><div><button type="button" className="order-lang" onClick={() => setModal('language')}><Icon name="globe" size={16} /><span className="lang-code-pill">{language === 'om' ? 'Oro' : language === 'am' ? 'Amh' : 'Eng'}</span><Icon name="down" size={11} /></button><span className="table-badge"><Icon name="bag" size={15} />{page === 'lookup' ? 'Order' : 'Pickup / Takeaway'}</span></div></div></header>
     <div className="order-shell order-content"><div className="fulfilment-utility"><button className="order-back" disabled={busy} onClick={() => { if (isReceipt || page === 'details' || page === 'lookup') close(); else go('details') }}><Icon name="arrow" size={16} />{isReceipt || page === 'details' || page === 'lookup' ? 'Back to menu' : 'Back'}</button>{page !== 'lookup' && <button disabled={busy} onClick={() => { setLookupState('initial'); go('lookup') }}><Icon name="user" size={15} />Sign In / Track Order</button>}</div>
       <div className="order-page-heading"><span className="eyebrow">ILILLII HOTEL · BALE ROBE</span><h1 ref={heading} tabIndex={-1} id="fulfilment-title">{title}</h1></div>
       {!isReceipt && page !== 'lookup' && <ol className="checkout-progress fulfilment-progress">{['Details', 'Review'].map((label, index) => <li key={label} className={label === ({ details: 'Details', review: 'Review' } as Record<string, string>)[page] ? 'current' : ''}><span>{index + 1}</span>{label}</li>)}</ol>}
       <div className={`order-layout ${page === 'lookup' || page === 'details' || isReceipt ? 'wide-main single-card' : ''}`}><div className="order-main-card">
         {isReceipt && receipt && <div className="checkout-status-pair"><StatusBadge type="Order" label={stages[stage]} /></div>}
         {error && <div className="order-error" role="alert" id="guest-form-error"><Icon name="info" size={20} /><div><strong>Let’s check before continuing.</strong><p>{error}</p></div></div>}
-        {page === 'details' && <form noValidate onSubmit={event => { event.preventDefault(); const invalid = validateOffsite(name, phone); setError(invalid); if (!invalid) go('review') }}><div className="order-card-heading"><span className="order-card-icon"><Icon name="bag" size={23} /></span><div><h2>Pick Up My Order (Takeaway)</h2></div></div><div className="pickup-location"><Icon name="pin" size={22} /><div><strong>Ilillii Hotel · Bale Robe</strong><span>Around Awraris, near General Wako Gutu Square</span><small>Manager: 0909511588</small></div></div><label className="order-field">Your name<span>Required</span><input required aria-invalid={Boolean(error && !name.trim())} aria-describedby={error ? 'guest-form-error' : undefined} autoComplete="name" value={name} maxLength={80} onChange={event => setName(event.target.value)} placeholder="Your name" /></label><label className="order-field">Phone number<span>Required</span><input required aria-invalid={Boolean(error && error.toLowerCase().includes('phone'))} aria-describedby={error ? 'guest-form-error' : undefined} type="tel" inputMode="tel" autoComplete="tel" value={phone} maxLength={24} onChange={event => setPhone(event.target.value)} placeholder="0909511588" /><small>Used by our team for order coordination.</small></label><label className="order-field">Order instructions<span>Optional</span><textarea value={note} maxLength={500} onChange={event => setNote(event.target.value)} rows={3} placeholder="Anything the team should know?" /><small>Let us know if you have any dietary preferences.</small></label><button className="button primary order-full" type="submit">Review order<Icon name="arrow" size={18} /></button></form>}
+        {page === 'details' && <form noValidate onSubmit={event => { event.preventDefault(); const invalid = validateOffsite(name, phone); setError(invalid); if (!invalid) go('review') }}><div className="order-card-heading"><span className="order-card-icon"><Icon name="bag" size={23} /></span><div><h2>Pick Up My Order (Takeaway)</h2></div></div><div className="pickup-location"><Icon name="pin" size={22} /><div><strong>Ilillii Hotel · Bale Robe</strong><span>Around Awraris, near General Wako Gutu Square</span><small>Phone: 0909511588</small></div></div><label className="order-field">Your name<span>Required</span><input required aria-invalid={Boolean(error && !name.trim())} aria-describedby={error ? 'guest-form-error' : undefined} autoComplete="name" value={name} maxLength={80} onChange={event => setName(event.target.value)} placeholder="Your name" /></label><label className="order-field">Phone number<span>Required</span><input required aria-invalid={Boolean(error && error.toLowerCase().includes('phone'))} aria-describedby={error ? 'guest-form-error' : undefined} type="tel" inputMode="tel" autoComplete="tel" value={phone} maxLength={24} onChange={event => setPhone(event.target.value)} placeholder="0909511588" /><small>Used by our team for order coordination.</small></label><label className="order-field">Order instructions<span>Optional</span><textarea value={note} maxLength={500} onChange={event => setNote(event.target.value)} rows={3} placeholder="Anything the team should know?" /><small>Let us know if you have any dietary preferences.</small></label><button className="button primary order-full" type="submit">Review order<Icon name="arrow" size={18} /></button></form>}
         {page === 'review' && (
           <>
             <h2>Check your meal details</h2>
@@ -230,8 +245,19 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
                   Track order progress<Icon name="arrow" size={18} />
                 </button>
               )}
+              <button
+                type="button"
+                className="button secondary order-full"
+                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                onClick={() => {
+                  close()
+                  window.dispatchEvent(new CustomEvent('ilillii-open-history'))
+                }}
+              >
+                <Icon name="clock" size={16} />View My Past Orders
+              </button>
               <a href="tel:0909511588" className="button secondary order-full" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-                <Icon name="phone" size={16} />Call Manager (0909511588)
+                <Icon name="phone" size={16} />Call 0909511588
               </a>
               <button className="continue-button" onClick={() => setModal('cancel')}>Request cancellation</button>
               {cancellation && <p className="cancellation-note" role="status">Cancellation request received. Our team will verify and contact you.</p>}
@@ -263,6 +289,6 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
         )}
       </div>{page === 'review' && <aside className="order-summary-card"><div className="summary-heading"><Icon name="bag" size={20} /><h2>Your meal</h2>{!isReceipt && <button disabled={busy} onClick={close}>Edit</button>}</div><div className="summary-table"><span>Pickup at Ilillii Hotel</span></div><div className="summary-lines">{shownLines.map(line => <div key={line.item.id}><span>{line.quantity} ×</span><div><strong>{line.item.name}</strong></div>{shownLines.length > 1 && <b>{formatBirr(line.item.price * line.quantity)} ETB</b>}</div>)}</div><div className="summary-total"><span>Total</span><strong>{formatBirr(total)} <small>ETB</small></strong></div><div className="summary-assurance"><Icon name="heart" size={17} /><span>Good food, your way.<br />Freshly prepared at Ilillii.</span></div></aside>}</div>
     </div>
-    {open && modal && <Modal title={modal === 'language' ? 'Choose Language / Qooqa Filadhaa' : modal === 'cancel' ? 'Order Cancellation' : 'Contact Ilillii Hotel'} close={() => setModal(null)}>{modal === 'language' ? <div className="language-options">{languageOptions.map(option => <button className={`language-option ${language === option.id ? 'selected' : ''}`} key={option.id} onClick={() => { setLanguage(option.id); setModal(null) }}><span>{option.native} — {option.label}</span><Icon name={language === option.id ? 'check' : 'globe'} /></button>)}</div> : modal === 'cancel' ? <><p className="modal-description">If you need to change or cancel your order, please call our manager directly before kitchen preparation finishes.</p><a href="tel:0909511588" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="phone" size={17} />Call Manager (0909511588)</a></> : <><p className="modal-description">Ilillii Hotel is located around Awraris, near General Wako Gutu Square, Bale Robe. If you have any questions or need assistance, please call our manager directly.</p><a href="tel:0909511588" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="phone" size={17} />Call Manager (0909511588)</a></>}</Modal>}
+    {open && modal && <Modal title={modal === 'language' ? 'Choose Language / Qooqa Filadhaa' : modal === 'cancel' ? 'Order Cancellation' : 'Contact Ilillii Hotel'} close={() => setModal(null)}>{modal === 'language' ? <div className="language-options">{languageOptions.map(option => <button className={`language-option ${language === option.id ? 'selected' : ''}`} key={option.id} onClick={() => { setLanguage(option.id); setModal(null) }}><span>{option.native} — {option.label}</span><Icon name={language === option.id ? 'check' : 'globe'} /></button>)}</div> : modal === 'cancel' ? <><p className="modal-description">If you need to change or cancel your order, please call our team directly before kitchen preparation finishes.</p><a href="tel:0909511588" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="phone" size={17} />Call 0909511588</a></> : <><p className="modal-description">Ilillii Hotel is located around Awraris, near General Wako Gutu Square, Bale Robe. If you have any questions or need assistance, please call our team directly.</p><a href="tel:0909511588" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="phone" size={17} />Call 0909511588</a></>}</Modal>}
   </dialog>
 }
