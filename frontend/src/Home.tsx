@@ -9,7 +9,7 @@ const heroPhoto = '/images/ethiopian-sharing-platter.jpg'
 
 export default function App() {
   const [modal, setModal] = useState<string | null>(null)
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
   const [featuredDishes, setFeaturedDishes] = useState<ApiMenuItem[]>([])
 
   useEffect(() => {
@@ -39,16 +39,59 @@ export default function App() {
   return <>
     <GlobalHeader active="home" />
     <main>
-      <section className="hero"><div className="hero-copy"><div className="eyebrow"><span /> A WARM WELCOME TO ILILLII</div><h1>Good food.<br />Great <span>Restaurant.</span></h1><div className="hero-buttons"><button className="button primary" onClick={showMenu}>Explore Our Menu<Icon name="arrow" size={18} /></button><a className="button secondary" href="#find-us"><Icon name="pin" size={18} />Find Us</a></div><div className="hero-footnote"><span className="mini-mark"><Mark /></span><span>Rooted in our community.<br /><strong>Made for moments together.</strong></span></div></div><div className="hero-image"><img src={heroPhoto} alt="A generous Ethiopian sharing platter served on injera" fetchPriority="high" /><div className="image-shade" /><span className="image-label">GOOD FOOD BRINGS US TOGETHER</span><div className="round-seal"><span>COME HUNGRY</span><Mark /><span>LEAVE HAPPY</span></div><div className="photo-caption"><span className="photo-caption-line" />A shared table. A shared moment.</div></div></section>
-      <section className="ways container" aria-labelledby="ways-heading"><div className="ways-intro"><span className="eyebrow">YOUR TABLE, YOUR WAY</span><h2 id="ways-heading">How will you<br />join us?</h2></div>{[{ icon: 'meal', name: 'Dine In', description: 'Settle in. Share a meal. Feel at home at our hotel.' }, { icon: 'bag', name: 'Pickup / Takeaway', description: 'Your favourites, freshly prepared to take with you.' }].map(method => <button className="method-card" key={method.name} onClick={() => setModal(method.name)}><span className="method-icon"><Icon name={method.icon} size={25} /></span><span className="method-content"><strong>{method.name}</strong></span><Icon name="arrow" size={18} /></button>)}</section>
+      <section className="hero">
+        <div className="hero-copy">
+          <div className="eyebrow"><span /> {t('hero.welcome')}</div>
+          <h1>{t('hero.titleLine1')}<br />{t('hero.titleLine2')} <span>{t('hero.titleSpan')}</span></h1>
+          <div className="hero-buttons">
+            <button className="button primary" onClick={showMenu}>{t('hero.exploreMenu')}<Icon name="arrow" size={18} /></button>
+            <a className="button secondary" href="#find-us"><Icon name="pin" size={18} />{t('hero.findUs')}</a>
+          </div>
+          <div className="hero-footnote">
+            <span className="mini-mark"><Mark /></span>
+            <span>{t('hero.community')}<br /><strong>{t('hero.moments')}</strong></span>
+          </div>
+        </div>
+        <div className="hero-image">
+          <img src={heroPhoto} alt="A generous Ethiopian sharing platter served on injera" fetchPriority="high" />
+          <div className="image-shade" />
+          <span className="image-label">{t('hero.imageLabel')}</span>
+          <div className="round-seal">
+            <span>{t('hero.sealTop')}</span>
+            <Mark />
+            <span>{t('hero.sealBottom')}</span>
+          </div>
+          <div className="photo-caption">
+            <span className="photo-caption-line" />{t('hero.photoCaption')}
+          </div>
+        </div>
+      </section>
+
+      <section className="ways container" aria-labelledby="ways-heading">
+        <div className="ways-intro">
+          <span className="eyebrow">{t('ways.eyebrow')}</span>
+          <h2 id="ways-heading" style={{ whiteSpace: 'pre-line' }}>{t('ways.title')}</h2>
+        </div>
+        {[
+          { icon: 'meal', name: t('ways.dineIn'), description: t('ways.dineInDesc') },
+          { icon: 'bag', name: t('ways.pickup'), description: t('ways.pickupDesc') },
+        ].map(method => (
+          <button className="method-card" key={method.name} onClick={() => setModal(method.name)}>
+            <span className="method-icon"><Icon name={method.icon} size={25} /></span>
+            <span className="method-content"><strong>{method.name}</strong></span>
+            <Icon name="arrow" size={18} />
+          </button>
+        ))}
+      </section>
+
       <section className="featured" id="menu">
         <div className="container">
           <div className="section-heading">
             <div>
-              <span className="eyebrow">A LITTLE SOMETHING TO LOOK FORWARD TO</span>
-              <h2>Find your next favourite.</h2>
+              <span className="eyebrow">{t('featured.eyebrow')}</span>
+              <h2>{t('featured.title')}</h2>
             </div>
-            <button className="text-button" onClick={showMenu}>Explore the menu<Icon name="arrow" size={19} /></button>
+            <button className="text-button" onClick={showMenu}>{t('featured.explore')}<Icon name="arrow" size={19} /></button>
           </div>
           <div className="food-grid">
             {featuredDishes.length > 0 ? featuredDishes.map((food, index) => (
@@ -65,12 +108,18 @@ export default function App() {
                       }
                     }}
                   />
-                  <span className="food-badge">{food.houseSpecial ? 'SPECIAL HOUSE FOOD' : index === 0 ? 'SIGNATURE DISH' : 'CHEF RECOMMENDATION'}</span>
+                  <span className="food-badge">
+                    {food.houseSpecial ? t('featured.badgeSpecial') : index === 0 ? t('featured.badgeSignature') : t('featured.badgeChef')}
+                  </span>
                   <span className="food-arrow"><Icon name="arrow" /></span>
                 </div>
                 <div className="food-info">
                   <div>
-                    <h3>{food.amharicName ? `${food.name} / ${food.amharicName}` : food.name}</h3>
+                    <h3>
+                      {language === 'am' && food.amharicName
+                        ? food.amharicName
+                        : (language === 'om' && food.translations?.om ? food.translations.om : food.name)}
+                    </h3>
                   </div>
                   <span className="price">{food.price}<small>ETB</small></span>
                 </div>
@@ -93,7 +142,7 @@ export default function App() {
                       }
                     }}
                   />
-                  <span className="food-badge">SPECIAL HOUSE FOOD</span>
+                  <span className="food-badge">{t('featured.badgeSpecial')}</span>
                   <span className="food-arrow"><Icon name="arrow" /></span>
                 </div>
                 <div className="food-info">
@@ -105,12 +154,33 @@ export default function App() {
               </button>
             ))}
           </div>
-          <p className="sample-note"><span className="note-dot" />Freshly prepared daily with authentic Bale Robe spices and ingredients.</p>
+          <p className="sample-note"><span className="note-dot" />{t('featured.freshNote')}</p>
         </div>
       </section>
-      <section className="hospitality container" id="about"><div className="hospitality-image"><img src={'/images/1517248135467-4c7edcad34c4.jpg'} alt="Warm restaurant interior with tables set for gathering" loading="lazy" /><span className="hospitality-stamp"><Mark /><span>THERE’S ALWAYS<br />ROOM AT OUR TABLE</span></span></div><div className="hospitality-copy"><span className="eyebrow">MORE THAN A MEAL</span><h2>A familiar place.<br />A warm welcome.</h2><div className="hospitality-signoff"><Icon name="heart" size={21} /><span>Food. People. A sense of belonging.</span></div></div></section>
+
+      <section className="hospitality container" id="about">
+        <div className="hospitality-image">
+          <img src={'/images/1517248135467-4c7edcad34c4.jpg'} alt="Warm restaurant interior with tables set for gathering" loading="lazy" />
+          <span className="hospitality-stamp">
+            <Mark />
+            <span>{t('hospitality.stampTop')}<br />{t('hospitality.stampBottom')}</span>
+          </span>
+        </div>
+        <div className="hospitality-copy">
+          <span className="eyebrow">{t('hospitality.eyebrow')}</span>
+          <h2>{t('hospitality.titleLine1')}<br />{t('hospitality.titleLine2')}</h2>
+          <div className="hospitality-signoff">
+            <Icon name="heart" size={21} />
+            <span>{t('hospitality.signoff')}</span>
+          </div>
+        </div>
+      </section>
+
       <FindUsSection />
-      <section className="closing"><Mark /><button className="text-button" onClick={showMenu}>Let’s find your favourite<Icon name="arrow" size={18} /></button></section>
+      <section className="closing">
+        <Mark />
+        <button className="text-button" onClick={showMenu}>{t('featured.explore')}<Icon name="arrow" size={18} /></button>
+      </section>
     </main>
     <GlobalFooter />
     {modal && <Modal title={modal === 'language' ? 'Choose your language' : modal === 'brand' ? 'The Ilillii brand' : modal === 'directions' ? 'Find Ilillii Hotel' : modal === 'contact' ? 'Let’s get in touch' : `${modal} at Ilillii`} close={() => setModal(null)}>

@@ -17,22 +17,25 @@ function Quantity({ item, quantity, update }: { item: MenuItem; quantity: number
   return <QuantityControl label={item.name} quantity={quantity} onChange={delta => update(item.id, delta)} />
 }
 function ProductCard({ item, quantity, update, details }: { item: MenuItem; quantity: number; update: (id: string, delta: number) => void; details: () => void; language?: string }) {
+  const { language, t } = useLanguage()
   const unavailable = item.availability === 'unavailable'
-  const amharicName = item.translations?.am
-  const fullName = amharicName && amharicName !== item.name
-    ? `${item.name} (${amharicName})`
-    : item.name
+  const primaryName = language === 'am' && item.translations?.am
+    ? item.translations.am
+    : (language === 'om' && item.translations?.om ? item.translations.om : item.name)
+  const secondaryName = language === 'am' && item.translations?.am !== item.name
+    ? item.name
+    : (language !== 'am' && item.translations?.am ? item.translations.am : '')
 
   const fallbackImage = item.category === 'drinks' ? '/images/menu/jaanboo.jpg' : '/images/ethiopian-sharing-platter.jpg'
   const imageUrl = item.confirmedImage ? getImageUrl(item.confirmedImage) : (item.image ? getImageUrl(item.image) : '')
 
   return (
     <article className={`product-card ${quantity ? 'in-cart' : ''} ${unavailable ? 'is-unavailable' : ''}`}>
-      <button className={`product-art art-${item.category}`} onClick={details} aria-label={`View details for ${item.name}`}>
+      <button className={`product-art art-${item.category}`} onClick={details} aria-label={`View details for ${primaryName}`}>
         {imageUrl ? (
           <img
             src={imageUrl}
-            alt={item.name}
+            alt={primaryName}
             loading="lazy"
             onError={(e) => {
               const target = e.currentTarget
@@ -45,17 +48,18 @@ function ProductCard({ item, quantity, update, details }: { item: MenuItem; quan
           <>
             <span className="art-orbit" />
             <span className="art-symbol"><Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={34} /></span>
-            <span className="photo-pending">ITEM PHOTO AWAITING VERIFICATION</span>
+            <span className="photo-pending">{t('menu.photoPending')}</span>
           </>
         )}
         {item.houseSpecial && (
-          <span className="house-special-pill">House Special</span>
+          <span className="house-special-pill">{t('menu.houseSpecial')}</span>
         )}
-        {quantity > 0 && <span className="selected-label"><Icon name="check" size={12} />In your cart</span>}
+        {quantity > 0 && <span className="selected-label"><Icon name="check" size={12} />{t('menu.inCart')}</span>}
       </button>
       <div className="product-body">
-        <button className="product-name" onClick={details} title={fullName}>
-          <h3>{fullName}</h3>
+        <button className="product-name" onClick={details} title={primaryName}>
+          <h3>{primaryName}</h3>
+          {secondaryName && <p style={{ fontSize: '11px', color: 'var(--color-muted)', margin: '2px 0 0' }}>{secondaryName}</p>}
         </button>
         {item.verifiedDescription && (
           <p className="product-card-desc">{item.verifiedDescription}</p>
@@ -65,12 +69,12 @@ function ProductCard({ item, quantity, update, details }: { item: MenuItem; quan
             <small>ETB</small> {formatBirr(item.price)}
           </span>
           {unavailable ? (
-            <button className="add-button" disabled>Unavailable</button>
+            <button className="add-button" disabled>{t('menu.unavailable')}</button>
           ) : quantity ? (
             <Quantity item={item} quantity={quantity} update={update} />
           ) : (
-            <button className="add-button" onClick={() => update(item.id, 1)} aria-label={`Add ${item.name} to cart`}>
-              <Icon name="plus" size={15} />Add
+            <button className="add-button" onClick={() => update(item.id, 1)} aria-label={`Add ${primaryName} to cart`}>
+              <Icon name="plus" size={15} />{t('menu.addBtn')}
             </button>
           )}
         </div>
@@ -86,7 +90,7 @@ export default function Menu() {
   const [cart, setCart] = useState<Cart>({})
   const [panel, setPanel] = useState(false)
   const [modal, setModal] = useState<'language' | 'states' | null>(null)
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
   const [details, setDetails] = useState<MenuItem | null>(null)
   const [notice, setNotice] = useState('')
   const [mode, setMode] = useState('Dine in')
@@ -230,73 +234,262 @@ export default function Menu() {
           <div className="qr-context">
             <span className="qr-context-icon"><Icon name="meal" size={25} /></span>
             <div>
-              <span className="eyebrow">{localStorage.getItem('ilillii_table_source') === 'qr' ? 'SCANNED TABLE SERVICE' : 'YOUR TABLE. YOUR TIME.'}</span>
-              <h2>{qr.table ? (localStorage.getItem('ilillii_table_source') === 'qr' ? `Ordering from Table ${qr.table}` : 'Welcome to Ilillii.') : 'Let’s check your table.'}</h2>
+              <span className="eyebrow">{localStorage.getItem('ilillii_table_source') === 'qr' ? t('qr.scannedBannerEyebrow') : t('menu.yourTableYourTime')}</span>
+              <h2>{qr.table ? (localStorage.getItem('ilillii_table_source') === 'qr' ? t('qr.scannedBannerTitle', undefined, { table: qr.table }) : t('menu.welcomeToIlillii')) : t('menu.checkTable')}</h2>
             </div>
             {qr.table && (
               <span className="table-badge" style={localStorage.getItem('ilillii_table_source') === 'qr' ? { background: '#dcfce7', color: '#15803d', borderColor: '#bbf7d0', fontWeight: 700 } : {}}>
-                <Icon name="meal" size={16} />Table {qr.table} {localStorage.getItem('ilillii_table_source') === 'qr' ? '· QR Verified' : ''}
+                <Icon name="meal" size={16} />{localStorage.getItem('ilillii_table_source') === 'qr' ? t('qr.scannedBadge', undefined, { table: qr.table }) : t('qr.manualBadge', undefined, { table: qr.table })}
               </span>
             )}
           </div>
         )}
-        <div className="qr-entry-actions">{(qr.table || qr.invalid) && <a href="#food-menu" className="button primary">Explore Menu<Icon name="arrow" size={16} /></a>}{count > 0 && <button className="button secondary" onClick={() => setPanel(true)}>View Cart · {count}</button>}<button className="qr-demo-toggle" onClick={() => { setCheckoutEntry('lookup'); setCheckout(true) }}><Icon name="search" size={16} />Find my order</button><button className="qr-demo-toggle" aria-expanded={qrOptions} onClick={() => setQrOptions(!qrOptions)}>Select Table QR<Icon name="down" size={14} /></button>{qr.invalid && <button className="qr-demo-toggle" onClick={() => setTableHelp(true)}>Ask staff for assistance</button>}</div>
-        {qrOptions && <div className="qr-demo-options"><strong>Select Table</strong><div>{demoTables.map(table => <button key={table} className={qr.table === table ? 'chosen' : ''} onClick={() => { setQr({ table, invalid: false }); setMode('Dine in') }}>Table {table}</button>)}<button onClick={() => setQr({ table: null, invalid: true })}>Invalid QR</button><button onClick={() => setQr({ table: null, invalid: false })}>Regular menu</button></div></div>}
+        <div className="qr-entry-actions">
+          {(qr.table || qr.invalid) && <a href="#food-menu" className="button primary">{t('qr.exploreMenu')}<Icon name="arrow" size={16} /></a>}
+          {count > 0 && <button className="button secondary" onClick={() => setPanel(true)}>{t('menu.viewCartWithCount', undefined, { count })}</button>}
+          <button className="qr-demo-toggle" onClick={() => { setCheckoutEntry('lookup'); setCheckout(true) }}><Icon name="search" size={16} />{t('qr.findMyOrder')}</button>
+          <button className="qr-demo-toggle" aria-expanded={qrOptions} onClick={() => setQrOptions(!qrOptions)}>{t('qr.selectTable')}<Icon name="down" size={14} /></button>
+          {qr.invalid && <button className="qr-demo-toggle" onClick={() => setTableHelp(true)}>{t('order.requestHelp')}</button>}
+        </div>
+        {qrOptions && (
+          <div className="qr-demo-options">
+            <strong>{t('qr.selectTable')}</strong>
+            <div>
+              {demoTables.map(table => (
+                <button key={table} className={qr.table === table ? 'chosen' : ''} onClick={() => { setQr({ table, invalid: false }); setMode('Dine in') }}>
+                  {t('checkout.table')} {table}
+                </button>
+              ))}
+              <button onClick={() => setQr({ table: null, invalid: true })}>Invalid QR</button>
+              <button onClick={() => setQr({ table: null, invalid: false })}>{t('menu.all')}</button>
+            </div>
+          </div>
+        )}
       </section>
-      <section className="menu-welcome menu-container"><div className="menu-welcome-copy"><span className="eyebrow"><span />GOOD FOOD, GREAT RESTAURANT</span><h1>Explore our <span>menu.</span></h1><span className="currency-note"><span>ETB</span>All prices in Ethiopian birr</span></div><div className="menu-editorial"><img src="/images/ethiopian-sharing-platter.jpg" alt="Ethiopian sharing platter" /><div className="editorial-shade" /><span className="editorial-caption">A SHARED TABLE. A SHARED MOMENT.</span><div className="editorial-seal"><Mark /></div></div></section>
+
+      <section className="menu-welcome menu-container">
+        <div className="menu-welcome-copy">
+          <span className="eyebrow"><span />{t('menu.welcomeEyebrow')}</span>
+          <h1>{t('menu.exploreTitle')} <span>{t('menu.exploreSpan')}</span></h1>
+          <span className="currency-note"><span>ETB</span>{t('menu.currencyNote')}</span>
+        </div>
+        <div className="menu-editorial">
+          <img src="/images/ethiopian-sharing-platter.jpg" alt="Ethiopian sharing platter" />
+          <div className="editorial-shade" />
+          <span className="editorial-caption">{t('hero.photoCaption')}</span>
+          <div className="editorial-seal"><Mark /></div>
+        </div>
+      </section>
+
       <section id="food-menu" className="menu-container menu-explorer" aria-label="Food and drinks menu">
-        <div className="menu-toolbar"><label className="menu-search"><Icon name="search" size={21} /><input aria-label="Search food or drink name" placeholder="What are you in the mood for?" value={query} onChange={e => setQuery(e.target.value)} />{query && <button aria-label="Clear search" onClick={() => setQuery('')}><Icon name="close" size={18} /></button>}<span className="search-hint">Search food & drinks</span></label><span className="browse-tip"><Icon name="bag" size={16} />Browse first. Choose your way later.</span></div>
-        <div className="category-navigation" role="group" aria-label="Filter menu by category"><button className={`menu-category ${category === 'all' ? 'active' : ''}`} aria-pressed={category === 'all'} onClick={() => setCategory('all')}><Icon name="menu" size={17} /><span>All items</span><small>{items.length}</small></button>{categories.map(c => <button key={c.id} className={`menu-category ${category === c.id ? 'active' : ''}`} aria-pressed={category === c.id} onClick={() => setCategory(c.id)}><Icon name={c.icon} size={17} /><span>{c.label}</span><small>{items.filter(item => item.category === c.id).length}</small></button>)}</div>
-        <div className="results-heading"><div><h2>{query.trim() ? 'Search results' : category === 'all' ? 'Something for everyone.' : categories.find(c => c.id === category)?.label}</h2><span>{results.length} {results.length === 1 ? 'item' : 'items'}{query.trim() && <> matching “{query}”</>}</span></div><span className="price-reminder">PRICES IN <strong>ETB</strong></span></div>
-        {language === 'am' && null}
-        {menuState !== 'ready' ? <StatePanel kind={menuState === 'loading' ? 'loading' : 'error'} title={menuState === 'loading' ? 'Getting the menu ready…' : 'We couldn’t load the menu.'} action={<button className="button primary" onClick={() => setMenuState('ready')}>{menuState === 'loading' ? 'Return to menu preview' : 'Try again'}</button>}></StatePanel> : results.length ? (query.trim() || category !== 'all' ? <div className="product-grid">{results.map(item => <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />)}</div> : categories.map(c => <section className="product-section" key={c.id}><div className="product-section-heading"><span className="section-icon"><Icon name={c.icon} size={20} /></span><div><h3>{c.label}</h3></div><span>{items.filter(item => item.category === c.id).length} items</span></div><div className="product-grid">{items.filter(item => item.category === c.id).map(item => <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />)}</div></section>)) : <div className="menu-empty"><span><Icon name="search" size={32} /></span><h3>No matches just yet.</h3><p>Try a shorter name, check the spelling, or browse all food and drinks.</p><button className="button primary" onClick={resetSearch}>Show all items<Icon name="arrow" size={17} /></button></div>}
-        <div className="menu-help"><Icon name="heart" size={20} /><div><strong>Questions or special orders?</strong></div><SiteLink href="/contact" className="button secondary">Contact Hotel<Icon name="arrow" size={16} /></SiteLink></div>
+        <div className="menu-toolbar">
+          <label className="menu-search">
+            <Icon name="search" size={21} />
+            <input aria-label="Search food or drink name" placeholder={t('menu.searchPlaceholder')} value={query} onChange={e => setQuery(e.target.value)} />
+            {query && <button aria-label="Clear search" onClick={() => setQuery('')}><Icon name="close" size={18} /></button>}
+            <span className="search-hint">{t('menu.searchHint')}</span>
+          </label>
+          <span className="browse-tip"><Icon name="bag" size={16} />{t('menu.browseFirst')}</span>
+        </div>
+
+        <div className="category-navigation" role="group" aria-label="Filter menu by category">
+          <button className={`menu-category ${category === 'all' ? 'active' : ''}`} aria-pressed={category === 'all'} onClick={() => setCategory('all')}>
+            <Icon name="menu" size={17} />
+            <span>{t('menu.all')}</span>
+            <small>{items.length}</small>
+          </button>
+          {categories.map(c => (
+            <button key={c.id} className={`menu-category ${category === c.id ? 'active' : ''}`} aria-pressed={category === c.id} onClick={() => setCategory(c.id)}>
+              <Icon name={c.icon} size={17} />
+              <span>{c.id === 'main' ? t('menu.main') : c.id === 'additional' ? t('menu.additional') : t('menu.drinks')}</span>
+              <small>{items.filter(item => item.category === c.id).length}</small>
+            </button>
+          ))}
+        </div>
+
+        <div className="results-heading">
+          <div>
+            <h2>{query.trim() ? t('menu.resultsFor') : category === 'all' ? t('menu.somethingForEveryone') : (category === 'main' ? t('menu.main') : category === 'additional' ? t('menu.additional') : t('menu.drinks'))}</h2>
+            <span>{results.length} {results.length === 1 ? t('common.item') : t('common.items')}{query.trim() && <> {t('menu.matching', undefined, { query })}</>}</span>
+          </div>
+          <span className="price-reminder">{t('menu.pricesIn')}</span>
+        </div>
+
+        {menuState !== 'ready' ? (
+          <StatePanel
+            kind={menuState === 'loading' ? 'loading' : 'error'}
+            title={menuState === 'loading' ? t('common.loading') : t('menu.noMatches')}
+            action={<button className="button primary" onClick={() => setMenuState('ready')}>{menuState === 'loading' ? t('common.back') : t('menu.showAll')}</button>}
+          />
+        ) : results.length ? (
+          query.trim() || category !== 'all' ? (
+            <div className="product-grid">
+              {results.map(item => (
+                <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />
+              ))}
+            </div>
+          ) : (
+            categories.map(c => (
+              <section className="product-section" key={c.id}>
+                <div className="product-section-heading">
+                  <span className="section-icon"><Icon name={c.icon} size={20} /></span>
+                  <div><h3>{c.id === 'main' ? t('menu.main') : c.id === 'additional' ? t('menu.additional') : t('menu.drinks')}</h3></div>
+                  <span>{items.filter(item => item.category === c.id).length} {t('common.items')}</span>
+                </div>
+                <div className="product-grid">
+                  {items.filter(item => item.category === c.id).map(item => (
+                    <ProductCard key={item.id} item={item} quantity={cart[item.id] || 0} update={update} details={() => setDetails(item)} language={language} />
+                  ))}
+                </div>
+              </section>
+            ))
+          )
+        ) : (
+          <div className="menu-empty">
+            <span><Icon name="search" size={32} /></span>
+            <h3>{t('menu.noMatches')}</h3>
+            <p>{t('menu.noMatchesDesc')}</p>
+            <button className="button primary" onClick={resetSearch}>{t('menu.showAll')}<Icon name="arrow" size={17} /></button>
+          </div>
+        )}
+
+        <div className="menu-help">
+          <Icon name="heart" size={20} />
+          <div><strong>{t('menu.questions')}</strong></div>
+          <SiteLink href="/contact" className="button secondary">{t('menu.contactHotel')}<Icon name="arrow" size={16} /></SiteLink>
+        </div>
       </section>
-      <section className="menu-service-strip"><div className="menu-container">{[{ name: 'Dine in', icon: 'meal', text: 'Good company, around our table at Ilillii Hotel.' }, { name: 'Pickup / Takeaway', icon: 'bag', text: 'Freshly prepared and packed for pickup at the hotel.' }].map(item => <div key={item.name}><Icon name={item.icon} size={24} /><span><strong>{item.name}</strong></span></div>)}</div></section>
+
+      <section className="menu-service-strip">
+        <div className="menu-container">
+          {[
+            { name: t('ways.dineIn'), icon: 'meal', text: t('ways.dineInDesc') },
+            { name: t('ways.pickup'), icon: 'bag', text: t('ways.pickupDesc') }
+          ].map(item => (
+            <div key={item.name}>
+              <Icon name={item.icon} size={24} />
+              <span><strong>{item.name}</strong></span>
+            </div>
+          ))}
+        </div>
+      </section>
     </main>
+
     <GlobalFooter />
-    {count > 0 && <div className="bottom-cart"><div><span>{count} {count === 1 ? 'item' : 'items'} · Subtotal</span><strong>{formatBirr(subtotal)} <small>ETB</small></strong></div><button onClick={() => setPanel(true)}>View cart<Icon name="arrow" size={19} /></button></div>}
-    <div className={`cart-toast ${notice ? 'visible' : ''}`} role="status" aria-live="polite">{notice && <><Icon name="check" size={17} /><span>{notice}</span></>}</div>
+
+    {count > 0 && (
+      <div className="bottom-cart">
+        <div>
+          <span>{count} {count === 1 ? t('common.item') : t('common.items')} · {t('common.subtotal')}</span>
+          <strong>{formatBirr(subtotal)} <small>ETB</small></strong>
+        </div>
+        <button onClick={() => setPanel(true)}>{t('nav.yourCart')}<Icon name="arrow" size={19} /></button>
+      </div>
+    )}
+
+    <div className={`cart-toast ${notice ? 'visible' : ''}`} role="status" aria-live="polite">
+      {notice && <><Icon name="check" size={17} /><span>{notice}</span></>}
+    </div>
+
     <dialog className="cart-drawer" ref={cartRef} onCancel={() => setPanel(false)} onClick={e => { if (e.target === e.currentTarget) setPanel(false) }}>
-      <div className="drawer-heading"><div><span className="eyebrow">A LITTLE GOOD FOOD</span><h2>Your cart <span>{count}</span></h2></div><button className="icon-button" onClick={() => setPanel(false)} aria-label="Close cart"><Icon name="close" /></button></div>
+      <div className="drawer-heading">
+        <div>
+          <span className="eyebrow">{t('featured.eyebrow')}</span>
+          <h2>{t('cart.title')} <span>{count}</span></h2>
+        </div>
+        <button className="icon-button" onClick={() => setPanel(false)} aria-label="Close cart"><Icon name="close" /></button>
+      </div>
+
       {qr.table && (
         <div className="cart-table-context">
           <Icon name="meal" size={19} />
-          <span>Table {qr.table} · Dine In {localStorage.getItem('ilillii_table_source') === 'qr' ? '(QR Verified)' : ''}</span>
+          <span>{t('checkout.table')} {qr.table} · {t('cart.dineIn')} {localStorage.getItem('ilillii_table_source') === 'qr' ? '(QR Verified)' : ''}</span>
         </div>
       )}
-      {count ? <>
-        <div className="cart-lines">{selected.map(item => <div className="cart-line" key={item.id}><span className={`cart-item-symbol art-${item.category}`}>{item.confirmedImage ? <img src={getImageUrl(item.confirmedImage)} alt={item.name} onError={(e) => { const target = e.currentTarget; target.onerror = null; target.src = '/images/ethiopian-sharing-platter.jpg' }} /> : <Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={22} />}</span><div className="cart-line-content"><h3>{language === 'am' && item.translations?.am ? item.translations.am : item.name}</h3>{cart[item.id] > 1 && <p>{formatBirr(item.price)} ETB each</p>}<Quantity item={item} quantity={cart[item.id]} update={update} /></div><strong>{formatBirr(item.price * cart[item.id])}<small>ETB</small></strong></div>)}</div>
-        <div className="cart-mode">
-          <span className="eyebrow">ORDER SERVICE</span>
-          <div>
-            <button
-              type="button"
-              className={mode === 'Dine in' ? 'chosen' : ''}
-              aria-pressed={mode === 'Dine in'}
-              onClick={() => setMode('Dine in')}
-            >
-              <Icon name="meal" size={17} />
-              <span>Dine in (Table)</span>
+
+      {count ? (
+        <>
+          <div className="cart-lines">
+            {selected.map(item => {
+              const displayName = language === 'am' && item.translations?.am
+                ? item.translations.am
+                : (language === 'om' && item.translations?.om ? item.translations.om : item.name)
+              return (
+                <div className="cart-line" key={item.id}>
+                  <span className={`cart-item-symbol art-${item.category}`}>
+                    {item.confirmedImage ? (
+                      <img src={getImageUrl(item.confirmedImage)} alt={displayName} onError={(e) => { const target = e.currentTarget; target.onerror = null; target.src = '/images/ethiopian-sharing-platter.jpg' }} />
+                    ) : (
+                      <Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={22} />
+                    )}
+                  </span>
+                  <div className="cart-line-content">
+                    <h3>{displayName}</h3>
+                    {cart[item.id] > 1 && <p>{formatBirr(item.price)} ETB {t('cart.each')}</p>}
+                    <Quantity item={item} quantity={cart[item.id]} update={update} />
+                  </div>
+                  <strong>{formatBirr(item.price * cart[item.id])}<small>ETB</small></strong>
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="cart-mode">
+            <span className="eyebrow">{t('cart.orderService')}</span>
+            <div>
+              <button
+                type="button"
+                className={mode === 'Dine in' ? 'chosen' : ''}
+                aria-pressed={mode === 'Dine in'}
+                onClick={() => setMode('Dine in')}
+              >
+                <Icon name="meal" size={17} />
+                <span>{t('cart.dineIn')}</span>
+              </button>
+              <button
+                type="button"
+                className={mode === 'Pickup' ? 'chosen' : ''}
+                aria-pressed={mode === 'Pickup'}
+                onClick={() => setMode('Pickup')}
+              >
+                <Icon name="bag" size={17} />
+                <span>{t('cart.pickup')}</span>
+              </button>
+            </div>
+          </div>
+
+          <label className="order-field cart-note-field">
+            {t('cart.orderNote')} <span>{t('cart.optional')}</span>
+            <textarea value={note} maxLength={500} onChange={e => setNote(e.target.value)} rows={2} placeholder={t('cart.notePlaceholder')} />
+          </label>
+
+          <div className="cart-summary">
+            <div>
+              <span>{t('common.total')}</span>
+              <strong>{formatBirr(subtotal)} ETB</strong>
+            </div>
+            <button className="button primary cart-checkout-btn" onClick={() => { setPanel(false); if (mode === 'Pickup') { setCheckoutEntry('details'); setCheckout(true) } else { setDineInCheckout(true) } }}>
+              {t('cart.continueToOrder')}<Icon name="arrow" size={18} />
             </button>
-            <button
-              type="button"
-              className={mode === 'Pickup' ? 'chosen' : ''}
-              aria-pressed={mode === 'Pickup'}
-              onClick={() => setMode('Pickup')}
-            >
-              <Icon name="bag" size={17} />
-              <span>Pickup / Takeaway</span>
+            <button className="continue-button" onClick={() => setPanel(false)}>
+              {t('cart.continueBrowsing')}
             </button>
           </div>
+        </>
+      ) : (
+        <div className="empty-cart">
+          <span><Icon name="bag" size={42} /></span>
+          <h3>{t('cart.emptyTitle')}</h3>
+          <p>{t('cart.emptyDesc')}</p>
+          <button className="button primary" onClick={() => setPanel(false)}>
+            {t('cart.exploreMenu')}<Icon name="arrow" size={17} />
+          </button>
         </div>
-        <label className="order-field cart-note-field">Order note <span>Optional</span><textarea value={note} maxLength={500} onChange={e => setNote(e.target.value)} rows={2} placeholder="Special instructions for kitchen (allergies, spice level, etc.)" /></label>
-        <div className="cart-summary"><div><span>Total</span><strong>{formatBirr(subtotal)} ETB</strong></div><button className="button primary cart-checkout-btn" onClick={() => { setPanel(false); if (mode === 'Pickup') { setCheckoutEntry('details'); setCheckout(true) } else { setDineInCheckout(true) } }}>Continue to Order<Icon name="arrow" size={18} /></button><button className="continue-button" onClick={() => setPanel(false)}>Continue browsing</button></div>
-      </> : <div className="empty-cart"><span><Icon name="bag" size={42} /></span><h3>A good meal starts here.</h3><p>Your cart is empty. Browse the menu and tap “Add” to start your order.</p><button className="button primary" onClick={() => setPanel(false)}>Explore the menu<Icon name="arrow" size={17} /></button></div>}
+      )}
     </dialog>
-    <Suspense fallback={checkout ? <p role="status">Loading checkout…</p> : null}><FulfilmentFlow open={checkout} entry={checkoutEntry} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
-    <Suspense fallback={dineInCheckout ? <p role="status">Loading order details…</p> : null}><OrderFlow open={dineInCheckout} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setDineInCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
-    {tableHelp && <Modal title="Let’s check your table." close={() => setTableHelp(false)}><p className="modal-description">Ask staff to confirm your table and provide its correct QR code. You can keep browsing; your cart is unchanged. Dine-in requires a table reference. Pickup orders are also available from checkout without a table.</p><button className="button secondary" onClick={() => { setTableHelp(false); setQrOptions(true) }}>Open demo table options</button></Modal>}
+    <Suspense fallback={checkout ? <p role="status">{t('common.loading')}</p> : null}><FulfilmentFlow open={checkout} entry={checkoutEntry} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
+    <Suspense fallback={dineInCheckout ? <p role="status">{t('common.loading')}</p> : null}><OrderFlow open={dineInCheckout} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setDineInCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
+    {tableHelp && <Modal title={t('menu.checkTable')} close={() => setTableHelp(false)}><p className="modal-description">{t('history.desc')}</p><button className="button secondary" onClick={() => { setTableHelp(false); setQrOptions(true) }}>{t('qr.selectTable')}</button></Modal>}
     {modal && <Modal title={modal === 'language' ? 'Feel at home.' : 'A considered menu preview'} close={() => setModal(null)}>
       {modal === 'language' ? (
         <div className="language-options">
@@ -314,15 +507,15 @@ export default function Menu() {
             </button>
           ))}
         </div>
-      ) : <><p className="modal-description">Product photos are reserved until their matches are confirmed. URL table numbers are not treated as valid without a verified table registry. There is no database, real order submission or payment integration.</p><h3 className="state-preview-title">Unavailable component state</h3><ProductCard item={{ id: 'state-preview', name: 'Item name · component preview', price: 0, category: 'main', availability: 'unavailable' }} quantity={0} update={() => {}} details={() => {}} language={language} /></>}
+      ) : <><p className="modal-description">Product photos are reserved until their matches are confirmed.</p><h3 className="state-preview-title">{t('menu.unavailable')}</h3></>}
     </Modal>}
-    {details && <Modal title={language === 'am' && details.translations?.am ? details.translations.am : details.name} close={() => setDetails(null)}>
+    {details && <Modal title={language === 'am' && details.translations?.am ? details.translations.am : (language === 'om' && details.translations?.om ? details.translations.om : details.name)} close={() => setDetails(null)}>
       {details.confirmedImage && <div className="modal-item-photo"><img src={getImageUrl(details.confirmedImage)} alt={details.name} onError={(e) => { const target = e.currentTarget; target.onerror = null; target.src = details.category === 'drinks' ? '/images/menu/jaanboo.jpg' : '/images/ethiopian-sharing-platter.jpg' }} /></div>}
       {details.translations?.am && <div className="modal-item-translation">{details.name} {details.translations.am !== details.name && <>· <span lang="am">{details.translations.am}</span></>}</div>}
       <div className="item-details-price">{formatBirr(details.price)} <span>ETB</span></div>
       {details.verifiedDescription && <p className="modal-item-desc">{details.verifiedDescription}</p>}
-      <p className="detail-warning"><Icon name="info" size={17} />Please ask the hotel about ingredients and allergens.</p>
-      {cart[details.id] ? <Quantity item={details} quantity={cart[details.id]} update={update} /> : <button className="button primary" onClick={() => update(details.id, 1)}><Icon name="plus" size={17} />Add to preview cart</button>}
+      <p className="detail-warning"><Icon name="info" size={17} />{t('menu.askIngredients')}</p>
+      {cart[details.id] ? <Quantity item={details} quantity={cart[details.id]} update={update} /> : <button className="button primary" onClick={() => update(details.id, 1)}><Icon name="plus" size={17} />{t('menu.addBtn')}</button>}
     </Modal>}
   </div>
 }
