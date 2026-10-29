@@ -417,6 +417,27 @@ body .admin-card-badges-row {
   flex-wrap: wrap !important;
 }
 
+body .admin-status-completed-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border: 1px solid #bbf7d0 !important;
+  padding: 4px 10px !important;
+  border-radius: 9999px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+body .admin-status-completed-pill .dot {
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #16a34a !important;
+}
+
 body .admin-card-footer-row {
   display: flex !important;
   align-items: center !important;

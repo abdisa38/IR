@@ -310,73 +310,74 @@ export default function Admin() {
   const orderTable = (data: DemoOrder[]) => (
     <>
       <div className="admin-mobile-orders">
-        {data.map(order => (
-          <article className="admin-mobile-order-card" key={order.id}>
-            <div className="admin-card-header">
-              <div className="admin-card-user-info">
-                <button
-                  type="button"
-                  className="admin-card-customer-link"
-                  onClick={() => setSelected(order)}
-                >
-                  {order.customer || 'Guest Customer'}
-                </button>
-                <span className="admin-card-id-pill">#{order.id}</span>
-              </div>
-              <span className="admin-card-time-text">{time(order.received)}</span>
-            </div>
+        {data.map(order => {
+          const customerDisplayName = order.customer && !order.customer.trim().toLowerCase().startsWith('table')
+            ? order.customer
+            : 'Guest Customer'
 
-            <div className="admin-card-tags-row">
-              <span className="admin-tag-service">
-                <Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={14} />
-                {order.type}
-              </span>
-              {order.source === 'table_qr' ? (
-                <span className="admin-tag-table-qr">
-                  Table {order.table} (QR)
-                </span>
-              ) : order.table ? (
-                <span className="admin-tag-table-manual">
-                  Table {order.table}
-                </span>
-              ) : (
-                <span className="admin-tag-table-direct">
-                  Web Direct
-                </span>
-              )}
-              {order.parentOrderId && (
-                <span className="admin-tag-extra">
-                  + Extra Items
-                </span>
-              )}
-            </div>
-
-            <div className="admin-card-items-box">
-              {order.items.map((item, idx) => (
-                <div key={idx} className="admin-card-item-line">
-                  <span className="admin-item-title">
-                    <strong className="admin-item-count">{item.quantity}×</strong>
-                    {item.name}
+          return (
+            <article className="admin-mobile-order-card" key={order.id} onClick={() => setSelected(order)} style={{ cursor: 'pointer' }}>
+              <div className="admin-card-header">
+                <div className="admin-card-user-info">
+                  <span className="admin-card-customer-link">
+                    {customerDisplayName}
                   </span>
-                  {financial && <span className="admin-item-sum">{formatBirr(item.price * item.quantity)} ETB</span>}
                 </div>
-              ))}
-              {order.note && <div className="admin-card-kitchen-note">Note: {order.note}</div>}
-            </div>
+                <span className="admin-card-time-text">{time(order.received)}</span>
+              </div>
 
-            <div className="admin-card-badges-row">
-              <Badge value={order.payment} type="Payment" />
-              <Badge value={orderStatusLabel(order)} />
-            </div>
+              <div className="admin-card-tags-row">
+                <span className="admin-tag-service">
+                  <Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={14} />
+                  {order.type}
+                </span>
+                {order.source === 'table_qr' ? (
+                  <span className="admin-tag-table-qr">
+                    Table {order.table} (QR)
+                  </span>
+                ) : order.table ? (
+                  <span className="admin-tag-table-manual">
+                    Table {order.table}
+                  </span>
+                ) : (
+                  <span className="admin-tag-table-direct">
+                    Web Direct
+                  </span>
+                )}
+                {order.parentOrderId && (
+                  <span className="admin-tag-extra">
+                    + Extra Items
+                  </span>
+                )}
+              </div>
 
-            <div className="admin-card-footer-row">
-              {financial && (
-                <div className="admin-card-price-display">
-                  <strong>{formatBirr(orderTotal(order))}</strong>
-                  <small>ETB</small>
+              <div className="admin-card-items-box">
+                {order.items.map((item, idx) => (
+                  <div key={idx} className="admin-card-item-line">
+                    <span className="admin-item-title">
+                      <strong className="admin-item-count">{item.quantity}×</strong>
+                      {item.name}
+                    </span>
+                  </div>
+                ))}
+                {order.note && <div className="admin-card-kitchen-note">Note: {order.note}</div>}
+              </div>
+
+              {order.status === 'Completed' && (
+                <div className="admin-card-badges-row">
+                  <span className="admin-status-completed-pill">
+                    <span className="dot" /> {t('stage.completed') || 'Completed'}
+                  </span>
                 </div>
               )}
-              <div className="admin-card-actions-group">
+
+              <div className="admin-card-footer-row">
+                {financial && (
+                  <div className="admin-card-price-display">
+                    <strong>{formatBirr(orderTotal(order))}</strong>
+                    <small>ETB</small>
+                  </div>
+                )}
                 {operation && nextOrderStatus(order) && (role !== 'Kitchen Staff' || ['Accepted', 'Preparing'].includes(order.status)) && (
                   <button
                     className="button primary"
@@ -388,17 +389,10 @@ export default function Admin() {
                     {nextOrderStatus(order)!.label === 'Accept order' ? t('admin.acceptOrder') : nextOrderStatus(order)!.label}
                   </button>
                 )}
-                <button
-                  className="button secondary"
-                  onClick={() => setSelected(order)}
-                  aria-label={`View order ${order.id}`}
-                >
-                  {t('admin.viewOrder')}<Icon name="arrow" size={14} />
-                </button>
               </div>
-            </div>
-          </article>
-        ))}
+            </article>
+          )
+        })}
         {data.length === 0 && (
           <div className="admin-empty">
             <Icon name="bag" size={28} />
@@ -423,7 +417,11 @@ export default function Admin() {
             </tr>
           </thead>
           <tbody>
-            {data.map(order => (
+            {data.map(order => {
+              const desktopCustomer = order.customer && !order.customer.trim().toLowerCase().startsWith('table')
+                ? order.customer
+                : 'Guest Customer'
+              return (
               <tr key={order.id}>
                 <td>
                   <button
@@ -431,10 +429,9 @@ export default function Admin() {
                     onClick={() => setSelected(order)}
                     style={{ fontWeight: 700, display: 'block', textAlign: 'left', color: 'var(--color-ink)' }}
                   >
-                    {order.customer ? order.customer : order.id}
+                    {desktopCustomer}
                   </button>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '3px' }}>
-                    <small style={{ color: 'var(--color-muted)' }}>{order.id}</small>
                     {order.parentOrderId && (
                       <span style={{ fontSize: '10px', color: '#b45309', background: '#fef3c7', padding: '1px 5px', borderRadius: '3px' }}>
                         + Extra Dishes
@@ -487,7 +484,8 @@ export default function Admin() {
                   </button>
                 </td>
               </tr>
-            ))}
+            )
+          })}
           </tbody>
         </table>
         {data.length === 0 && (
