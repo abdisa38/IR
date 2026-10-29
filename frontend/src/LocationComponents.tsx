@@ -394,19 +394,6 @@ export function GlobalHeader({
             {customer.email && <p style={{ margin: '0', fontSize: '13px', color: 'var(--color-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Icon name="info" size={13} />{customer.email}</p>}
           </div>
 
-          {customer.lastOrder && (
-            <div style={{ background: '#fcf8f4', border: '1px solid var(--color-line)', borderRadius: '10px', padding: '14px', marginBottom: '16px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                <strong style={{ fontSize: '13px', color: 'var(--color-ink)' }}>Recent Order</strong>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--color-brand)', background: 'white', padding: '2px 8px', borderRadius: '4px', border: '1px solid var(--color-line)' }}>
-                  {customer.lastOrder}
-                </span>
-              </div>
-              <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-muted)', lineHeight: 1.4 }}>
-                Saved under your name. When you place an order, our kitchen and service team immediately see your order details.
-              </p>
-            </div>
-          )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <SiteLink
@@ -429,7 +416,7 @@ export function GlobalHeader({
                 window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
               }}
             >
-              Switch Account / Sign Out
+            Sign Out
             </button>
           </div>
         </Modal>
