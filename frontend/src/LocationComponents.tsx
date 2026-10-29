@@ -217,95 +217,104 @@ export function GlobalHeader({
       </div>
       <header className="header">
         <div className="container nav-inner">
-          <Logo />
-          <nav className="navigation" aria-label="Main navigation">
-            <SiteLink
-              href="/#home"
-              className={active === 'home' ? 'active' : ''}
-              onClick={() => setMobileNav(false)}
-            >
-              {t('nav.home')}
-            </SiteLink>
-            <SiteLink
-              href="/#menu"
-              className={active === 'menu' ? 'active' : ''}
-              onClick={() => setMobileNav(false)}
-            >
-              {t('nav.menu')}
-            </SiteLink>
-            <a href="/#about" onClick={() => setMobileNav(false)}>
-              {t('nav.story')}
-            </a>
-            <a href="/#find-us" onClick={() => setMobileNav(false)}>
-              {t('nav.findUs')}
-            </a>
-            <SiteLink
-              href="/contact"
-              className={active === 'contact' ? 'active' : ''}
-              onClick={() => setMobileNav(false)}
-            >
-              {t('nav.contact')}
-            </SiteLink>
-            {customer?.name ? (
+          <div className="nav-top-bar">
+            <Logo />
+            <nav className="navigation" aria-label="Main navigation">
+              <SiteLink
+                href="/#home"
+                className={active === 'home' ? 'active' : ''}
+                onClick={() => setMobileNav(false)}
+              >
+                {t('nav.home')}
+              </SiteLink>
+              <SiteLink
+                href="/#menu"
+                className={active === 'menu' ? 'active' : ''}
+                onClick={() => setMobileNav(false)}
+              >
+                {t('nav.menu')}
+              </SiteLink>
+              <a href="/#about" onClick={() => setMobileNav(false)}>
+                {t('nav.story')}
+              </a>
+              <a href="/#find-us" onClick={() => setMobileNav(false)}>
+                {t('nav.findUs')}
+              </a>
+              <SiteLink
+                href="/contact"
+                className={active === 'contact' ? 'active' : ''}
+                onClick={() => setMobileNav(false)}
+              >
+                {t('nav.contact')}
+              </SiteLink>
+              {customer?.name ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileOpen(true)
+                    setMobileNav(false)
+                  }}
+                  className="nav-profile-pill"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                >
+                  <span className="nav-profile-avatar" style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-brand)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: '12px', fontWeight: 700, overflow: 'hidden' }}>
+                    {customer.avatar ? (
+                      <img src={customer.avatar} alt={customer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      customer.name.charAt(0).toUpperCase()
+                    )}
+                  </span>
+                  <span>{customer.name.split(' ')[0]}</span>
+                </button>
+              ) : (
+                <SiteLink href="/#login" onClick={() => setMobileNav(false)}>
+                  {t('nav.signIn')}
+                </SiteLink>
+              )}
+            </nav>
+            <div className="nav-actions">
               <button
                 type="button"
-                onClick={() => {
-                  setProfileOpen(true)
-                  setMobileNav(false)
-                }}
-                className="nav-profile-pill"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
+                className="language-button"
+                onClick={() => setLanguageOpen(true)}
+                aria-label="Choose Language"
               >
-                <span className="nav-profile-avatar" style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-brand)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: '12px', fontWeight: 700, overflow: 'hidden' }}>
-                  {customer.avatar ? (
-                    <img src={customer.avatar} alt={customer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    customer.name.charAt(0).toUpperCase()
-                  )}
-                </span>
-                <span>{customer.name.split(' ')[0]}</span>
+                <Icon name="globe" size={19} />
+                <span className="lang-code-pill desktop-only">{language === 'om' ? 'Oro' : language === 'am' ? 'Amh' : 'Eng'}</span>
+                <Icon name="down" size={11} className="desktop-only" />
               </button>
-            ) : (
-              <SiteLink href="/#login" onClick={() => setMobileNav(false)}>
-                {t('nav.signIn')}
-              </SiteLink>
-            )}
-          </nav>
-          <div className="nav-actions">
-            <button
-              type="button"
-              className="language-button"
-              onClick={() => setLanguageOpen(true)}
-              aria-label="Choose Language"
-            >
-              <Icon name="globe" size={16} />
-              <span className="lang-code-pill">{language === 'om' ? 'Oro' : language === 'am' ? 'Amh' : 'Eng'}</span>
-              <Icon name="down" size={11} />
-            </button>
-            {cartCount !== undefined ? (
+              {cartCount !== undefined ? (
+                <button
+                  className="cart-trigger button primary nav-order"
+                  onClick={onOpenCart}
+                  aria-label={`Open cart, ${cartCount} items`}
+                >
+                  <Icon name="bag" size={18} />
+                  <span>{t('nav.yourCart')}</span>
+                  <strong>{cartCount}</strong>
+                </button>
+              ) : (
+                <SiteLink href="/#menu" className="button primary nav-order desktop-order-cta">
+                  {t('nav.orderFood')}<Icon name="arrow" size={17} />
+                </SiteLink>
+              )}
               <button
-                className="cart-trigger button primary nav-order"
-                onClick={onOpenCart}
-                aria-label={`Open cart, ${cartCount} items`}
+                className="icon-button mobile-toggle"
+                aria-label="Toggle navigation"
+                aria-expanded={mobileNav}
+                onClick={() => setMobileNav(!mobileNav)}
               >
-                <Icon name="bag" size={18} />
-                <span>{t('nav.yourCart')}</span>
-                <strong>{cartCount}</strong>
+                <Icon name={mobileNav ? 'close' : 'menu'} size={20} />
               </button>
-            ) : (
-              <SiteLink href="/#menu" className="button primary nav-order">
-                {t('nav.orderFood')}<Icon name="arrow" size={17} />
-              </SiteLink>
-            )}
-            <button
-              className="icon-button mobile-toggle"
-              aria-label="Toggle navigation"
-              aria-expanded={mobileNav}
-              onClick={() => setMobileNav(!mobileNav)}
-            >
-              <Icon name={mobileNav ? 'close' : 'menu'} />
-            </button>
+            </div>
           </div>
+          {cartCount === undefined && (
+            <div className="mobile-header-order-cta">
+              <SiteLink href="/#menu" className="button primary mobile-order-btn">
+                {t('nav.orderFood')}<Icon name="arrow" size={16} />
+              </SiteLink>
+            </div>
+          )}
         </div>
       </header>
 
