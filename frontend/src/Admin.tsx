@@ -32,7 +32,7 @@ function ActivityChart({ orders }: { orders: DemoOrder[] }) {
 }
 
 export default function Admin() {
-  const { language } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
 
   // Authenticated user state
   const getStoredUser = () => {
@@ -367,7 +367,7 @@ export default function Admin() {
                     }}
                     style={{ fontSize: '12px', padding: '6px 12px', minHeight: '34px', borderRadius: '10px' }}
                   >
-                    {nextOrderStatus(order)!.label}
+                    {nextOrderStatus(order)!.label === 'Accept order' ? t('admin.acceptOrder') : nextOrderStatus(order)!.label}
                   </button>
                 )}
                 <button
@@ -376,7 +376,7 @@ export default function Admin() {
                   aria-label={`View order ${order.id}`}
                   style={{ fontSize: '12px', padding: '6px 12px', minHeight: '34px', borderRadius: '10px' }}
                 >
-                  View order<Icon name="arrow" size={14} />
+                  {t('admin.viewOrder')}<Icon name="arrow" size={14} />
                 </button>
               </div>
             </div>

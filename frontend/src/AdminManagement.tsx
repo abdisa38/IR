@@ -8,6 +8,7 @@ import { demoTables } from './order-prototype'
 import { SiteLink } from './site-routing'
 import { Pagination } from './ui-patterns'
 import { api, getImageUrl, type ApiMenuItem, type ApiStaff } from './api/client'
+import { useLanguage } from './language'
 
 type ManagedItem = {
   id: string
@@ -55,6 +56,7 @@ async function compressImageFile(file: File, maxWidth = 1000, maxHeight = 1000, 
 }
 
 export function AdminMenu({ notify }: { notify: (text: string) => void }) {
+  const { t } = useLanguage()
   const [items, setItems] = useState<ManagedItem[]>(() =>
     menuItems.map(item => ({
       ...item,
@@ -236,12 +238,12 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
           <input
             value={query}
             onChange={event => setQuery(event.target.value)}
-            placeholder="Search food and drinks"
+            placeholder={t('admin.searchFoodDrinks')}
             aria-label="Search managed menu"
           />
         </label>
         <select aria-label="Filter category" value={filter} onChange={event => setFilter(event.target.value)}>
-          <option value="all">All categories</option>
+          <option value="all">{t('admin.allCategories')}</option>
           <option value="food">Main & Traditional Foods</option>
           <option value="beer-wine">Beer & Wines</option>
           <option value="cold-drinks">Cold Beverages</option>
@@ -249,7 +251,7 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
           <option value="hot-drinks">Hot Drinks</option>
         </select>
         <button className="button primary" onClick={() => open()}>
-          <Icon name="plus" size={16} />Add menu item
+          <Icon name="plus" size={16} />{t('admin.addMenuItem')}
         </button>
       </div>
 
@@ -257,12 +259,12 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
         <table className="admin-table">
           <thead>
             <tr>
-              <th>Menu item</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Availability</th>
-              <th>House Special</th>
-              <th>Action</th>
+              <th>{t('admin.menuItem')}</th>
+              <th>{t('admin.category')}</th>
+              <th>{t('admin.price')}</th>
+              <th>{t('admin.availability')}</th>
+              <th>{t('admin.houseSpecial')}</th>
+              <th>{t('admin.action')}</th>
             </tr>
           </thead>
           <tbody>
@@ -292,22 +294,22 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
                 </td>
                 <td data-label="Availability">
                   <span className={`admin-badge ${item.availability === 'Available' ? 'badge-green' : 'badge-neutral'}`}>
-                    {item.availability}
+                    {item.availability === 'Available' ? t('admin.available') : t('admin.unavailable')}
                   </span>
                 </td>
                 <td data-label="House Special">
-                  {item.houseSpecial ? <span className="admin-badge badge-amber">House Special</span> : '—'}
+                  {item.houseSpecial ? <span className="admin-badge badge-amber">{t('admin.houseSpecial')}</span> : '—'}
                 </td>
                 <td data-label="Action" style={{ display: 'flex', gap: '8px' }}>
                   <button className="admin-table-action" onClick={() => open(item)}>
-                    Edit<Icon name="arrow" size={14} />
+                    {t('admin.edit')}<Icon name="arrow" size={14} />
                   </button>
                   <button
                     className="admin-table-action"
                     style={{ color: '#b82032' }}
                     onClick={() => handleDelete(item.id, item.name)}
                   >
-                    Delete
+                    {t('admin.delete')}
                   </button>
                 </td>
               </tr>
