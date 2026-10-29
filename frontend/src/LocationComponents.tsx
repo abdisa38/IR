@@ -336,7 +336,9 @@ export function GlobalHeader({
 
             <div className="mobile-drawer-footer">
               <div>Around Awraris, near General Wako Gutu Square · Bale Robe</div>
-              <a href="tel:0909511588">📞 Hotline: 0909511588</a>
+              <a href="tel:0909511588" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Icon name="phone" size={14} /> Hotline: 0909511588
+              </a>
             </div>
           </div>
         </>
@@ -388,8 +390,8 @@ export function GlobalHeader({
               )}
             </div>
             <h2 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 750, color: 'var(--color-ink)' }}>{customer.name}</h2>
-            {customer.phone && <p style={{ margin: '0 0 2px', fontSize: '13px', color: 'var(--color-muted)' }}>📞 {customer.phone}</p>}
-            {customer.email && <p style={{ margin: '0', fontSize: '13px', color: 'var(--color-muted)' }}>✉️ {customer.email}</p>}
+            {customer.phone && <p style={{ margin: '0 0 4px', fontSize: '13px', color: 'var(--color-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Icon name="phone" size={13} />{customer.phone}</p>}
+            {customer.email && <p style={{ margin: '0', fontSize: '13px', color: 'var(--color-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Icon name="info" size={13} />{customer.email}</p>}
           </div>
 
           {customer.lastOrder && (

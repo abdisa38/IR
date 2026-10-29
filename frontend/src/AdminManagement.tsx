@@ -673,7 +673,7 @@ function TableQrCode({ table }: { table: string }) {
         </div>
       )}
       <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 600, display: 'inline-block', marginTop: '6px' }}>
-        📲 Scans to Table {table} Order
+        Scans to Table {table} Order
       </span>
     </div>
   )

@@ -227,32 +227,6 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                   <div><h2>Who’s joining us?</h2></div>
                 </div>
 
-                <div className="table-check">
-                  <Icon name="meal" size={22} />
-                  <div>
-                    <strong>{table ? `Table ${table}` : 'Table Service'}</strong>
-                    <span>Dine-in at Ilillii Hotel</span>
-                  </div>
-                  <span>DINE IN</span>
-                </div>
-
-                {activeOrderId && (
-                  <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '12px', margin: '14px 0', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#92400e', fontWeight: 600 }}>
-                      <Icon name="meal" size={18} />
-                      <span>Active Table Order #{activeOrderId}</span>
-                    </div>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#78350f', cursor: 'pointer' }}>
-                      <input
-                        type="checkbox"
-                        checked={appendToExisting}
-                        onChange={e => setAppendToExisting(e.target.checked)}
-                      />
-                      Add these dishes directly to your current active table order
-                    </label>
-                  </div>
-                )}
-
                 <label className="order-field">
                   Your name <span>Required</span>
                   <input
@@ -319,26 +293,6 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                   )}
                   {note && <div><dt>Order note</dt><dd>{note}</dd></div>}
                 </dl>
-
-                {/* Inline order items summary for clean single-card review */}
-                <div className="review-meal-summary">
-                  <div className="review-meal-title">
-                    <Icon name="bag" size={17} />
-                    <span>Your Meal ({shownLines.reduce((acc, l) => acc + l.quantity, 0)} items)</span>
-                  </div>
-                  <div className="review-meal-items">
-                    {shownLines.map(line => (
-                      <div key={line.item.id} className="review-meal-row">
-                        <span>{line.quantity} × {line.item.name}</span>
-                        <b>{formatBirr(line.item.price * line.quantity)} ETB</b>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="review-meal-total">
-                    <span>Total Amount</span>
-                    <strong>{formatBirr(shownTotal)} ETB</strong>
-                  </div>
-                </div>
 
                 <div className="order-buttons-group">
                   <button
@@ -414,47 +368,49 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
             )}
           </div>
 
-          <aside className="order-summary-card">
-            <div className="summary-heading">
-              <Icon name="bag" size={20} />
-              <h2>{confirmedView ? 'Your order' : 'Your meal'}</h2>
-              {!locked && <button onClick={close}>Edit</button>}
-            </div>
-            <div className="summary-table">
-              <span>{snapshot?.table ? `Table ${snapshot.table}` : table ? `Table ${table}` : 'Table Service'}</span>
-              <small>DINE IN</small>
-            </div>
-            <div className="summary-lines">
-              {shownLines.map(line => (
-                <div key={line.item.id}>
-                  <span>{line.quantity} ×</span>
-                  <div>
-                    <strong>{line.item.name}</strong>
-                    <small>{formatBirr(line.item.price)} ETB each</small>
-                  </div>
-                  <b>{formatBirr(line.item.price * line.quantity)}</b>
-                </div>
-              ))}
-            </div>
-            <div className="summary-subtotal">
-              <span>Subtotal</span>
-              <strong>{formatBirr(shownTotal)} ETB</strong>
-            </div>
-            <div className="summary-total">
-              <span>Total</span>
-              <strong>{formatBirr(shownTotal)} <small>ETB</small></strong>
-            </div>
-            {snapshot?.note && (
-              <div className="summary-order-note">
-                <strong>Order note</strong>
-                <p>{snapshot.note}</p>
+          {!confirmedView && (
+            <aside className="order-summary-card">
+              <div className="summary-heading">
+                <Icon name="bag" size={20} />
+                <h2>Your meal</h2>
+                {!locked && <button onClick={close}>Edit</button>}
               </div>
-            )}
-            <div className="summary-assurance">
-              <Icon name="heart" size={17} />
-              <span>Your table. Your meal.<br />Enjoy your time at Ilillii.</span>
-            </div>
-          </aside>
+              <div className="summary-table">
+                <span>{table ? `Table ${table}` : 'Table Service'}</span>
+                <small>DINE IN</small>
+              </div>
+              <div className="summary-lines">
+                {shownLines.map(line => (
+                  <div key={line.item.id}>
+                    <span>{line.quantity} ×</span>
+                    <div>
+                      <strong>{line.item.name}</strong>
+                      <small>{formatBirr(line.item.price)} ETB each</small>
+                    </div>
+                    <b>{formatBirr(line.item.price * line.quantity)}</b>
+                  </div>
+                ))}
+              </div>
+              <div className="summary-subtotal">
+                <span>Subtotal</span>
+                <strong>{formatBirr(shownTotal)} ETB</strong>
+              </div>
+              <div className="summary-total">
+                <span>Total</span>
+                <strong>{formatBirr(shownTotal)} <small>ETB</small></strong>
+              </div>
+              {snapshot?.note && (
+                <div className="summary-order-note">
+                  <strong>Order note</strong>
+                  <p>{snapshot.note}</p>
+                </div>
+              )}
+              <div className="summary-assurance">
+                <Icon name="heart" size={17} />
+                <span>Your table. Your meal.<br />Enjoy your time at Ilillii.</span>
+              </div>
+            </aside>
+          )}
         </div>
 
         <div className="order-bottom-help">

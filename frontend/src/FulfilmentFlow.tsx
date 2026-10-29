@@ -169,25 +169,6 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
               {note && <div><dt>Note</dt><dd>{note}</dd></div>}
             </dl>
 
-            <div className="review-meal-summary">
-              <div className="review-meal-title">
-                <Icon name="bag" size={17} />
-                <span>Your Takeaway Order ({shownLines.reduce((acc, l) => acc + l.quantity, 0)} items)</span>
-              </div>
-              <div className="review-meal-items">
-                {shownLines.map(line => (
-                  <div key={line.item.id} className="review-meal-row">
-                    <span>{line.quantity} × {line.item.name}</span>
-                    <b>{formatBirr(line.item.price * line.quantity)} ETB</b>
-                  </div>
-                ))}
-              </div>
-              <div className="review-meal-total">
-                <span>Total Amount:</span>
-                <strong>{formatBirr(total)} ETB</strong>
-              </div>
-            </div>
-
             <div className="order-buttons-group">
               <button className="button primary order-full" onClick={submit} disabled={busy || Boolean(receipt)} aria-busy={busy}>
                 {busy ? 'Submitting order…' : 'Place Order'}

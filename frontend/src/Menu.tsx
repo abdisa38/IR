@@ -233,7 +233,29 @@ export default function Menu() {
       {qr.table && <div className="cart-table-context"><Icon name="meal" size={19} /><span>Table {qr.table} · Dine In</span></div>}
       {count ? <>
         <div className="cart-lines">{selected.map(item => <div className="cart-line" key={item.id}><span className={`cart-item-symbol art-${item.category}`}>{item.confirmedImage ? <img src={getImageUrl(item.confirmedImage)} alt={item.name} onError={(e) => { const target = e.currentTarget; target.onerror = null; target.src = '/images/ethiopian-sharing-platter.jpg' }} /> : <Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={22} />}</span><div className="cart-line-content"><h3>{language === 'am' && item.translations?.am ? item.translations.am : item.name}</h3><p>{formatBirr(item.price)} ETB each</p><Quantity item={item} quantity={cart[item.id]} update={update} /></div><strong>{formatBirr(item.price * cart[item.id])}<small>ETB</small></strong></div>)}</div>
-        <div className="cart-mode"><span className="eyebrow">ORDER SERVICE</span><div>{['Dine in', 'Pickup'].map(value => <button className={mode === value ? 'chosen' : ''} aria-pressed={mode === value} onClick={() => setMode(value)} key={value}>{value === 'Pickup' ? '🛍️ Pickup / Takeaway' : '🍽️ Dine in (Table)'}</button>)}</div></div>
+        <div className="cart-mode">
+          <span className="eyebrow">ORDER SERVICE</span>
+          <div>
+            <button
+              type="button"
+              className={mode === 'Dine in' ? 'chosen' : ''}
+              aria-pressed={mode === 'Dine in'}
+              onClick={() => setMode('Dine in')}
+            >
+              <Icon name="meal" size={17} />
+              <span>Dine in (Table)</span>
+            </button>
+            <button
+              type="button"
+              className={mode === 'Pickup' ? 'chosen' : ''}
+              aria-pressed={mode === 'Pickup'}
+              onClick={() => setMode('Pickup')}
+            >
+              <Icon name="bag" size={17} />
+              <span>Pickup / Takeaway</span>
+            </button>
+          </div>
+        </div>
         <label className="order-field cart-note-field">Order note <span>Optional</span><textarea value={note} maxLength={500} onChange={e => setNote(e.target.value)} rows={2} placeholder="Special instructions for kitchen (allergies, spice level, etc.)" /></label>
         <div className="cart-summary"><div><span>Subtotal</span><strong>{formatBirr(subtotal)} ETB</strong></div><button className="button primary cart-checkout-btn" onClick={() => { setPanel(false); if (mode === 'Pickup') { setCheckoutEntry('details'); setCheckout(true) } else { setDineInCheckout(true) } }}>Continue to Order<Icon name="arrow" size={18} /></button><button className="continue-button" onClick={() => setPanel(false)}>Continue browsing</button></div>
       </> : <div className="empty-cart"><span><Icon name="bag" size={42} /></span><h3>A good meal starts here.</h3><p>Your cart is empty. Browse the menu and tap “Add” to start your order.</p><button className="button primary" onClick={() => setPanel(false)}>Explore the menu<Icon name="arrow" size={17} /></button></div>}
