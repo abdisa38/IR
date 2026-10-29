@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
 import { connectDB } from './config/db.js';
 import menuRoutes from './routes/menu.js';
 import orderRoutes from './routes/orders.js';
@@ -8,6 +9,7 @@ import staffRoutes from './routes/staff.js';
 import analyticsRoutes from './routes/analytics.js';
 import settingsRoutes from './routes/settings.js';
 import authRoutes from './routes/auth.js';
+import uploadRoutes from './routes/upload.js';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,6 +48,8 @@ app.get('/api/health', (_req, res) => {
         uptime: process.uptime(),
     });
 });
+// Static files for uploaded images
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 // API Routes
 app.use('/api/menu', menuRoutes);
 app.use('/api/orders', orderRoutes);
@@ -53,6 +57,7 @@ app.use('/api/staff', staffRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/upload', uploadRoutes);
 // 404 handler for API routes
 app.use('/api/*', (req, res) => {
     res.status(404).json({ success: false, message: `Endpoint ${req.originalUrl} not found` });

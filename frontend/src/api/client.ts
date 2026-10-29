@@ -5,6 +5,18 @@
 
 const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api` : '/api'
 
+export function getImageUrl(url?: string): string {
+  if (!url) return '/images/ethiopian-sharing-platter.jpg'
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url
+  }
+  if (url.startsWith('/uploads/')) {
+    const backendOrigin = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : ''
+    return backendOrigin ? `${backendOrigin}${url}` : url
+  }
+  return url
+}
+
 export function getStoredToken(): string | null {
   try {
     return localStorage.getItem('ilillii_token')
