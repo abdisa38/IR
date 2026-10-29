@@ -199,9 +199,7 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
           </h1>
         </div>
 
-        <CompactCheckoutAmount subtotal={shownTotal} />
-
-        <div className="order-layout">
+        <div className={`order-layout ${step === 'details' || confirmedView ? 'single-card' : ''}`}>
           <div className="order-main-card">
             {confirmedView && snapshot && (
               <div className="checkout-status-pair">
@@ -368,7 +366,7 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
             )}
           </div>
 
-          {!confirmedView && (
+          {step === 'review' && (
             <aside className="order-summary-card">
               <div className="summary-heading">
                 <Icon name="bag" size={20} />
