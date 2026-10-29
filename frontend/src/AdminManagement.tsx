@@ -7,7 +7,7 @@ import type { Role } from './admin-model'
 import { demoTables } from './order-prototype'
 import { SiteLink } from './site-routing'
 import { Pagination } from './ui-patterns'
-import { api, type ApiMenuItem, type ApiStaff } from './api/client'
+import { api, getImageUrl, type ApiMenuItem, type ApiStaff } from './api/client'
 
 type ManagedItem = {
   id: string

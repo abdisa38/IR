@@ -5,7 +5,7 @@ import { SiteLink, sitePage } from './site-routing'
 import { QuantityControl, StatePanel } from './ui-patterns'
 import { categories, formatBirr, menuItems } from './menu-data'
 import type { MenuItem } from './menu-data'
-import { api } from './api/client'
+import { api, getImageUrl } from './api/client'
 import './menu.css'
 import { GlobalFooter, GlobalHeader } from './LocationComponents'
 const FulfilmentFlow = lazy(() => import('./FulfilmentFlow'))
@@ -27,7 +27,7 @@ function ProductCard({ item, quantity, update, details }: { item: MenuItem; quan
     <article className={`product-card ${quantity ? 'in-cart' : ''} ${unavailable ? 'is-unavailable' : ''}`}>
       <button className={`product-art art-${item.category}`} onClick={details} aria-label={`View details for ${item.name}`}>
         {item.confirmedImage ? (
-          <img src={item.confirmedImage} alt={item.name} loading="lazy" />
+          <img src={getImageUrl(item.confirmedImage)} alt={item.name} loading="lazy" />
         ) : (
           <>
             <span className="art-orbit" />
@@ -101,7 +101,7 @@ export default function Menu() {
             ? 'drinks'
             : (item.categoryLabel?.toLowerCase().includes('additional') || item.id.startsWith('additional-') ? 'additional' : 'main'),
           availability: item.available ? 'available' : 'unavailable',
-          confirmedImage: item.image,
+          confirmedImage: getImageUrl(item.image),
           verifiedDescription: item.description,
           translations: {
             am: item.amharicName || item.translations?.am || '',
