@@ -465,4 +465,3 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
     </dialog>
   )
 }
-}
