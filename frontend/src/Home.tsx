@@ -1,9 +1,9 @@
 import { Icon, Logo, Mark, Modal } from './shared-ui'
-import { useLanguage } from './language'
+import { useLanguage, languageOptions } from './language'
 import { useEffect, useState } from 'react'
 import { FindUsSection, GlobalFooter, GlobalHeader } from './LocationComponents'
 import { SiteLink } from './site-routing'
-import { api, type ApiMenuItem } from './api/client'
+import { api, getImageUrl, type ApiMenuItem } from './api/client'
 
 const heroPhoto = '/images/ethiopian-sharing-platter.jpg'
 
@@ -47,7 +47,7 @@ export default function App() {
               <button className="food-card" key={food.id} onClick={showMenu}>
                 <div className="food-photo">
                   <img
-                    src={food.image || heroPhoto}
+                    src={getImageUrl(food.image || heroPhoto)}
                     alt={food.name}
                     loading="lazy"
                     onError={(e) => {
@@ -106,7 +106,23 @@ export default function App() {
     </main>
     <GlobalFooter />
     {modal && <Modal title={modal === 'language' ? 'Choose your language' : modal === 'brand' ? 'The Ilillii brand' : modal === 'directions' ? 'Find Ilillii Hotel' : modal === 'contact' ? 'Let’s get in touch' : `${modal} at Ilillii`} close={() => setModal(null)}>
-      {modal === 'language' ? <><div className="language-options">{[{ id: 'om', label: 'Afaan Oromo' }, { id: 'am', label: 'አማርኛ — Amharic' }].map(item => <button className={`language-option ${language === item.id ? 'selected' : ''}`} key={item.id} onClick={() => setLanguage(item.id)}><span>{item.label}<small>Official language selection</small></span>{language === item.id ? <Icon name="check" /> : <Icon name="globe" />}</button>)}</div>{language && null}</> :
+      {modal === 'language' ? (
+        <div className="language-options">
+          {languageOptions.map(item => (
+            <button
+              className={`language-option ${language === item.id ? 'selected' : ''}`}
+              key={item.id}
+              onClick={() => {
+                setLanguage(item.id)
+                setModal(null)
+              }}
+            >
+              <span>{item.native} — {item.label}</span>
+              {language === item.id ? <Icon name="check" /> : <Icon name="globe" />}
+            </button>
+          ))}
+        </div>
+      ) :
       modal === 'brand' ? <><div className="brand-preview"><Logo /><div className="dark-brand"><Logo light /></div><div className="symbol-preview"><Mark /><span>Shared moments. One meeting point.</span></div></div><div className="swatches">{['Brand red', 'Deep red', 'Warm ivory', 'Warm gold'].map((name, i) => <div key={name}><span className={`swatch swatch-${i}`} />{name}</div>)}</div><p className="modal-description">An editable SVG meeting-point symbol paired with a custom-spaced wordmark. Manrope supports Latin and Afaan Oromo; Noto Sans Ethiopic provides Ethiopic script coverage. Status colors are paired with labels and icons.</p></> :
       modal === 'directions' ? <><p className="modal-description">Ilillii Hotel is located around Awraris, near General Wako Gutu Square, Bale Robe, Oromia, Ethiopia.</p><a href="https://www.google.com/maps/search/?api=1&query=General+Wako+Gutu+Square+Bale+Robe+Ethiopia" target="_blank" rel="noopener noreferrer" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="pin" size={17} />Open in Google Maps</a></> :
       modal === 'contact' ? <><p className="modal-description">Ilillii Hotel Manager: 0909511588. We are happy to assist you with table bookings, orders, and inquiries in Bale Robe.</p><a href="tel:0909511588" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="phone" size={17} />Call Manager (0909511588)</a></> :

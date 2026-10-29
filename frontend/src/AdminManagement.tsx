@@ -437,7 +437,7 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
 
             <div className="admin-item-preview">
               {editing.image ? (
-                <img src={editing.image} alt="Item preview" style={{ objectFit: 'cover' }} />
+                <img src={getImageUrl(editing.image)} alt="Item preview" style={{ objectFit: 'cover' }} />
               ) : (
                 <Icon name="meal" size={28} />
               )}
