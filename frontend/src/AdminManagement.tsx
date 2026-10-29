@@ -850,11 +850,14 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
                   <span>Generating QR…</span>
                 </div>
               )}
-              <p style={{ fontSize: '11px', color: '#57534e', marginTop: '10px', marginBottom: 0 }}>
+              <p style={{ fontSize: '11px', color: '#57534e', marginTop: '10px', marginBottom: '4px' }}>
                 Browse Food &amp; Drink · Direct Table Service
               </p>
+              <code style={{ fontSize: '10px', color: '#78716c', background: '#f5f5f4', padding: '2px 6px', borderRadius: '4px', wordBreak: 'break-all' }}>
+                {getProductionQrUrl(printableTable)}
+              </code>
             </div>
-            <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '12px' }}>
+            <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '10px' }}>
               Around Awraris, near General Wako Gutu Square · Bale Robe
             </p>
             <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
