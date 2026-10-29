@@ -227,3 +227,156 @@
   font-size: 11px;
   color: var(--color-muted, #78716C);
 }
+
+/* ==========================================================================
+   Clean, simple text status badges for Admin Orders (No background, No boxes, No info icon)
+   ========================================================================== */
+body .admin-app .ui-status,
+body .admin-workspace .ui-status,
+body .admin-mobile-orders .ui-status,
+body .admin-table .ui-status,
+body .admin-order-detail .ui-status {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1.4 !important;
+  white-space: nowrap !important;
+}
+
+body .admin-app .ui-status > svg,
+body .admin-workspace .ui-status > svg,
+body .admin-mobile-orders .ui-status > svg,
+body .admin-table .ui-status > svg,
+body .admin-order-detail .ui-status > svg {
+  display: none !important;
+}
+
+body .admin-app .ui-status > span,
+body .admin-workspace .ui-status > span,
+body .admin-mobile-orders .ui-status > span,
+body .admin-table .ui-status > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  white-space: nowrap !important;
+}
+
+body .admin-app .ui-status small,
+body .admin-workspace .ui-status small,
+body .admin-mobile-orders .ui-status small,
+body .admin-table .ui-status small {
+  display: inline !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #78716c !important;
+  margin-right: 2px !important;
+}
+
+body .admin-app .ui-status small::after,
+body .admin-workspace .ui-status small::after,
+body .admin-mobile-orders .ui-status small::after,
+body .admin-table .ui-status small::after {
+  content: ": ";
+}
+
+body .admin-app .ui-status::before,
+body .admin-workspace .ui-status::before,
+body .admin-mobile-orders .ui-status::before,
+body .admin-table .ui-status::before {
+  content: '●';
+  font-size: 8px !important;
+  margin-right: 3px !important;
+}
+
+body .admin-app .ui-status-success,
+body .admin-workspace .ui-status-success {
+  color: #16a34a !important;
+}
+body .admin-app .ui-status-success::before,
+body .admin-workspace .ui-status-success::before {
+  color: #16a34a !important;
+}
+
+body .admin-app .ui-status-warning,
+body .admin-workspace .ui-status-warning {
+  color: #d97706 !important;
+}
+body .admin-app .ui-status-warning::before,
+body .admin-workspace .ui-status-warning::before {
+  color: #d97706 !important;
+}
+
+body .admin-app .ui-status-error,
+body .admin-workspace .ui-status-error {
+  color: #dc2626 !important;
+}
+body .admin-app .ui-status-error::before,
+body .admin-workspace .ui-status-error::before {
+  color: #dc2626 !important;
+}
+
+body .admin-app .ui-status-neutral,
+body .admin-workspace .ui-status-neutral {
+  color: #475569 !important;
+}
+body .admin-app .ui-status-neutral::before,
+body .admin-workspace .ui-status-neutral::before {
+  color: #94a3b8 !important;
+}
+
+/* ==========================================================================
+   Medium Button Sizing & Standardized Button Radius Across Entire Admin Dashboard
+   ========================================================================== */
+body .admin-workspace .button,
+body .admin-app .button,
+body .admin-section-toolbar .button,
+body .admin-main .button,
+body .mobile-order-action .button,
+body .admin-table .button,
+body .admin-form .button,
+body .admin-modal .button,
+body .admin-detail-actions .button,
+body .admin-state-panel .button {
+  min-height: 38px !important;
+  max-height: 42px !important;
+  padding: 8px 16px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+  gap: 8px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06) !important;
+  transition: all 0.15s ease !important;
+}
+
+body .admin-mobile-order .button {
+  min-height: 35px !important;
+  padding: 6px 13px !important;
+  font-size: 12px !important;
+  border-radius: 9px !important;
+}
+
+body .admin-workspace .admin-search,
+body .admin-section-toolbar .admin-search,
+body .admin-section-toolbar select,
+body .admin-filter-tabs button,
+body .admin-period-filter {
+  border-radius: 10px !important;
+  min-height: 40px !important;
+}
+
+body .admin-table .admin-table-action,
+body .admin-table .icon-button {
+  border-radius: 8px !important;
+  min-height: 34px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+}

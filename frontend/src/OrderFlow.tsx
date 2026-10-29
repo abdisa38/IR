@@ -383,15 +383,10 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                     <span>{line.quantity} ×</span>
                     <div>
                       <strong>{line.item.name}</strong>
-                      <small>{formatBirr(line.item.price)} ETB each</small>
                     </div>
-                    <b>{formatBirr(line.item.price * line.quantity)}</b>
+                    {shownLines.length > 1 && <b>{formatBirr(line.item.price * line.quantity)} ETB</b>}
                   </div>
                 ))}
-              </div>
-              <div className="summary-subtotal">
-                <span>Subtotal</span>
-                <strong>{formatBirr(shownTotal)} ETB</strong>
               </div>
               <div className="summary-total">
                 <span>Total</span>

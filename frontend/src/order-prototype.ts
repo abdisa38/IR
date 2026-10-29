@@ -13,7 +13,7 @@ export function tableFromUrl(search: string) {
 }
 export const orderStages = ['Submitted', 'Accepted', 'Preparing', 'Ready to Serve', 'Completed']
 export function validateGuest(name: string, phone: string) {
-  if (!name.trim()) return 'Please enter your name so staff know who the order is for.'
+  if (!name.trim()) return ''
   if (phone.trim() && !isValidPhone(phone)) return 'Check your phone number, or leave it blank. It is optional.'
   return ''
 }

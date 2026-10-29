@@ -2,18 +2,18 @@ import { menuItems } from './menu-data'
 import type { PaymentStatus } from './payment-model'
 export type { PaymentStatus } from './payment-model'
 export type Role = 'Owner' | 'Manager' | 'Order/Service Staff' | 'Kitchen Staff' | 'Payment Reviewer'
-export type AdminPage = 'Overview' | 'Orders' | 'Kitchen Board' | 'Menu Management' | 'Categories' | 'Payments' | 'Tables & QR Codes' | 'Reports' | 'Staff & Permissions' | 'Hotel Settings'
+export type AdminPage = 'Overview' | 'Orders' | 'Menu Management' | 'Categories' | 'Payments' | 'Tables & QR Codes' | 'Reports' | 'Staff & Permissions' | 'Hotel Settings'
 export const roles: Role[] = ['Owner', 'Manager', 'Order/Service Staff', 'Kitchen Staff', 'Payment Reviewer']
 export const navigation: { page: AdminPage; icon: string; section?: string }[] = [
-  { page: 'Overview', icon: 'overview', section: 'WORKSPACE' }, { page: 'Orders', icon: 'bag' }, { page: 'Kitchen Board', icon: 'meal' },
+  { page: 'Overview', icon: 'overview', section: 'WORKSPACE' }, { page: 'Orders', icon: 'bag' },
   { page: 'Menu Management', icon: 'menu', section: 'RESTAURANT' }, { page: 'Categories', icon: 'layers' }, { page: 'Payments', icon: 'cash' }, { page: 'Tables & QR Codes', icon: 'qr' },
   { page: 'Reports', icon: 'chart', section: 'MANAGEMENT' }, { page: 'Staff & Permissions', icon: 'users' }, { page: 'Hotel Settings', icon: 'settings' },
 ]
 const permissions: Record<Role, AdminPage[]> = {
   Owner: navigation.map(item => item.page),
-  Manager: ['Overview', 'Orders', 'Kitchen Board', 'Menu Management', 'Categories', 'Tables & QR Codes', 'Reports'],
-  'Order/Service Staff': ['Overview', 'Orders', 'Kitchen Board', 'Tables & QR Codes'],
-  'Kitchen Staff': ['Kitchen Board'],
+  Manager: ['Overview', 'Orders', 'Menu Management', 'Categories', 'Tables & QR Codes', 'Reports'],
+  'Order/Service Staff': ['Overview', 'Orders', 'Tables & QR Codes'],
+  'Kitchen Staff': ['Orders'],
   'Payment Reviewer': ['Overview', 'Payments'],
 }
 export const canAccess = (role: Role, page: AdminPage) => permissions[role].includes(page)
