@@ -18,10 +18,17 @@ const OrderSchema = new Schema({
     status: {
         type: String,
         required: true,
-        enum: ['pending', 'preparing', 'ready', 'completed', 'cancelled'],
+        enum: ['pending', 'accepted', 'preparing', 'ready', 'completed', 'cancelled'],
         default: 'pending',
         index: true,
     },
+    source: {
+        type: String,
+        enum: ['table_qr', 'web_direct'],
+        default: 'web_direct',
+        index: true,
+    },
+    parentOrderId: { type: String, trim: true },
     paymentStatus: {
         type: String,
         required: true,
