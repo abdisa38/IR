@@ -5,6 +5,7 @@ import { SiteLink } from './site-routing'
 import './location.css'
 
 export function ContactAction({ kind, className = 'button secondary' }: { kind: 'call' | 'directions'; className?: string }) {
+  const { t } = useLanguage()
   if (kind === 'call') {
     return (
       <a
@@ -14,7 +15,7 @@ export function ContactAction({ kind, className = 'button secondary' }: { kind: 
         aria-label="Call Ilillii Hotel at 0909511588"
       >
         <Icon name="phone" size={17} />
-        Call 0909511588
+        {t('location.phoneTitle')}: 0909511588
       </a>
     )
   }
@@ -28,16 +29,107 @@ export function ContactAction({ kind, className = 'button secondary' }: { kind: 
       aria-label="Get directions to General Wako Gutu Square, Bale Robe"
     >
       <Icon name="pin" size={17} />
-      Get Directions
+      {t('location.directions')}
     </a>
   )
 }
 export function MapPreview() {
   const [state, setState] = useState('placeholder')
-  return <div className="location-map-component"><div className={`location-map-stage map-state-${state}`} aria-live="polite"><div className="location-map-lines" aria-hidden="true" /><div className="location-map-content">{state === 'loading' ? <><span className="map-state-symbol"><Icon name="globe" size={30} /></span><h3>Loading map preview…</h3></> : state === 'error' ? <><span className="map-state-symbol"><Icon name="info" size={30} /></span><h3>Around Awraris, near General Wako Gutu Square</h3><p>Bale Robe, Oromia, Ethiopia.<br />Phone: 0909511588</p><button className="map-retry" onClick={() => setState('placeholder')}>Retry map preview<Icon name="arrow" size={15} /></button></> : state === 'external' ? <><span className="map-state-symbol"><Icon name="arrow" size={28} /></span><h3>Continue in your maps app.</h3><button className="map-retry" onClick={() => setState('placeholder')}>Return to location preview</button></> : <><span className="reserved-location-mark"><Mark /></span><h3>See you in Bale Robe</h3><p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>Around Awraris, near General Wako Gutu Square</p><span className="location-town-tag"><Icon name="pin" size={13} />BALE ROBE · OROMIA</span></>}</div></div></div>
+  const { t } = useLanguage()
+  return (
+    <div className="location-map-component">
+      <div className={`location-map-stage map-state-${state}`} aria-live="polite">
+        <div className="location-map-lines" aria-hidden="true" />
+        <div className="location-map-content">
+          {state === 'loading' ? (
+            <>
+              <span className="map-state-symbol"><Icon name="globe" size={30} /></span>
+              <h3>Loading map preview…</h3>
+            </>
+          ) : state === 'error' ? (
+            <>
+              <span className="map-state-symbol"><Icon name="info" size={30} /></span>
+              <h3>{t('location.address')}</h3>
+              <p>{t('location.town')}<br />{t('location.phoneTitle')}: 0909511588</p>
+              <button className="map-retry" onClick={() => setState('placeholder')}>
+                Retry map preview<Icon name="arrow" size={15} />
+              </button>
+            </>
+          ) : state === 'external' ? (
+            <>
+              <span className="map-state-symbol"><Icon name="arrow" size={28} /></span>
+              <h3>Continue in your maps app.</h3>
+              <button className="map-retry" onClick={() => setState('placeholder')}>
+                Return to location preview
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="reserved-location-mark"><Mark /></span>
+              <h3>{t('location.mapTitle')}</h3>
+              <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>
+                {t('location.address')}
+              </p>
+              <span className="location-town-tag">
+                <Icon name="pin" size={13} />
+                {t('location.town').toUpperCase()}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
 }
 export function FindUsSection() {
-  return <section className="find-ilillii" id="find-us"><div className="container"><div className="find-section-heading"><span className="eyebrow">GOOD FOOD IS JUST THE BEGINNING</span><h2>Find Ilillii Hotel</h2></div><div className="location-composition"><MapPreview /><div className="visit-information"><span className="eyebrow">YOUR PLACE IN BALE ROBE</span><h3>There’s a place<br />for you here.</h3><div className="visit-detail"><Icon name="pin" size={21} /><div><strong>Around Awraris, near General Wako Gutu Square</strong><span>Bale Robe, Oromia, Ethiopia</span></div></div><div className="visit-detail"><Icon name="phone" size={21} /><div><strong>Phone: 0909511588</strong><a href="tel:0909511588" style={{ color: 'var(--color-brand)', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>Tap to call</a></div></div><div className="visit-detail"><Icon name="clock" size={21} /><div><strong>Opening hours</strong><span>Daily: 6:30 AM – 11:00 PM</span></div></div><div className="visit-actions"><ContactAction kind="directions" className="button primary" /><ContactAction kind="call" /></div><SiteLink href="/#menu" className="visit-order-link">Explore our menu & order food<Icon name="arrow" size={17} /></SiteLink></div></div></div></section>
+  const { t } = useLanguage()
+  return (
+    <section className="find-ilillii" id="find-us">
+      <div className="container">
+        <div className="find-section-heading">
+          <span className="eyebrow">{t('location.eyebrow')}</span>
+          <h2>{t('location.heading')}</h2>
+        </div>
+        <div className="location-composition">
+          <MapPreview />
+          <div className="visit-information">
+            <span className="eyebrow">{t('location.visitEyebrow')}</span>
+            <h3>{t('location.visitTitleLine1')}<br />{t('location.visitTitleLine2')}</h3>
+            <div className="visit-detail">
+              <Icon name="pin" size={21} />
+              <div>
+                <strong>{t('location.address')}</strong>
+                <span>{t('location.town')}</span>
+              </div>
+            </div>
+            <div className="visit-detail">
+              <Icon name="phone" size={21} />
+              <div>
+                <strong>{t('location.phoneTitle')}: 0909511588</strong>
+                <a href="tel:0909511588" style={{ color: 'var(--color-brand)', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>
+                  {t('location.tapToCall')}
+                </a>
+              </div>
+            </div>
+            <div className="visit-detail">
+              <Icon name="clock" size={21} />
+              <div>
+                <strong>{t('location.hoursTitle')}</strong>
+                <span>{t('location.hoursValue')}</span>
+              </div>
+            </div>
+            <div className="visit-actions">
+              <ContactAction kind="directions" className="button primary" />
+              <ContactAction kind="call" />
+            </div>
+            <SiteLink href="/#menu" className="visit-order-link">
+              {t('location.exploreMenuBtn')}<Icon name="arrow" size={17} />
+            </SiteLink>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
 }
 export function GlobalHeader({
   active = 'home',
@@ -53,7 +145,7 @@ export function GlobalHeader({
   const [customer, setCustomer] = useState<{ name?: string; phone?: string; email?: string; avatar?: string; lastOrder?: string } | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
 
   const updateCustomerState = () => {
     try {
@@ -118,9 +210,9 @@ export function GlobalHeader({
   return (
     <>
       <div className="announcement">
-        <span>A place to gather. A meal to remember.</span>
+        <span>{t('announcement.tagline')}</span>
         <span className="announcement-location">
-          <Icon name="pin" size={13} /> Bale Robe, Oromia
+          <Icon name="pin" size={13} /> {t('announcement.location')}
         </span>
       </div>
       <header className="header">
@@ -132,27 +224,27 @@ export function GlobalHeader({
               className={active === 'home' ? 'active' : ''}
               onClick={() => setMobileNav(false)}
             >
-              Home
+              {t('nav.home')}
             </SiteLink>
             <SiteLink
               href="/#menu"
               className={active === 'menu' ? 'active' : ''}
               onClick={() => setMobileNav(false)}
             >
-              Our Menu
+              {t('nav.menu')}
             </SiteLink>
             <a href="/#about" onClick={() => setMobileNav(false)}>
-              Our Story
+              {t('nav.story')}
             </a>
             <a href="/#find-us" onClick={() => setMobileNav(false)}>
-              Find Us
+              {t('nav.findUs')}
             </a>
             <SiteLink
               href="/contact"
               className={active === 'contact' ? 'active' : ''}
               onClick={() => setMobileNav(false)}
             >
-              Contact
+              {t('nav.contact')}
             </SiteLink>
             {customer?.name ? (
               <button
@@ -175,7 +267,7 @@ export function GlobalHeader({
               </button>
             ) : (
               <SiteLink href="/#login" onClick={() => setMobileNav(false)}>
-                Sign In
+                {t('nav.signIn')}
               </SiteLink>
             )}
           </nav>
@@ -197,12 +289,12 @@ export function GlobalHeader({
                 aria-label={`Open cart, ${cartCount} items`}
               >
                 <Icon name="bag" size={18} />
-                <span>Your cart</span>
+                <span>{t('nav.yourCart')}</span>
                 <strong>{cartCount}</strong>
               </button>
             ) : (
               <SiteLink href="/#menu" className="button primary nav-order">
-                Order Food<Icon name="arrow" size={17} />
+                {t('nav.orderFood')}<Icon name="arrow" size={17} />
               </SiteLink>
             )}
             <button
@@ -242,7 +334,7 @@ export function GlobalHeader({
                 }}
               >
                 <Icon name="bag" size={18} />
-                <span>View Your Cart ({cartCount} {cartCount === 1 ? 'item' : 'items'})</span>
+                <span>{t('nav.yourCart')} ({cartCount})</span>
                 <Icon name="arrow" size={15} />
               </button>
             ) : (
@@ -252,7 +344,7 @@ export function GlobalHeader({
                 onClick={() => setMobileNav(false)}
               >
                 <Icon name="meal" size={18} />
-                <span>Explore Menu & Order Food</span>
+                <span>{t('hero.exploreMenu')}</span>
                 <Icon name="arrow" size={15} />
               </SiteLink>
             )}
@@ -265,7 +357,7 @@ export function GlobalHeader({
               >
                 <span className="mobile-nav-item-left">
                   <Icon name="meal" size={18} />
-                  <span>Home</span>
+                  <span>{t('nav.home')}</span>
                 </span>
                 <Icon name="arrow" size={14} />
               </SiteLink>
@@ -276,7 +368,7 @@ export function GlobalHeader({
               >
                 <span className="mobile-nav-item-left">
                   <Icon name="menu" size={18} />
-                  <span>Our Menu</span>
+                  <span>{t('nav.menu')}</span>
                 </span>
                 <Icon name="arrow" size={14} />
               </SiteLink>
@@ -287,7 +379,7 @@ export function GlobalHeader({
               >
                 <span className="mobile-nav-item-left">
                   <Icon name="heart" size={18} />
-                  <span>Our Story</span>
+                  <span>{t('nav.story')}</span>
                 </span>
                 <Icon name="arrow" size={14} />
               </a>
@@ -298,7 +390,7 @@ export function GlobalHeader({
               >
                 <span className="mobile-nav-item-left">
                   <Icon name="pin" size={18} />
-                  <span>Find Us in Bale Robe</span>
+                  <span>{t('nav.findUs')}</span>
                 </span>
                 <Icon name="arrow" size={14} />
               </a>
@@ -309,7 +401,7 @@ export function GlobalHeader({
               >
                 <span className="mobile-nav-item-left">
                   <Icon name="phone" size={18} />
-                  <span>Contact & Hotel Info</span>
+                  <span>{t('nav.contact')}</span>
                 </span>
                 <Icon name="arrow" size={14} />
               </SiteLink>
@@ -324,7 +416,7 @@ export function GlobalHeader({
               >
                 <span className="mobile-nav-item-left">
                   <Icon name="clock" size={18} />
-                  <span>My Past Orders</span>
+                  <span>{t('nav.pastOrders')}</span>
                 </span>
                 <Icon name="arrow" size={14} />
               </button>
@@ -349,7 +441,7 @@ export function GlobalHeader({
                   </div>
                   <div className="mobile-guest-info">
                     <strong>{customer.name}</strong>
-                    <span>Guest Profile</span>
+                    <span>{t('nav.guestProfile')}</span>
                   </div>
                 </div>
                 <Icon name="arrow" size={16} />
@@ -365,7 +457,7 @@ export function GlobalHeader({
                     <Icon name="user" size={18} />
                   </div>
                   <div className="mobile-guest-info">
-                    <strong>Sign In</strong>
+                    <strong>{t('nav.signIn')}</strong>
                   </div>
                 </div>
                 <Icon name="arrow" size={16} />
@@ -373,9 +465,9 @@ export function GlobalHeader({
             )}
 
             <div className="mobile-drawer-footer">
-              <div>Around Awraris, near General Wako Gutu Square · Bale Robe</div>
+              <div>{t('location.address')} · {t('location.town')}</div>
               <a href="tel:0909511588" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <Icon name="phone" size={14} /> Phone: 0909511588
+                <Icon name="phone" size={14} /> {t('location.phoneTitle')}: 0909511588
               </a>
             </div>
           </div>
@@ -492,6 +584,7 @@ interface SavedPastOrder {
 
 function PastOrdersModal({ close }: { close: () => void }) {
   const [orders, setOrders] = useState<SavedPastOrder[]>([])
+  const { t } = useLanguage()
 
   useEffect(() => {
     try {
@@ -512,17 +605,17 @@ function PastOrdersModal({ close }: { close: () => void }) {
   }
 
   const clearHistory = () => {
-    if (confirm('Clear local past order history on this device?')) {
+    if (confirm(t('history.clearConfirm'))) {
       localStorage.removeItem('ilillii_order_history')
       setOrders([])
     }
   }
 
   return (
-    <Modal title="My Past Orders" close={close}>
+    <Modal title={t('history.title')} close={close}>
       <div style={{ maxHeight: '68vh', overflowY: 'auto', paddingRight: '4px' }}>
         <p style={{ margin: '0 0 14px', fontSize: '13px', color: 'var(--color-muted)' }}>
-          Meals and drinks you ordered at Ilillii Hotel.
+          {t('history.desc')}
         </p>
 
         {orders.length === 0 ? (
@@ -530,9 +623,9 @@ function PastOrdersModal({ close }: { close: () => void }) {
             <span style={{ display: 'grid', placeItems: 'center', width: '48px', height: '48px', margin: '0 auto 12px', background: '#f5ebe1', borderRadius: '50%', color: 'var(--color-brand)' }}>
               <Icon name="bag" size={24} />
             </span>
-            <h4 style={{ margin: '0 0 4px', fontSize: '15px', color: 'var(--color-ink)' }}>No past orders recorded</h4>
+            <h4 style={{ margin: '0 0 4px', fontSize: '15px', color: 'var(--color-ink)' }}>{t('history.emptyTitle')}</h4>
             <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-muted)' }}>
-              When you submit a meal order, a receipt will be kept here so you can review your dishes anytime.
+              {t('history.emptyDesc')}
             </p>
           </div>
         ) : (
@@ -572,7 +665,7 @@ function PastOrdersModal({ close }: { close: () => void }) {
                   ))}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #ebdcd0', marginTop: '8px', paddingTop: '8px', fontWeight: 700, fontSize: '14px' }}>
-                  <span>Total</span>
+                  <span>{t('common.total')}</span>
                   <span style={{ color: 'var(--color-brand)' }}>{ord.total?.toLocaleString()} ETB</span>
                 </div>
               </div>
@@ -587,7 +680,7 @@ function PastOrdersModal({ close }: { close: () => void }) {
             style={{ flex: 1, justifyContent: 'center' }}
             onClick={startFresh}
           >
-            Start Fresh Order
+            {t('history.startFresh')}
           </button>
           {orders.length > 0 && (
             <button
@@ -596,7 +689,7 @@ function PastOrdersModal({ close }: { close: () => void }) {
               style={{ fontSize: '12px', padding: '6px 12px' }}
               onClick={clearHistory}
             >
-              Clear History
+              {t('history.clear')}
             </button>
           )}
         </div>
@@ -607,7 +700,7 @@ function PastOrdersModal({ close }: { close: () => void }) {
 
 export function GlobalFooter() {
   const [languageOpen, setLanguageOpen] = useState(false)
-  const { language, setLanguage } = useLanguage()
+  const { language, setLanguage, t } = useLanguage()
   return (
     <footer className="global-footer">
       <div className="container">
@@ -615,7 +708,7 @@ export function GlobalFooter() {
           <div className="footer-brand-wrap">
             <Logo light />
             <p className="footer-addr">
-              Around Awraris, near General Wako Gutu Square · Bale Robe, Oromia
+              {t('footer.brandAddr')}
             </p>
             <a href="tel:0909511588" className="footer-phone">
               <Icon name="phone" size={13} />
@@ -624,17 +717,17 @@ export function GlobalFooter() {
           </div>
 
           <div className="footer-links-group">
-            <span className="footer-title">EXPLORE</span>
+            <span className="footer-title">{t('footer.explore')}</span>
             <div className="footer-nav-row">
-              <SiteLink href="/#home">Home</SiteLink>
-              <SiteLink href="/#menu">Menu</SiteLink>
-              <SiteLink href="/contact">Contact</SiteLink>
-              <SiteLink href="/#login">Sign In</SiteLink>
+              <SiteLink href="/#home">{t('nav.home')}</SiteLink>
+              <SiteLink href="/#menu">{t('nav.menu')}</SiteLink>
+              <SiteLink href="/contact">{t('nav.contact')}</SiteLink>
+              <SiteLink href="/#login">{t('nav.signIn')}</SiteLink>
             </div>
           </div>
 
           <div className="footer-lang-group">
-            <span className="footer-title">LANGUAGE</span>
+            <span className="footer-title">{t('footer.language')}</span>
             <button className="footer-action footer-compact-lang" onClick={() => setLanguageOpen(true)}>
               <Icon name="globe" size={14} />
               <span>{language === 'om' ? 'Afaan Oromoo' : language === 'am' ? 'አማርኛ' : 'English'}</span>
@@ -643,8 +736,8 @@ export function GlobalFooter() {
         </div>
 
         <div className="global-footer-bottom">
-          <span>© {new Date().getFullYear()} Ilillii Hotel. All rights reserved.</span>
-          <span>Bale Robe, Oromia, Ethiopia · Open Daily 7:00 AM – 11:30 PM</span>
+          <span>© {new Date().getFullYear()} {t('brand.hotel')}. {t('footer.rights')}</span>
+          <span>{t('footer.hours')}</span>
         </div>
       </div>
       {languageOpen && (
