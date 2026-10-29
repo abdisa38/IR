@@ -5,7 +5,7 @@ import { formatBirr } from './menu-data'
 import { fulfilmentStages, validateOffsite } from './fulfilment-model'
 import type { Fulfilment } from './fulfilment-model'
 import { api } from './api/client'
-import { languageOptions } from './language'
+import { useLanguage, languageOptions } from './language'
 import './fulfilment.css'
 import { CompactCheckoutAmount, StatusBadge } from './ui-patterns'
 

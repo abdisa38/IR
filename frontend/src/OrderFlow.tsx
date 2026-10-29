@@ -4,7 +4,7 @@ import { formatBirr } from './menu-data'
 import type { MenuItem } from './menu-data'
 import { orderStages, validateGuest } from './order-prototype'
 import { api } from './api/client'
-import { languageOptions } from './language'
+import { useLanguage, languageOptions } from './language'
 import './order.css'
 import { CompactCheckoutAmount, StatusBadge } from './ui-patterns'
 
@@ -187,6 +187,7 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
     close()
   }
 
+  const { t } = useLanguage()
   const currentIndex = step === 'details' ? 0 : 1
   return (
     <dialog ref={dialog} className="order-flow" aria-labelledby="order-page-title" onCancel={event => { event.preventDefault(); if (!busy) close() }}>
@@ -201,7 +202,7 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
             </button>
             <span className="table-badge">
               <Icon name="meal" size={15} />
-              {snapshot?.table ? `Table ${snapshot.table}` : table ? `Table ${table}` : 'Dine In'}
+              {snapshot?.table ? `${t('checkout.table')} ${snapshot.table}` : table ? `${t('checkout.table')} ${table}` : t('ways.dineIn')}
             </span>
           </div>
         </div>
@@ -214,12 +215,12 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
           disabled={busy}
         >
           <Icon name="arrow" size={16} />
-          {confirmedView ? 'Back to menu' : step === 'details' ? 'Back to cart' : 'Back'}
+          {confirmedView ? t('order.backToMenu') : step === 'details' ? t('order.backToCart') : t('order.back')}
         </button>
 
         {!confirmedView && (
           <ol className="checkout-progress" aria-label="Order progress">
-            {['Your details', 'Review order'].map((label, index) => (
+            {[t('checkout.detailsStep'), t('checkout.reviewStep')].map((label, index) => (
               <li
                 key={label}
                 className={index === currentIndex ? 'current' : index < currentIndex ? 'complete' : ''}
@@ -233,16 +234,16 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
         )}
 
         <div className="order-page-heading">
-          <span className="eyebrow">{confirmedView ? 'GOOD FOOD. GREAT RESTAURANT.' : 'DINE IN · TABLE ORDER'}</span>
+          <span className="eyebrow">{confirmedView ? t('order.goodFoodGreat') : t('order.dineInTableOrder')}</span>
           <h1 id="order-page-title" ref={heading} tabIndex={-1}>
             {step === 'details' ? (
-              <>A little about <span>you.</span></>
+              <>{t('order.stepAboutYou')}</>
             ) : step === 'review' ? (
-              <>One last <span>look.</span></>
+              <>{t('order.stepOneLastLook')}</>
             ) : step === 'confirmation' ? (
-              <>Your order,<br /><span>all together.</span></>
+              <>{t('order.stepAllTogether')}</>
             ) : (
-              <>From our kitchen<br />to <span>your table.</span></>
+              <>{t('order.stepKitchenToTable')}</>
             )}
           </h1>
         </div>
@@ -251,7 +252,7 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
           <div className="order-main-card">
             {confirmedView && snapshot && (
               <div className="checkout-status-pair">
-                <StatusBadge type="Order" label={orderStages[stage]} />
+                <StatusBadge type="Order" label={t(`stage.${orderStages[stage]?.toLowerCase()}`, orderStages[stage])} />
               </div>
             )}
 
@@ -259,9 +260,9 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
               <div className="order-error" role="alert" id="dine-form-error">
                 <Icon name="info" size={20} />
                 <div>
-                  <strong>Let’s check before continuing.</strong>
+                  <strong>{t('order.letsCheck')}</strong>
                   <p>{error}</p>
-                  <button onClick={() => setModal('help')}>Ask staff for help</button>
+                  <button onClick={() => setModal('help')}>{t('order.askForHelp')}</button>
                 </div>
               </div>
             )}
@@ -270,26 +271,26 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
               <form onSubmit={event => { event.preventDefault(); const validation = validateGuest(name, phone); setError(validation); if (!validation) go('review') }} noValidate>
                 <div className="order-card-heading">
                   <span className="order-card-icon"><Icon name="heart" size={22} /></span>
-                  <div><h2>Who’s joining us?</h2></div>
+                  <div><h2>{t('checkout.whoJoining')}</h2></div>
                 </div>
 
                 <label className="order-field">
-                  Your name <span>Required</span>
+                  {t('checkout.nameLabel')} <span>{t('checkout.nameReq')}</span>
                   <input
                     autoComplete="given-name"
                     maxLength={80}
                     value={name}
                     onChange={e => setName(e.target.value)}
-                    placeholder="The name staff can call you"
+                    placeholder={t('checkout.namePlaceholder')}
                     aria-invalid={Boolean(error && !name.trim())}
                     aria-describedby={error ? 'dine-form-error name-help' : 'name-help'}
                     required
                   />
-                  <small id="name-help">So we know who this meal is for.</small>
+                  <small id="name-help">{t('checkout.nameHelp')}</small>
                 </label>
 
                 <label className="order-field">
-                  Phone number <span>Optional</span>
+                  {t('checkout.phoneLabel')} <span>{t('checkout.optional')}</span>
                   <input
                     type="tel"
                     aria-invalid={Boolean(error && error.toLowerCase().includes('phone'))}
@@ -301,27 +302,27 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                     onChange={e => setPhone(e.target.value)}
                     placeholder="0909511588"
                   />
-                  <small>For order coordination, if needed.</small>
+                  <small>{t('checkout.phoneHelp')}</small>
                 </label>
 
                 <label className="order-field">
-                  Anything we should know? <span>Optional</span>
+                  {t('checkout.noteLabel')} <span>{t('checkout.optional')}</span>
                   <textarea
                     value={note}
                     onChange={e => setNote(e.target.value)}
                     maxLength={500}
-                    placeholder="Add a note for the kitchen"
+                    placeholder={t('checkout.notePlaceholder')}
                     rows={3}
                   />
-                  <small>Let us know if you have any dietary preferences.</small>
+                  <small>{t('checkout.noteHelp')}</small>
                 </label>
 
                 <div className="order-buttons-group">
                   <button className="button primary order-full" type="submit">
-                    Review your order<Icon name="arrow" size={18} />
+                    {t('checkout.reviewBtn')}<Icon name="arrow" size={18} />
                   </button>
                   <p className="order-privacy">
-                    <Icon name="check" size={13} />Your order is sent directly to the kitchen staff.
+                    <Icon name="check" size={13} />{t('checkout.privacyNote')}
                   </p>
                 </div>
               </form>
@@ -329,16 +330,16 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
 
             {step === 'review' && (
               <>
-                <h2>Review order details</h2>
+                <h2>{t('checkout.reviewDetailsHeading')}</h2>
                 <dl className="review-details">
-                  <div><dt>Customer</dt><dd>{name}</dd></div>
-                  <div><dt>Table</dt><dd>{table ? `Table ${table}` : 'Table Service'}</dd></div>
-                  {phone && <div><dt>Phone</dt><dd>{phone}</dd></div>}
+                  <div><dt>{t('checkout.customer')}</dt><dd>{name}</dd></div>
+                  <div><dt>{t('checkout.table')}</dt><dd>{table ? `${t('checkout.table')} ${table}` : t('checkout.tableService')}</dd></div>
+                  {phone && <div><dt>{t('checkout.phone')}</dt><dd>{phone}</dd></div>}
                   {activeOrderId && (
                     <div style={{ gridColumn: '1 / -1', background: '#fdfbf7', border: '1px solid #ebdcd0', borderRadius: '10px', padding: '10px 12px', marginTop: '6px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                         <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--color-brand)' }}>
-                          {appendToExisting ? `Adding to Active Order #${activeOrderId}` : 'Separate Fresh Order'}
+                          {appendToExisting ? `${t('checkout.activeOrderNotice', undefined, { id: activeOrderId })}` : t('checkout.startSeparateBtn')}
                         </span>
                         <button
                           type="button"
@@ -354,15 +355,15 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                             }
                           }}
                         >
-                          {appendToExisting ? 'Start separate new order' : 'Add to previous order'}
+                          {appendToExisting ? t('checkout.startSeparateBtn') : t('checkout.appendToActiveBtn')}
                         </button>
                       </div>
                       <small style={{ color: '#78716c', fontSize: '11px', display: 'block' }}>
-                        {appendToExisting ? 'Kitchen ticket will combine these items with your current table meal.' : 'This will be prepared as an independent new ticket.'}
+                        {appendToExisting ? t('checkout.appendExpl') : t('checkout.separateExpl')}
                       </small>
                     </div>
                   )}
-                  {note && <div><dt>Order note</dt><dd>{note}</dd></div>}
+                  {note && <div><dt>{t('cart.orderNote')}</dt><dd>{note}</dd></div>}
                 </dl>
 
                 <div className="order-buttons-group">
@@ -372,11 +373,11 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                     disabled={busy || Boolean(snapshot)}
                     aria-busy={busy}
                   >
-                    {busy ? <><span className="order-spinner" />Placing order…</> : 'Place Order'}
+                    {busy ? <><span className="order-spinner" />{t('checkout.placingOrder')}</> : t('checkout.placeOrder')}
                     {!busy && <Icon name="arrow" size={18} />}
                   </button>
-                  <p className="order-privacy"><Icon name="check" size={13} />Sent directly to kitchen.</p>
-                  {error && <button className="continue-button" onClick={close}>Edit order without losing your cart</button>}
+                  <p className="order-privacy"><Icon name="check" size={13} />{t('checkout.privacyNote')}</p>
+                  {error && <button className="continue-button" onClick={close}>{t('order.editWithoutLosingCart')}</button>}
                 </div>
               </>
             )}
@@ -385,10 +386,10 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
               <>
                 <div className="order-success-icon"><Icon name="check" size={32} /></div>
                 <div className="confirmation-intro">
-                  <h2>{step === 'tracking' ? orderStages[stage] : 'Order Received!'}</h2>
-                  <p>Your table order has been sent to the Ilillii Hotel kitchen.</p>
+                  <h2>{step === 'tracking' ? (orderStages[stage] ? t(`stage.${orderStages[stage].toLowerCase()}`, orderStages[stage]) : orderStages[stage]) : t('order.receivedHeading')}</h2>
+                  <p>{t('order.receivedDesc')}</p>
                   <strong className="order-reference">{snapshot.reference}</strong>
-                  <span>{snapshot.table ? `Table ${snapshot.table}` : 'Dine In'} · {snapshot.name}</span>
+                  <span>{snapshot.table ? `${t('checkout.table')} ${snapshot.table}` : t('ways.dineIn')} · {snapshot.name}</span>
                 </div>
 
                 <div className="order-buttons-group">
@@ -398,20 +399,20 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                         {orderStages.map((label, index) => (
                           <li key={label} className={index < stage ? 'done' : index === stage ? 'active' : ''} aria-current={index === stage ? 'step' : undefined}>
                             <span>{index < stage ? <Icon name="check" size={14} /> : index + 1}</span>
-                            <div><strong>{label}</strong></div>
+                            <div><strong>{t(`stage.${label.toLowerCase()}`, label)}</strong></div>
                           </li>
                         ))}
                       </ol>
                       <div className="status-refresh">
-                        <p>{refreshed || 'Kitchen status updated.'}</p>
-                        <button className="button secondary" onClick={() => setRefreshed(`Checked at ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`)}>
-                          Refresh status
+                        <p>{refreshed || t('order.statusUpdated')}</p>
+                        <button className="button secondary" onClick={() => setRefreshed(t('order.checkedAt', undefined, { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }))}>
+                          {t('order.refreshStatus')}
                         </button>
                       </div>
                     </>
                   ) : (
                     <button className="button secondary order-full" onClick={() => go('tracking')}>
-                      View order status<Icon name="arrow" size={18} />
+                      {t('order.viewStatus')}<Icon name="arrow" size={18} />
                     </button>
                   )}
 
@@ -421,7 +422,7 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                     onClick={handleAddMoreDishes}
                   >
                     <Icon name="plus" size={17} />
-                    Add More Food / Order Additional Dishes
+                    {t('order.addMoreDishes')}
                   </button>
 
                   <button
@@ -433,7 +434,7 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                       window.dispatchEvent(new CustomEvent('ilillii-open-history'))
                     }}
                   >
-                    <Icon name="clock" size={16} />View My Past Orders
+                    <Icon name="clock" size={16} />{t('order.viewPastOrders')}
                   </button>
 
                   <a
@@ -441,10 +442,10 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
                     className="button secondary order-full"
                     style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none' }}
                   >
-                    <Icon name="phone" size={16} />Call 0909511588
+                    <Icon name="phone" size={16} />{t('order.callPhone')}
                   </a>
                   <button className="continue-button" onClick={() => setModal('help')}>
-                    Request staff assistance<Icon name="heart" size={16} />
+                    {t('order.requestHelp')}<Icon name="heart" size={16} />
                   </button>
                 </div>
               </>
@@ -455,37 +456,42 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
             <aside className="order-summary-card">
               <div className="summary-heading">
                 <Icon name="bag" size={20} />
-                <h2>Your meal</h2>
-                {!locked && <button onClick={close}>Edit</button>}
+                <h2>{t('checkout.yourMeal')}</h2>
+                {!locked && <button onClick={close}>{t('common.edit')}</button>}
               </div>
               <div className="summary-table">
-                <span>{table ? `Table ${table}` : 'Table Service'}</span>
-                <small>DINE IN</small>
+                <span>{table ? `${t('checkout.table')} ${table}` : t('checkout.tableService')}</span>
+                <small>{t('checkout.dineInBadge')}</small>
               </div>
               <div className="summary-lines">
-                {shownLines.map(line => (
-                  <div key={line.item.id}>
-                    <span>{line.quantity} ×</span>
-                    <div>
-                      <strong>{line.item.name}</strong>
+                {shownLines.map(line => {
+                  const displayName = language === 'am' && line.item.translations?.am
+                    ? line.item.translations.am
+                    : (language === 'om' && line.item.translations?.om ? line.item.translations.om : line.item.name)
+                  return (
+                    <div key={line.item.id}>
+                      <span>{line.quantity} ×</span>
+                      <div>
+                        <strong>{displayName}</strong>
+                      </div>
+                      {shownLines.length > 1 && <b>{formatBirr(line.item.price * line.quantity)} ETB</b>}
                     </div>
-                    {shownLines.length > 1 && <b>{formatBirr(line.item.price * line.quantity)} ETB</b>}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
               <div className="summary-total">
-                <span>Total</span>
+                <span>{t('common.total')}</span>
                 <strong>{formatBirr(shownTotal)} <small>ETB</small></strong>
               </div>
               {snapshot?.note && (
                 <div className="summary-order-note">
-                  <strong>Order note</strong>
+                  <strong>{t('cart.orderNote')}</strong>
                   <p>{snapshot.note}</p>
                 </div>
               )}
               <div className="summary-assurance">
                 <Icon name="heart" size={17} />
-                <span>Your table. Your meal.<br />Enjoy your time at Ilillii.</span>
+                <span>{t('order.enjoyMeal')}</span>
               </div>
             </aside>
           )}
@@ -493,8 +499,8 @@ export default function OrderFlow({ open, table, lines, note, setNote, close, la
 
         <div className="order-bottom-help">
           <Icon name="info" size={16} />
-          <span>Need a hand? Our team is available right at your table.</span>
-          <button onClick={() => setModal('help')}>Ask for help</button>
+          <span>{t('order.needHand')}</span>
+          <button onClick={() => setModal('help')}>{t('order.askForHelp')}</button>
         </div>
       </div>
 
