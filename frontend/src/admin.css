@@ -229,24 +229,254 @@
 }
 
 /* ==========================================================================
-   Clean, simple text status badges for Admin Orders (No background, No boxes, No info icon)
+   Modern, Clean, Spacious Mobile Order Cards for Admin Dashboard
+   ========================================================================== */
+body .admin-mobile-orders {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  padding: 8px 0 24px !important;
+}
+
+body .admin-mobile-order-card,
+body .admin-mobile-order {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  background: #ffffff !important;
+  border: 1px solid #ebdcd0 !important;
+  border-radius: 14px !important;
+  padding: 16px 18px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04) !important;
+  box-sizing: border-box !important;
+}
+
+body .admin-card-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+}
+
+body .admin-card-user-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+body .admin-card-customer-link {
+  font-size: 16px !important;
+  font-weight: 750 !important;
+  color: var(--color-ink) !important;
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  text-align: left !important;
+}
+
+body .admin-card-customer-link:hover {
+  color: var(--color-brand) !important;
+  text-decoration: underline !important;
+}
+
+body .admin-card-id-pill {
+  font-size: 11.5px !important;
+  font-weight: 600 !important;
+  color: #78716c !important;
+  background: #f5f0eb !important;
+  padding: 2px 7px !important;
+  border-radius: 6px !important;
+}
+
+body .admin-card-time-text {
+  font-size: 12px !important;
+  color: #78716c !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+}
+
+body .admin-card-tags-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+body .admin-tag-service {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #44403c !important;
+  background: #f7f2ec !important;
+  padding: 3px 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid #ebdcd0 !important;
+}
+
+body .admin-tag-table-qr {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  color: #15803d !important;
+  background: #dcfce7 !important;
+  padding: 3px 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid #bbf7d0 !important;
+}
+
+body .admin-tag-table-manual {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #0369a1 !important;
+  background: #e0f2fe !important;
+  padding: 3px 10px !important;
+  border-radius: 8px !important;
+  border: 1px solid #bae6fd !important;
+}
+
+body .admin-tag-table-direct {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #6d28d9 !important;
+  background: #ede9fe !important;
+  padding: 3px 10px !important;
+  border-radius: 8px !important;
+}
+
+body .admin-tag-extra {
+  font-size: 11px !important;
+  color: #b45309 !important;
+  background: #fef3c7 !important;
+  padding: 3px 8px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+}
+
+body .admin-card-items-box {
+  background: #faf7f2 !important;
+  border: 1px solid #f0e6dc !important;
+  border-radius: 10px !important;
+  padding: 10px 13px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 6px !important;
+}
+
+body .admin-card-item-line {
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  font-size: 13.5px !important;
+  gap: 8px !important;
+}
+
+body .admin-item-title {
+  color: #1c1917 !important;
+  font-weight: 600 !important;
+  flex: 1 !important;
+}
+
+body .admin-item-count {
+  color: var(--color-brand) !important;
+  font-weight: 750 !important;
+  margin-right: 6px !important;
+}
+
+body .admin-item-sum {
+  color: #78716c !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+}
+
+body .admin-card-kitchen-note {
+  font-size: 11.5px !important;
+  color: #b45309 !important;
+  font-style: italic !important;
+  border-top: 1px dashed #e8dfd5 !important;
+  padding-top: 6px !important;
+  margin-top: 2px !important;
+}
+
+body .admin-card-badges-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+body .admin-card-footer-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  padding-top: 10px !important;
+  border-top: 1px solid #f0e6dc !important;
+}
+
+body .admin-card-price-display {
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 4px !important;
+}
+
+body .admin-card-price-display strong {
+  font-size: 17px !important;
+  font-weight: 800 !important;
+  color: #1c1917 !important;
+}
+
+body .admin-card-price-display small {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #78716c !important;
+}
+
+body .admin-card-actions-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body .admin-card-actions-group .button {
+  min-height: 36px !important;
+  max-height: 38px !important;
+  padding: 6px 14px !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  border-radius: 10px !important;
+}
+
+/* ==========================================================================
+   Clean, Soft Pill Badges for Admin Orders & Statuses
    ========================================================================== */
 body .admin-app .ui-status,
 body .admin-workspace .ui-status,
 body .admin-mobile-orders .ui-status,
 body .admin-table .ui-status,
 body .admin-order-detail .ui-status {
-  background: transparent !important;
-  background-color: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
+  background: #f5f0eb !important;
+  border: 1px solid #ebdcd0 !important;
+  padding: 4px 10px !important;
+  border-radius: 9999px !important;
   display: inline-flex !important;
   align-items: center !important;
   gap: 5px !important;
-  font-size: 13px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
-  line-height: 1.4 !important;
+  line-height: 1.2 !important;
   white-space: nowrap !important;
 }
 
@@ -265,8 +495,6 @@ body .admin-table .ui-status > span {
   display: inline-flex !important;
   align-items: center !important;
   gap: 3px !important;
-  overflow-wrap: normal !important;
-  word-break: normal !important;
   white-space: nowrap !important;
 }
 
@@ -275,9 +503,9 @@ body .admin-workspace .ui-status small,
 body .admin-mobile-orders .ui-status small,
 body .admin-table .ui-status small {
   display: inline !important;
-  font-size: 12px !important;
+  font-size: 11px !important;
   font-weight: 500 !important;
-  color: #78716c !important;
+  opacity: 0.8 !important;
   margin-right: 2px !important;
 }
 
@@ -293,44 +521,60 @@ body .admin-workspace .ui-status::before,
 body .admin-mobile-orders .ui-status::before,
 body .admin-table .ui-status::before {
   content: '●';
-  font-size: 8px !important;
-  margin-right: 3px !important;
+  font-size: 7px !important;
+  margin-right: 2px !important;
 }
 
 body .admin-app .ui-status-success,
-body .admin-workspace .ui-status-success {
-  color: #16a34a !important;
+body .admin-workspace .ui-status-success,
+body .admin-mobile-orders .ui-status-success {
+  background: #dcfce7 !important;
+  color: #15803d !important;
+  border-color: #bbf7d0 !important;
 }
 body .admin-app .ui-status-success::before,
-body .admin-workspace .ui-status-success::before {
+body .admin-workspace .ui-status-success::before,
+body .admin-mobile-orders .ui-status-success::before {
   color: #16a34a !important;
 }
 
 body .admin-app .ui-status-warning,
-body .admin-workspace .ui-status-warning {
-  color: #d97706 !important;
+body .admin-workspace .ui-status-warning,
+body .admin-mobile-orders .ui-status-warning {
+  background: #fef3c7 !important;
+  color: #b45309 !important;
+  border-color: #fde68a !important;
 }
 body .admin-app .ui-status-warning::before,
-body .admin-workspace .ui-status-warning::before {
+body .admin-workspace .ui-status-warning::before,
+body .admin-mobile-orders .ui-status-warning::before {
   color: #d97706 !important;
 }
 
 body .admin-app .ui-status-error,
-body .admin-workspace .ui-status-error {
+body .admin-workspace .ui-status-error,
+body .admin-mobile-orders .ui-status-error {
+  background: #fee2e2 !important;
   color: #dc2626 !important;
+  border-color: #fecaca !important;
 }
 body .admin-app .ui-status-error::before,
-body .admin-workspace .ui-status-error::before {
+body .admin-workspace .ui-status-error::before,
+body .admin-mobile-orders .ui-status-error::before {
   color: #dc2626 !important;
 }
 
 body .admin-app .ui-status-neutral,
-body .admin-workspace .ui-status-neutral {
-  color: #475569 !important;
+body .admin-workspace .ui-status-neutral,
+body .admin-mobile-orders .ui-status-neutral {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+  border-color: #bfdbfe !important;
 }
 body .admin-app .ui-status-neutral::before,
-body .admin-workspace .ui-status-neutral::before {
-  color: #94a3b8 !important;
+body .admin-workspace .ui-status-neutral::before,
+body .admin-mobile-orders .ui-status-neutral::before {
+  color: #2563eb !important;
 }
 
 /* ==========================================================================
@@ -357,7 +601,8 @@ body .admin-state-panel .button {
   transition: all 0.15s ease !important;
 }
 
-body .admin-mobile-order .button {
+body .admin-mobile-order .button,
+body .admin-mobile-order-card .button {
   min-height: 35px !important;
   padding: 6px 13px !important;
   font-size: 12px !important;

@@ -311,53 +311,72 @@ export default function Admin() {
     <>
       <div className="admin-mobile-orders">
         {data.map(order => (
-          <article className="admin-mobile-order" key={order.id}>
-            <div>
-              <button
-                className="admin-order-link"
-                onClick={() => setSelected(order)}
-                style={{ fontWeight: 700, fontSize: '15px' }}
-              >
-                {order.customer || order.id}
-              </button>
-              <span>{order.id} · {time(order.received)}</span>
+          <article className="admin-mobile-order-card" key={order.id}>
+            <div className="admin-card-header">
+              <div className="admin-card-user-info">
+                <button
+                  type="button"
+                  className="admin-card-customer-link"
+                  onClick={() => setSelected(order)}
+                >
+                  {order.customer || 'Guest Customer'}
+                </button>
+                <span className="admin-card-id-pill">#{order.id}</span>
+              </div>
+              <span className="admin-card-time-text">{time(order.received)}</span>
             </div>
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', margin: '4px 0' }}>
-              <span className="admin-order-type">
-                <Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={16} />
+
+            <div className="admin-card-tags-row">
+              <span className="admin-tag-service">
+                <Icon name={order.type === 'Dine-in' ? 'meal' : 'bag'} size={14} />
                 {order.type}
               </span>
               {order.source === 'table_qr' ? (
-                <span style={{ fontSize: '11px', fontWeight: 700, color: '#15803d', background: '#dcfce7', padding: '2px 7px', borderRadius: '4px', border: '1px solid #bbf7d0' }}>
-                  QR Table {order.table}
+                <span className="admin-tag-table-qr">
+                  Table {order.table} (QR)
                 </span>
               ) : order.table ? (
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#0369a1', background: '#e0f2fe', padding: '2px 7px', borderRadius: '4px' }}>
+                <span className="admin-tag-table-manual">
                   Table {order.table}
                 </span>
               ) : (
-                <span style={{ fontSize: '11px', fontWeight: 600, color: '#6d28d9', background: '#ede9fe', padding: '2px 7px', borderRadius: '4px' }}>
-                  Web Direct (No QR)
+                <span className="admin-tag-table-direct">
+                  Web Direct
                 </span>
               )}
               {order.parentOrderId && (
-                <span style={{ fontSize: '10px', color: '#b45309', background: '#fef3c7', padding: '2px 5px', borderRadius: '3px' }}>
-                  + Added Items
+                <span className="admin-tag-extra">
+                  + Extra Items
                 </span>
               )}
             </div>
-            <p>{order.items.map(item => `${item.quantity} × ${item.name}`).join(', ')}</p>
-            <div className="mobile-order-statuses">
+
+            <div className="admin-card-items-box">
+              {order.items.map((item, idx) => (
+                <div key={idx} className="admin-card-item-line">
+                  <span className="admin-item-title">
+                    <strong className="admin-item-count">{item.quantity}×</strong>
+                    {item.name}
+                  </span>
+                  {financial && <span className="admin-item-sum">{formatBirr(item.price * item.quantity)} ETB</span>}
+                </div>
+              ))}
+              {order.note && <div className="admin-card-kitchen-note">Note: {order.note}</div>}
+            </div>
+
+            <div className="admin-card-badges-row">
               <Badge value={order.payment} type="Payment" />
               <Badge value={orderStatusLabel(order)} />
             </div>
-            <div className="mobile-order-action">
+
+            <div className="admin-card-footer-row">
               {financial && (
-                <strong>
-                  {formatBirr(orderTotal(order))} <small>ETB</small>
-                </strong>
+                <div className="admin-card-price-display">
+                  <strong>{formatBirr(orderTotal(order))}</strong>
+                  <small>ETB</small>
+                </div>
               )}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div className="admin-card-actions-group">
                 {operation && nextOrderStatus(order) && (role !== 'Kitchen Staff' || ['Accepted', 'Preparing'].includes(order.status)) && (
                   <button
                     className="button primary"
@@ -365,7 +384,6 @@ export default function Admin() {
                       e.stopPropagation()
                       changeOrder(order)
                     }}
-                    style={{ fontSize: '12px', padding: '6px 12px', minHeight: '34px', borderRadius: '10px' }}
                   >
                     {nextOrderStatus(order)!.label === 'Accept order' ? t('admin.acceptOrder') : nextOrderStatus(order)!.label}
                   </button>
@@ -374,7 +392,6 @@ export default function Admin() {
                   className="button secondary"
                   onClick={() => setSelected(order)}
                   aria-label={`View order ${order.id}`}
-                  style={{ fontSize: '12px', padding: '6px 12px', minHeight: '34px', borderRadius: '10px' }}
                 >
                   {t('admin.viewOrder')}<Icon name="arrow" size={14} />
                 </button>

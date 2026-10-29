@@ -158,9 +158,9 @@ body .verification-banner { gap: 10px; padding: 12px 16px; }
   body .admin-sidebar { width: 240px; }
   body .admin-workspace { margin-left: 240px; }
   body .admin-main, body .admin-topbar { padding-inline: 20px; }
-  body .admin-mobile-orders { display: grid; }
+  body .admin-mobile-orders { display: flex; flex-direction: column; gap: 14px; }
   body .admin-order-table { display: none; }
-  body .admin-mobile-order { padding: 20px; border-top: 1px solid var(--color-line); }
+  body .admin-mobile-order, body .admin-mobile-order-card { background: #ffffff; border: 1px solid #ebdcd0; border-radius: 14px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
   body .mobile-order-statuses, body .mobile-order-action { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
 }
 @media(max-width:850px) {

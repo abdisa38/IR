@@ -232,16 +232,18 @@ export default function Menu() {
       <section className={`menu-container qr-entry ${qr.table || qr.invalid ? 'contextual-entry' : 'regular-entry'}`}>
         {(qr.table || qr.invalid) && (
           <div className="qr-context">
-            <span className="qr-context-icon"><Icon name="meal" size={25} /></span>
-            <div>
+            <div className="qr-context-top-bar">
+              <span className="qr-context-icon"><Icon name="meal" size={22} /></span>
+              {qr.table && (
+                <span className="table-badge qr-verified-pill" style={localStorage.getItem('ilillii_table_source') === 'qr' ? { background: '#dcfce7', color: '#15803d', borderColor: '#bbf7d0', fontWeight: 700 } : {}}>
+                  <Icon name="meal" size={15} />{localStorage.getItem('ilillii_table_source') === 'qr' ? t('qr.scannedBadge', undefined, { table: qr.table }) : t('qr.manualBadge', undefined, { table: qr.table })}
+                </span>
+              )}
+            </div>
+            <div className="qr-context-details">
               <span className="eyebrow">{localStorage.getItem('ilillii_table_source') === 'qr' ? t('qr.scannedBannerEyebrow') : t('menu.yourTableYourTime')}</span>
               <h2>{qr.table ? (localStorage.getItem('ilillii_table_source') === 'qr' ? t('qr.scannedBannerTitle', undefined, { table: qr.table }) : t('menu.welcomeToIlillii')) : t('menu.checkTable')}</h2>
             </div>
-            {qr.table && (
-              <span className="table-badge" style={localStorage.getItem('ilillii_table_source') === 'qr' ? { background: '#dcfce7', color: '#15803d', borderColor: '#bbf7d0', fontWeight: 700 } : {}}>
-                <Icon name="meal" size={16} />{localStorage.getItem('ilillii_table_source') === 'qr' ? t('qr.scannedBadge', undefined, { table: qr.table }) : t('qr.manualBadge', undefined, { table: qr.table })}
-              </span>
-            )}
           </div>
         )}
         <div className="qr-entry-actions">
