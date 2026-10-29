@@ -42,7 +42,48 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
   const [error, setError] = useState('')
   const [verified, setVerified] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload')
   const images = useRef<string[]>([])
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (JPEG, PNG, or WebP).')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Image file size must be under 10 MB.')
+      return
+    }
+
+    setUploadingImage(true)
+    setError('')
+    const reader = new FileReader()
+    reader.onload = async () => {
+      const base64 = reader.result as string
+      try {
+        const res = await api.uploadImage(base64, file.name)
+        if (res.success && res.url) {
+          setEditing(prev => (prev ? { ...prev, image: res.url } : null))
+          notify(`Image '${file.name}' uploaded to server!`)
+        } else {
+          setEditing(prev => (prev ? { ...prev, image: base64 } : null))
+        }
+      } catch (err: any) {
+        setEditing(prev => (prev ? { ...prev, image: base64 } : null))
+        notify('Image loaded into item.')
+      } finally {
+        setUploadingImage(false)
+      }
+    }
+    reader.onerror = () => {
+      setUploadingImage(false)
+      setError('Error reading local file.')
+    }
+    reader.readAsDataURL(file)
+  }
 
   const loadMenu = async () => {
     try {
@@ -320,9 +361,83 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
               />
             </label>
 
+            <div style={{ margin: '14px 0' }}>
+              <label style={{ display: 'block', fontWeight: 600, marginBottom: '6px' }}>
+                Food / Beverage Image
+              </label>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+                <button
+                  type="button"
+                  className={`button ${imageInputMode === 'upload' ? 'primary' : 'secondary'}`}
+                  style={{ padding: '6px 14px', fontSize: '13px' }}
+                  onClick={() => setImageInputMode('upload')}
+                >
+                  <Icon name="meal" size={15} />Upload from Computer / Phone
+                </button>
+                <button
+                  type="button"
+                  className={`button ${imageInputMode === 'url' ? 'primary' : 'secondary'}`}
+                  style={{ padding: '6px 14px', fontSize: '13px' }}
+                  onClick={() => setImageInputMode('url')}
+                >
+                  <Icon name="globe" size={15} />Enter Image URL
+                </button>
+              </div>
+
+              {imageInputMode === 'upload' ? (
+                <div style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '16px', textAlign: 'center', background: '#fafaf9' }}>
+                  <input
+                    type="file"
+                    id="admin-dish-image-file"
+                    accept="image/png,image/jpeg,image/webp,image/jpg"
+                    style={{ display: 'none' }}
+                    onChange={handleImageFileChange}
+                    disabled={uploadingImage}
+                  />
+                  <label
+                    htmlFor="admin-dish-image-file"
+                    className="button primary"
+                    style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Icon name="plus" size={16} />
+                    {uploadingImage ? 'Uploading Image to Server…' : 'Choose Image File'}
+                  </label>
+                  <p style={{ fontSize: '12px', color: '#78716c', marginTop: '8px', marginBottom: 0 }}>
+                    Supports PNG, JPG, JPEG, WebP up to 10MB
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <input
+                    type="url"
+                    placeholder="https://images.unsplash.com/... or /images/menu/dish.jpg"
+                    value={editing.image || ''}
+                    onChange={e => setEditing({ ...editing, image: e.target.value })}
+                    style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '14px' }}
+                  />
+                  <small style={{ color: '#78716c', display: 'block', marginTop: '4px' }}>
+                    Paste any public image URL or website asset link
+                  </small>
+                </div>
+              )}
+
+              {editing.image && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px', padding: '6px 10px', background: '#f3f4f6', borderRadius: '6px' }}>
+                  <span style={{ fontSize: '12px', color: '#15803d', fontWeight: 600 }}>✓ Image assigned</span>
+                  <button
+                    type="button"
+                    style={{ color: '#dc2626', fontSize: '12px', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                    onClick={() => setEditing({ ...editing, image: '' })}
+                  >
+                    Remove Image
+                  </button>
+                </div>
+              )}
+            </div>
+
             <div className="admin-item-preview">
               {editing.image ? (
-                <img src={editing.image} alt="Item preview" />
+                <img src={editing.image} alt="Item preview" style={{ objectFit: 'cover' }} />
               ) : (
                 <Icon name="meal" size={28} />
               )}
@@ -467,21 +582,46 @@ export function AdminCategories({ notify }: { notify: (text: string) => void }) 
 }
 
 function TableQrCode({ table }: { table: string }) {
+  const [dataUrl, setDataUrl] = useState<string>('')
   const qrTarget = typeof window !== 'undefined'
     ? `${window.location.origin}/?table=${table}&source=qr#menu`
     : `https://frontend-psi-ten-87.vercel.app/?table=${table}&source=qr#menu`
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=4&data=${encodeURIComponent(qrTarget)}`
+
+  useEffect(() => {
+    let active = true
+    QRCode.toDataURL(qrTarget, {
+      width: 280,
+      margin: 2,
+      color: {
+        dark: '#1c1917',
+        light: '#ffffff',
+      },
+      errorCorrectionLevel: 'H',
+    })
+      .then(url => {
+        if (active) setDataUrl(url)
+      })
+      .catch(err => console.error('QR code generation error:', err))
+    return () => {
+      active = false
+    }
+  }, [qrTarget])
 
   return (
     <div style={{ textAlign: 'center', background: '#ffffff', padding: '10px', borderRadius: '8px', border: '1px solid #e5e7eb', margin: '8px 0' }}>
-      <img
-        src={qrUrl}
-        alt={`QR Code for Table ${table}`}
-        width={140}
-        height={140}
-        loading="lazy"
-        style={{ display: 'block', margin: '0 auto', maxWidth: '100%', height: 'auto' }}
-      />
+      {dataUrl ? (
+        <img
+          src={dataUrl}
+          alt={`QR Code for Table ${table}`}
+          width={140}
+          height={140}
+          style={{ display: 'block', margin: '0 auto', maxWidth: '100%', height: 'auto' }}
+        />
+      ) : (
+        <div style={{ width: 140, height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', background: '#f5f5f4', borderRadius: '6px' }}>
+          <span style={{ fontSize: '11px', color: '#78716c' }}>Generating QR…</span>
+        </div>
+      )}
       <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 600, display: 'inline-block', marginTop: '6px' }}>
         📲 Scans to Table {table} Order
       </span>
@@ -499,7 +639,23 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
   })
   const [editing, setEditing] = useState<{ id: string; active: boolean; original?: string } | null>(null)
   const [printableTable, setPrintableTable] = useState<string | null>(null)
+  const [printableQrUrl, setPrintableQrUrl] = useState<string>('')
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (printableTable) {
+      const target = `${window.location.origin}/?table=${printableTable}&source=qr#menu`
+      QRCode.toDataURL(target, {
+        width: 400,
+        margin: 2,
+        errorCorrectionLevel: 'H',
+      })
+        .then(setPrintableQrUrl)
+        .catch(console.error)
+    } else {
+      setPrintableQrUrl('')
+    }
+  }, [printableTable])
 
   const saveTables = (newTables: { id: string; active: boolean }[]) => {
     setTables(newTables)
@@ -508,28 +664,22 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
     } catch {}
   }
 
-  const download = (id: string) => {
+  const download = async (id: string) => {
     const qrTarget = `${window.location.origin}/?table=${id}&source=qr#menu`
-    const qrImg = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=8&data=${encodeURIComponent(qrTarget)}`
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="480" viewBox="0 0 400 480">
-      <rect width="400" height="480" fill="#FFF8F3" rx="16"/>
-      <rect x="20" y="20" width="360" height="440" fill="#ffffff" stroke="#e5e7eb" stroke-width="2" rx="12"/>
-      <text x="200" y="60" text-anchor="middle" font-size="20" font-weight="bold" fill="#B82032" font-family="sans-serif">ILILLII BAR &amp; RESTAURANT</text>
-      <text x="200" y="85" text-anchor="middle" font-size="12" fill="#78350f" font-family="sans-serif">Bale Robe, Oromia · 0909511588</text>
-      <line x1="40" y1="100" x2="360" y2="100" stroke="#f3f4f6" stroke-width="2"/>
-      <text x="200" y="145" text-anchor="middle" font-size="32" font-weight="900" fill="#1c1917" font-family="sans-serif">TABLE ${id}</text>
-      <text x="200" y="175" text-anchor="middle" font-size="13" fill="#15803d" font-weight="bold" font-family="sans-serif">SCAN WITH YOUR PHONE CAMERA</text>
-      <image href="${qrImg}" x="100" y="195" width="200" height="200"/>
-      <text x="200" y="420" text-anchor="middle" font-size="12" fill="#57534e" font-family="sans-serif">Browse Food &amp; Drink · Order to Table ${id}</text>
-      <text x="200" y="440" text-anchor="middle" font-size="10" fill="#a8a29e" font-family="sans-serif">Around Awraris, near General Wako Gutu Square</text>
-    </svg>`
-    const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `ilillii-table-${id}-qr-card.svg`
-    link.click()
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
-    notify(`Downloaded printable QR tent card for Table ${id}`)
+    try {
+      const qrDataUrl = await QRCode.toDataURL(qrTarget, {
+        width: 600,
+        margin: 2,
+        errorCorrectionLevel: 'H',
+      })
+      const link = document.createElement('a')
+      link.href = qrDataUrl
+      link.download = `ilillii-table-${id}-qr.png`
+      link.click()
+      notify(`Downloaded high-res scannable QR code for Table ${id}`)
+    } catch (err: any) {
+      notify(`QR Download note: ${err.message}`)
+    }
   }
 
   const handleDelete = (id: string) => {
@@ -627,26 +777,32 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
               <p style={{ fontSize: '12px', fontWeight: 700, color: '#15803d', margin: '0 0 10px' }}>
                 SCAN WITH PHONE CAMERA TO ORDER
               </p>
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&margin=6&data=${encodeURIComponent(`${window.location.origin}/?table=${printableTable}&source=qr#menu`)}`}
-                alt={`Table ${printableTable} QR Code`}
-                width={180}
-                height={180}
-                style={{ display: 'block', margin: '0 auto' }}
-              />
+              {printableQrUrl ? (
+                <img
+                  src={printableQrUrl}
+                  alt={`Table ${printableTable} QR Code`}
+                  width={200}
+                  height={200}
+                  style={{ display: 'block', margin: '0 auto', maxWidth: '100%', height: 'auto' }}
+                />
+              ) : (
+                <div style={{ width: 180, height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', background: '#f5f5f4', borderRadius: '6px' }}>
+                  <span>Generating QR…</span>
+                </div>
+              )}
               <p style={{ fontSize: '11px', color: '#57534e', marginTop: '10px', marginBottom: 0 }}>
                 Browse Food &amp; Drink · Direct Table Service
               </p>
             </div>
             <p style={{ fontSize: '11px', color: '#9ca3af', marginTop: '12px' }}>
-              Around Awraris, near General Wako Gutu Square
+              Around Awraris, near General Wako Gutu Square · Bale Robe
             </p>
             <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
               <button className="button primary" style={{ flex: 1 }} onClick={() => window.print()}>
                 Print Card
               </button>
               <button className="button secondary" style={{ flex: 1 }} onClick={() => download(printableTable)}>
-                Download SVG
+                Download High-Res QR
               </button>
             </div>
           </div>
