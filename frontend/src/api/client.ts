@@ -199,6 +199,13 @@ export const api = {
     })
   },
 
+  async uploadImage(image: string, filename?: string) {
+    return request<{ success: boolean; message: string; url: string; fullUrl: string; filename?: string }>('/upload', {
+      method: 'POST',
+      body: JSON.stringify({ image, filename }),
+    })
+  },
+
   // Orders
   async getOrders(params?: { status?: string; type?: string; limit?: number }) {
     const query = new URLSearchParams()

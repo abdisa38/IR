@@ -1,6 +1,7 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
+import path from 'path'
 import { connectDB } from './config/db.js'
 import menuRoutes from './routes/menu.js'
 import orderRoutes from './routes/orders.js'
@@ -8,6 +9,7 @@ import staffRoutes from './routes/staff.js'
 import analyticsRoutes from './routes/analytics.js'
 import settingsRoutes from './routes/settings.js'
 import authRoutes from './routes/auth.js'
+import uploadRoutes from './routes/upload.js'
 
 dotenv.config()
 
@@ -56,6 +58,9 @@ app.get('/api/health', (_req: Request, res: Response) => {
   })
 })
 
+// Static files for uploaded images
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+
 // API Routes
 app.use('/api/menu', menuRoutes)
 app.use('/api/orders', orderRoutes)
@@ -63,6 +68,7 @@ app.use('/api/staff', staffRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/settings', settingsRoutes)
 app.use('/api/auth', authRoutes)
+app.use('/api/upload', uploadRoutes)
 
 // 404 handler for API routes
 app.use('/api/*', (req: Request, res: Response) => {

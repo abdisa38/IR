@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import QRCode from 'qrcode'
 import { Icon, Modal } from './shared-ui'
 import { categories as initialCategories, menuItems, formatBirr } from './menu-data'
 import { roles } from './admin-model'
