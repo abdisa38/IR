@@ -1,5 +1,5 @@
 import { useLanguage, languageOptions } from './language'
-import { lazy, Suspense, useEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Icon, Logo, Mark, Modal, useDialog } from './shared-ui'
 import { SiteLink, sitePage } from './site-routing'
 import { QuantityControl, StatePanel } from './ui-patterns'
@@ -23,11 +23,24 @@ function ProductCard({ item, quantity, update, details }: { item: MenuItem; quan
     ? `${item.name} (${amharicName})`
     : item.name
 
+  const fallbackImage = item.category === 'drinks' ? '/images/menu/jaanboo.jpg' : '/images/ethiopian-sharing-platter.jpg'
+  const imageUrl = item.confirmedImage ? getImageUrl(item.confirmedImage) : (item.image ? getImageUrl(item.image) : '')
+
   return (
     <article className={`product-card ${quantity ? 'in-cart' : ''} ${unavailable ? 'is-unavailable' : ''}`}>
       <button className={`product-art art-${item.category}`} onClick={details} aria-label={`View details for ${item.name}`}>
-        {item.confirmedImage ? (
-          <img src={getImageUrl(item.confirmedImage)} alt={item.name} loading="lazy" />
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt={item.name}
+            loading="lazy"
+            onError={(e) => {
+              const target = e.currentTarget
+              if (target.src !== fallbackImage) {
+                target.src = fallbackImage
+              }
+            }}
+          />
         ) : (
           <>
             <span className="art-orbit" />
@@ -89,10 +102,9 @@ export default function Menu() {
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   // Fetch real menu items from MongoDB backend
-  useEffect(() => {
-    let active = true
+  const loadLiveMenu = useCallback(() => {
     api.getMenu().then(res => {
-      if (active && res.success && res.items?.length) {
+      if (res.success && res.items?.length) {
         const live: MenuItem[] = res.items.map(item => ({
           id: item.id,
           name: item.name,
@@ -114,8 +126,23 @@ export default function Menu() {
     }).catch(err => {
       console.warn('Backend menu fetch notice; using fallback:', err.message)
     })
-    return () => { active = false }
   }, [])
+
+  useEffect(() => {
+    loadLiveMenu()
+    const handleUpdate = () => loadLiveMenu()
+    window.addEventListener('ilillii-menu-updated', handleUpdate)
+    const handleHash = () => {
+      if (window.location.hash.startsWith('#menu') || window.location.hash === '') {
+        loadLiveMenu()
+      }
+    }
+    window.addEventListener('hashchange', handleHash)
+    return () => {
+      window.removeEventListener('ilillii-menu-updated', handleUpdate)
+      window.removeEventListener('hashchange', handleHash)
+    }
+  }, [loadLiveMenu])
 
   const count = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0)
   const selected = items.filter(item => cart[item.id] > 0)
@@ -205,7 +232,7 @@ export default function Menu() {
       <div className="drawer-heading"><div><span className="eyebrow">A LITTLE GOOD FOOD</span><h2>Your cart <span>{count}</span></h2></div><button className="icon-button" onClick={() => setPanel(false)} aria-label="Close cart"><Icon name="close" /></button></div>
       {qr.table && <div className="cart-table-context"><Icon name="meal" size={19} /><span>Table {qr.table} · Dine In</span></div>}
       {count > 0 && <label className="order-field cart-note-field">Order note <span>Optional</span><textarea value={note} maxLength={500} onChange={e => setNote(e.target.value)} rows={2} placeholder="Anything the team should know?" /></label>}
-      {count ? <><div className="cart-lines">{selected.map(item => <div className="cart-line" key={item.id}><span className={`cart-item-symbol art-${item.category}`}>{item.confirmedImage ? <img src={item.confirmedImage} alt={item.name} /> : <Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={22} />}</span><div className="cart-line-content"><h3>{language === 'am' && item.translations?.am ? item.translations.am : item.name}</h3><p>{formatBirr(item.price)} ETB each</p><Quantity item={item} quantity={cart[item.id]} update={update} /></div><strong>{formatBirr(item.price * cart[item.id])}<small>ETB</small></strong></div>)}</div>
+      {count ? <><div className="cart-lines">{selected.map(item => <div className="cart-line" key={item.id}><span className={`cart-item-symbol art-${item.category}`}>{item.confirmedImage ? <img src={getImageUrl(item.confirmedImage)} alt={item.name} onError={(e) => { const target = e.currentTarget; target.onerror = null; target.src = '/images/ethiopian-sharing-platter.jpg' }} /> : <Icon name={item.category === 'drinks' ? 'coffee' : 'meal'} size={22} />}</span><div className="cart-line-content"><h3>{language === 'am' && item.translations?.am ? item.translations.am : item.name}</h3><p>{formatBirr(item.price)} ETB each</p><Quantity item={item} quantity={cart[item.id]} update={update} /></div><strong>{formatBirr(item.price * cart[item.id])}<small>ETB</small></strong></div>)}</div>
       <div className="cart-mode"><span className="eyebrow">ORDER SERVICE</span><div>{['Dine in', 'Pickup'].map(value => <button className={mode === value ? 'chosen' : ''} aria-pressed={mode === value} onClick={() => setMode(value)} key={value}>{value === 'Pickup' ? 'Pickup / Takeaway' : value}</button>)}</div></div>
       <div className="cart-summary"><div><span>Subtotal</span><strong>{formatBirr(subtotal)} ETB</strong></div><button className="button primary" onClick={() => { setPanel(false); if (mode === 'Pickup') { setCheckoutEntry('details'); setCheckout(true) } else { setDineInCheckout(true) } }}>Continue to Order<Icon name="arrow" size={18} /></button><button className="continue-button" onClick={() => setPanel(false)}>Continue browsing</button></div></> : <div className="empty-cart"><span><Icon name="bag" size={42} /></span><h3>A good meal starts here.</h3><p>Your cart is empty. Browse the menu and tap “Add” to start your order.</p><button className="button primary" onClick={() => setPanel(false)}>Explore the menu<Icon name="arrow" size={17} /></button></div>}
     </dialog>
@@ -232,7 +259,7 @@ export default function Menu() {
       ) : <><p className="modal-description">Product photos are reserved until their matches are confirmed. URL table numbers are not treated as valid without a verified table registry. There is no database, real order submission or payment integration.</p><h3 className="state-preview-title">Unavailable component state</h3><ProductCard item={{ id: 'state-preview', name: 'Item name · component preview', price: 0, category: 'main', availability: 'unavailable' }} quantity={0} update={() => {}} details={() => {}} language={language} /></>}
     </Modal>}
     {details && <Modal title={language === 'am' && details.translations?.am ? details.translations.am : details.name} close={() => setDetails(null)}>
-      {details.confirmedImage && <div className="modal-item-photo"><img src={details.confirmedImage} alt={details.name} /></div>}
+      {details.confirmedImage && <div className="modal-item-photo"><img src={getImageUrl(details.confirmedImage)} alt={details.name} onError={(e) => { const target = e.currentTarget; target.onerror = null; target.src = details.category === 'drinks' ? '/images/menu/jaanboo.jpg' : '/images/ethiopian-sharing-platter.jpg' }} /></div>}
       {details.translations?.am && <div className="modal-item-translation">{details.name} {details.translations.am !== details.name && <>· <span lang="am">{details.translations.am}</span></>}</div>}
       <div className="item-details-price">{formatBirr(details.price)} <span>ETB</span></div>
       {details.verifiedDescription && <p className="modal-item-desc">{details.verifiedDescription}</p>}

@@ -14,17 +14,25 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true
-    api.getMenu().then(res => {
-      if (mounted && res.success && res.items?.length) {
-        // Pick top 3 special items or first 3 available items
-        const specials = res.items.filter(i => i.houseSpecial && i.available)
-        const selected = specials.length >= 3 ? specials.slice(0, 3) : res.items.slice(0, 3)
-        setFeaturedDishes(selected)
-      }
-    }).catch(err => {
-      console.warn('Could not load featured dishes from backend:', err)
-    })
-    return () => { mounted = false }
+    const fetchFeatured = () => {
+      api.getMenu().then(res => {
+        if (mounted && res.success && res.items?.length) {
+          // Pick top 3 special items or first 3 available items
+          const specials = res.items.filter(i => i.houseSpecial && i.available)
+          const selected = specials.length >= 3 ? specials.slice(0, 3) : res.items.slice(0, 3)
+          setFeaturedDishes(selected)
+        }
+      }).catch(err => {
+        console.warn('Could not load featured dishes from backend:', err)
+      })
+    }
+
+    fetchFeatured()
+    window.addEventListener('ilillii-menu-updated', fetchFeatured)
+    return () => {
+      mounted = false
+      window.removeEventListener('ilillii-menu-updated', fetchFeatured)
+    }
   }, [])
 
   const showMenu = () => { window.location.hash = 'menu' }
