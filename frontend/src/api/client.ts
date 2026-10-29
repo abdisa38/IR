@@ -6,15 +6,25 @@
 const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api` : '/api'
 
 export function getImageUrl(url?: string): string {
-  if (!url) return '/images/ethiopian-sharing-platter.jpg'
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
-    return url
+  if (!url || typeof url !== 'string' || !url.trim()) {
+    return '/images/ethiopian-sharing-platter.jpg'
   }
-  if (url.startsWith('/uploads/')) {
+  const clean = url.trim()
+  if (clean.startsWith('http://') || clean.startsWith('https://') || clean.startsWith('data:')) {
+    return clean
+  }
+  if (clean.startsWith('/uploads/') || clean.startsWith('uploads/')) {
+    const pathPart = clean.startsWith('/') ? clean : `/${clean}`
     const backendOrigin = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace(/\/$/, '') : ''
-    return backendOrigin ? `${backendOrigin}${url}` : url
+    if (backendOrigin) {
+      return `${backendOrigin}${pathPart}`
+    }
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      return `http://localhost:5000${pathPart}`
+    }
+    return pathPart
   }
-  return url
+  return clean
 }
 
 export function getStoredToken(): string | null {

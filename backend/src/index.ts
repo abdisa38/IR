@@ -58,8 +58,17 @@ app.get('/api/health', (_req: Request, res: Response) => {
   })
 })
 
-// Static files for uploaded images
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
+// Static files for uploaded images with CORS and caching
+app.use(
+  '/uploads',
+  express.static(path.join(process.cwd(), 'uploads'), {
+    maxAge: '7d',
+    setHeaders: (res) => {
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin')
+    },
+  })
+)
 
 // API Routes
 app.use('/api/menu', menuRoutes)

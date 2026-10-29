@@ -23,6 +23,37 @@ type ManagedItem = {
 
 type ManagedCategory = { id: string; name: string; original: string; active: boolean }
 
+async function compressImageFile(file: File, maxWidth = 1000, maxHeight = 1000, quality = 0.82): Promise<string> {
+  return new Promise((resolve) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height)
+          width = Math.round(width * ratio)
+          height = Math.round(height * ratio)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(e.target?.result as string)
+          return
+        }
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', quality))
+      }
+      img.onerror = () => resolve(e.target?.result as string)
+      img.src = e.target?.result as string
+    }
+    reader.onerror = () => resolve('')
+    reader.readAsDataURL(file)
+  })
+}
+
 export function AdminMenu({ notify }: { notify: (text: string) => void }) {
   const [items, setItems] = useState<ManagedItem[]>(() =>
     menuItems.map(item => ({
@@ -46,43 +77,46 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
   const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload')
   const images = useRef<string[]>([])
 
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
       setError('Please select a valid image file (JPEG, PNG, or WebP).')
       return
     }
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Image file size must be under 10 MB.')
-      return
-    }
 
     setUploadingImage(true)
     setError('')
-    const reader = new FileReader()
-    reader.onload = async () => {
-      const base64 = reader.result as string
-      try {
-        const res = await api.uploadImage(base64, file.name)
-        if (res.success && res.url) {
-          setEditing(prev => (prev ? { ...prev, image: res.url } : null))
-          notify(`Image '${file.name}' uploaded to server!`)
-        } else {
-          setEditing(prev => (prev ? { ...prev, image: base64 } : null))
-        }
-      } catch (err: any) {
-        setEditing(prev => (prev ? { ...prev, image: base64 } : null))
-        notify('Image loaded into item.')
-      } finally {
-        setUploadingImage(false)
+
+    try {
+      // 1. Client-side canvas compression for instant responsiveness & sharp resolution
+      const compressedBase64 = await compressImageFile(file)
+      if (!compressedBase64) {
+        throw new Error('Could not read image file.')
       }
-    }
-    reader.onerror = () => {
+
+      // 2. Show live preview immediately
+      setEditing(prev => (prev ? { ...prev, image: compressedBase64 } : null))
+
+      // 3. Upload to backend server
+      try {
+        const res = await api.uploadImage(compressedBase64, file.name)
+        if (res.success && (res.fullUrl || res.url)) {
+          const targetUrl = res.fullUrl || res.url
+          setEditing(prev => (prev ? { ...prev, image: targetUrl } : null))
+          notify(`Image uploaded and linked!`)
+        } else {
+          notify(`Image compressed and linked!`)
+        }
+      } catch (uploadErr: any) {
+        console.warn('Backend upload notice; using optimized data URL:', uploadErr.message)
+        notify('Image loaded into item.')
+      }
+    } catch (err: any) {
+      setError(err.message || 'Error processing local image file.')
+    } finally {
       setUploadingImage(false)
-      setError('Error reading local file.')
     }
-    reader.readAsDataURL(file)
   }
 
   const loadMenu = async () => {
@@ -150,6 +184,7 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
     try {
       await api.deleteMenuItem(id)
       setItems(current => current.filter(i => i.id !== id))
+      window.dispatchEvent(new CustomEvent('ilillii-menu-updated'))
       notify(`Item '${name}' removed from menu.`)
     } catch (err: any) {
       notify(`Error deleting item: ${err.message}`)
@@ -187,6 +222,7 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
 
       setEditing(null)
       await loadMenu()
+      window.dispatchEvent(new CustomEvent('ilillii-menu-updated'))
     } catch (err: any) {
       setError(err.message || 'Failed to save menu item to database.')
     }
@@ -233,8 +269,22 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
             {pageItems.map(item => (
               <tr key={item.id}>
                 <td data-label="Menu item">
-                  <strong>{item.name}</strong>
-                  <small>{item.amharic || 'No Amharic translation'}</small>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ width: '42px', height: '42px', borderRadius: '8px', overflow: 'hidden', flexShrink: 0, background: '#f5ebe1', border: '1px solid #e7dfd5' }}>
+                      <img
+                        src={getImageUrl(item.image)}
+                        alt={item.name}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = '/images/ethiopian-sharing-platter.jpg'
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <strong style={{ display: 'block' }}>{item.name}</strong>
+                      <small style={{ color: '#78716c' }}>{item.amharic || 'No Amharic translation'}</small>
+                    </div>
+                  </div>
                 </td>
                 <td data-label="Category">{item.category}</td>
                 <td data-label="Price">
