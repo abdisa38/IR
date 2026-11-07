@@ -140,7 +140,7 @@ export default function App() {
                     <h3>
                       {language === 'am' && food.amharicName
                         ? food.amharicName
-                        : (language === 'om' && food.translations?.om ? food.translations.om : food.name)}
+                        : (language === 'om' && (food.translations?.or || (food.translations as any)?.om) ? (food.translations?.or || (food.translations as any)?.om) : food.name)}
                     </h3>
                   </div>
                   <span className="price">{food.price}<small>ETB</small></span>

@@ -27,7 +27,7 @@ function ProductCard({ item, quantity, update, details }: { item: MenuItem; quan
     : (language !== 'am' && item.translations?.am ? item.translations.am : '')
 
   const fallbackImage = item.category === 'drinks' ? '/images/menu/jaanboo.jpg' : '/images/ethiopian-sharing-platter.jpg'
-  const imageUrl = item.confirmedImage ? getImageUrl(item.confirmedImage) : (item.image ? getImageUrl(item.image) : '')
+  const imageUrl = item.confirmedImage ? getImageUrl(item.confirmedImage) : ((item as any).image ? getImageUrl((item as any).image) : '')
 
   return (
     <article className={`product-card ${quantity ? 'in-cart' : ''} ${unavailable ? 'is-unavailable' : ''}`}>

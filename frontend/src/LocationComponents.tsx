@@ -355,7 +355,7 @@ export function GlobalHeader({
               >
                 <Icon name="globe" size={19} />
                 <span className="lang-code-pill desktop-only">{language === 'om' ? 'Oro' : language === 'am' ? 'Amh' : 'Eng'}</span>
-                <Icon name="down" size={11} className="desktop-only" />
+                <span className="desktop-only"><Icon name="down" size={11} /></span>
               </button>
               {cartCount !== undefined ? (
                 <button
