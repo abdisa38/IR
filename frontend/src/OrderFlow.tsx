@@ -504,7 +504,7 @@ export default function OrderFlow({
                     </div>
                     <div>
                       <strong style={{ fontSize: '14px', color: 'var(--color-ink)' }}>
-                        {tableNum ? `${t('checkout.table')} ${tableNum}` : 'choose table number'}
+                        {tableNum ? `${t('checkout.table')} ${tableNum}` : ''}
                       </strong>
                       <small
                         style={{
