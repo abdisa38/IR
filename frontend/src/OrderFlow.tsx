@@ -485,8 +485,8 @@ export default function OrderFlow({
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    background: isTableScanned ? '#f0fdf4' : '#fffaf5',
-                    border: isTableScanned ? '1.5px solid #bbf7d0' : '1.5px solid #ebdcd3',
+                    background: isTableScanned ? '#f0fdf4' : tableNum ? '#fffaf5' : '#f8fafc',
+                    border: isTableScanned ? '1.5px solid #bbf7d0' : tableNum ? '1.5px solid #ebdcd3' : '1.5px solid #cbd5e1',
                     borderRadius: '10px',
                     padding: '12px 16px',
                     marginBottom: '20px',
@@ -498,8 +498,8 @@ export default function OrderFlow({
                         width: '36px',
                         height: '36px',
                         borderRadius: '50%',
-                        background: isTableScanned ? '#dcfce7' : '#fcedea',
-                        color: isTableScanned ? '#15803d' : 'var(--color-brand)',
+                        background: isTableScanned ? '#dcfce7' : tableNum ? '#fcedea' : '#e2e8f0',
+                        color: isTableScanned ? '#15803d' : tableNum ? 'var(--color-brand)' : '#475569',
                         display: 'grid',
                         placeItems: 'center',
                       }}
@@ -508,19 +508,21 @@ export default function OrderFlow({
                     </div>
                     <div>
                       <strong style={{ fontSize: '14px', color: 'var(--color-ink)' }}>
-                        {t('checkout.table')} {tableNum}
+                        {tableNum ? `${t('checkout.table')} ${tableNum}` : 'Direct Order · No Table Scanned'}
                       </strong>
                       <small
                         style={{
                           display: 'block',
                           fontSize: '11px',
-                          color: isTableScanned ? '#15803d' : '#78716c',
+                          color: isTableScanned ? '#15803d' : tableNum ? '#78716c' : '#64748b',
                           fontWeight: isTableScanned ? 600 : 400,
                         }}
                       >
                         {isTableScanned
                           ? `${t('checkout.table')} ${tableNum} · ${t('qr.scannedBadge', undefined, { table: tableNum })}`
-                          : `${t('checkout.table')} ${tableNum} · Dine-in Table`}
+                          : tableNum
+                          ? `${t('checkout.table')} ${tableNum} · Dine-in Table`
+                          : 'Order directly or tap to choose table number'}
                       </small>
                     </div>
                   </div>
@@ -537,7 +539,7 @@ export default function OrderFlow({
                     }}
                     onClick={() => setModal('table')}
                   >
-                    {t('common.edit')}
+                    {tableNum ? t('common.edit') : 'Select Table'}
                   </button>
                 </div>
 
