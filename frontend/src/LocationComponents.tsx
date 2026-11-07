@@ -157,6 +157,12 @@ export function GlobalHeader({
             if (latest.orderNumber) {
               api.getOrder(latest.orderNumber).then(res => {
                 if (res.success && res.order) {
+                  if (['completed', 'cancelled'].includes(res.order.status)) {
+                    localStorage.removeItem('ilillii_active_order_id')
+                    localStorage.removeItem('ilillii_active_order_time')
+                    setActiveOrder(null)
+                    return
+                  }
                   const s = res.order.status === 'pending'
                     ? 'Submitted'
                     : res.order.status === 'accepted'
@@ -732,6 +738,11 @@ function ActiveOrderStatusModal({
         const res = await api.getOrder(order.orderNumber)
         if (res.success && res.order && isMounted) {
           const apiStatus = res.order.status
+          if (['completed', 'cancelled'].includes(apiStatus)) {
+            localStorage.removeItem('ilillii_active_order_id')
+            localStorage.removeItem('ilillii_active_order_time')
+            setActiveOrder(null)
+          }
           const normalized =
             apiStatus === 'pending'
               ? 'Submitted'
@@ -821,8 +832,10 @@ function ActiveOrderStatusModal({
         <div style={{ marginBottom: '22px', padding: '0 8px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {stages.map((stg, idx) => {
+              const isCompletedOrder = activeIndex === 4
               const isPast = activeIndex > idx
               const isCurrent = activeIndex === idx
+              const isDone = isPast || (idx === 4 && isCompletedOrder)
 
               return (
                 <div key={stg.key} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', position: 'relative' }}>
@@ -836,22 +849,22 @@ function ActiveOrderStatusModal({
                         display: 'grid',
                         placeItems: 'center',
                         fontSize: '12px',
-                        fontWeight: 700,
-                        background: isCurrent ? '#b82032' : isPast ? '#15803d' : '#f5f5f4',
-                        color: isCurrent || isPast ? '#ffffff' : '#a8a29e',
-                        border: isCurrent ? '2px solid #981827' : isPast ? '2px solid #16a34a' : '2px solid #e7e5e4',
-                        boxShadow: isCurrent ? '0 0 0 4px rgba(184, 32, 50, 0.15)' : 'none',
+                        fontWeight: 750,
+                        background: isDone ? '#15803d' : isCurrent ? '#b82032' : '#f5f5f4',
+                        color: isDone || isCurrent ? '#ffffff' : '#a8a29e',
+                        border: isDone ? '2px solid #16a34a' : isCurrent ? '2px solid #981827' : '2px solid #e7e5e4',
+                        boxShadow: isCurrent && !isCompletedOrder ? '0 0 0 4px rgba(184, 32, 50, 0.15)' : 'none',
                         transition: 'all 0.3s ease',
                       }}
                     >
-                      {isPast ? '✓' : idx + 1}
+                      {isDone ? '✓' : idx + 1}
                     </div>
                     {idx < stages.length - 1 && (
                       <div
                         style={{
                           width: '2px',
                           height: '24px',
-                          background: isPast ? '#16a34a' : '#e7e5e4',
+                          background: isDone ? '#16a34a' : '#e7e5e4',
                           marginTop: '4px',
                         }}
                       />
@@ -864,13 +877,28 @@ function ActiveOrderStatusModal({
                       <strong
                         style={{
                           fontSize: '14px',
-                          color: isCurrent ? '#b82032' : isPast ? '#15803d' : '#78716c',
-                          fontWeight: isCurrent || isPast ? 750 : 500,
+                          color: isDone ? '#15803d' : isCurrent ? '#b82032' : '#78716c',
+                          fontWeight: isDone || isCurrent ? 750 : 500,
                         }}
                       >
                         {stg.label}
                       </strong>
-                      {isCurrent && (
+                      {isDone && idx === 4 ? (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            background: '#dcfce7',
+                            color: '#15803d',
+                            padding: '1px 8px',
+                            borderRadius: '4px',
+                            fontWeight: 750,
+                            letterSpacing: '0.4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          Completed
+                        </span>
+                      ) : isCurrent ? (
                         <span
                           style={{
                             fontSize: '10px',
@@ -885,9 +913,9 @@ function ActiveOrderStatusModal({
                         >
                           In Progress
                         </span>
-                      )}
+                      ) : null}
                     </div>
-                    <small style={{ fontSize: '12px', color: isCurrent ? '#44403c' : '#a8a29e', display: 'block', marginTop: '1px' }}>
+                    <small style={{ fontSize: '12px', color: isDone || isCurrent ? '#44403c' : '#a8a29e', display: 'block', marginTop: '1px' }}>
                       {stg.sub}
                     </small>
                   </div>
@@ -921,49 +949,83 @@ function ActiveOrderStatusModal({
       
 
         {/* Action Buttons */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <button
-            type="button"
-            className="button primary"
-            style={{
-              background: '#b82032',
-              color: '#ffffff',
-              minHeight: '46px',
-              fontWeight: 700,
-              fontSize: '14px',
-              justifyContent: 'center',
-            }}
-            onClick={onAddFood}
-          >
-            + Add More Food
-          </button>
-          <div style={{ display: 'flex', gap: '8px' }}>
+        {activeIndex === 4 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ background: '#f0fdf4', border: '1.5px solid #bbf7d0', borderRadius: '12px', padding: '14px', textAlign: 'center', color: '#166534' }}>
+              <strong style={{ fontSize: '14px', display: 'block', marginBottom: '4px' }}>✓ Meal Completed & Served!</strong>
+              <p style={{ margin: 0, fontSize: '12px', color: '#15803d' }}>
+                Thank you for dining at Ilillii Hotel. Your receipt is saved in your past orders.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="button primary"
+              style={{ background: '#b82032', borderColor: '#981827', color: '#fff', minHeight: '46px', fontWeight: 700, fontSize: '14px', justifyContent: 'center' }}
+              onClick={() => {
+                close()
+                onViewHistory()
+              }}
+            >
+              View in Past Orders
+            </button>
             <button
               type="button"
               className="button secondary"
-              style={{ flex: 1, justifyContent: 'center', minHeight: '42px', fontSize: '13px' }}
-              onClick={onViewHistory}
-            >
-              Past Orders History
-            </button>
-            <a
-              href="tel:0938890645"
-              className="button secondary"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '6px',
-                textDecoration: 'none',
-                minHeight: '42px',
-                padding: '0 14px',
-                fontSize: '13px',
+              style={{ minHeight: '42px', justifyContent: 'center', fontSize: '13px' }}
+              onClick={() => {
+                localStorage.removeItem('ilillii_active_order_id')
+                localStorage.removeItem('ilillii_active_order_time')
+                close()
               }}
             >
-              <Icon name="phone" size={15} /> 0938890645
-            </a>
+              Start Fresh Order
+            </button>
           </div>
-        </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              type="button"
+              className="button primary"
+              style={{
+                background: '#b82032',
+                color: '#ffffff',
+                minHeight: '46px',
+                fontWeight: 700,
+                fontSize: '14px',
+                justifyContent: 'center',
+              }}
+              onClick={onAddFood}
+            >
+              + Add More Food
+            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                type="button"
+                className="button secondary"
+                style={{ flex: 1, justifyContent: 'center', minHeight: '42px', fontSize: '13px' }}
+                onClick={onViewHistory}
+              >
+                Past Orders History
+              </button>
+              <a
+                href="tel:0938890645"
+                className="button secondary"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  textDecoration: 'none',
+                  minHeight: '42px',
+                  padding: '0 14px',
+                  fontSize: '13px',
+                }}
+              >
+                Call: 0938890645
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     </Modal>
   )
