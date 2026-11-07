@@ -293,6 +293,12 @@ export const api = {
   },
 
   async cancelOrder(id: string) {
+    return request<{ success: boolean; message: string; order: ApiOrder }>(`/orders/${id}?cancel=true`, {
+      method: 'DELETE',
+    })
+  },
+
+  async deleteOrder(id: string) {
     return request<{ success: boolean; message: string; order: ApiOrder }>(`/orders/${id}`, {
       method: 'DELETE',
     })

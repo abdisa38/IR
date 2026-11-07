@@ -503,7 +503,9 @@ export default function OrderFlow({
                       <Icon name="meal" size={18} />
                     </div>
                     <div>
-                     
+                      <strong style={{ fontSize: '14px', color: 'var(--color-ink)' }}>
+                        {tableNum ? `${t('checkout.table')} ${tableNum}` : 'choose table number'}
+                      </strong>
                       <small
                         style={{
                           display: 'block',

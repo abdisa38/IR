@@ -261,22 +261,30 @@ router.patch('/:id/payment', async (req: Request, res: Response) => {
   }
 })
 
-// DELETE /api/orders/:id - cancel order
+// DELETE /api/orders/:id - permanently delete or cancel order
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = getParam(req.params.id)
-    const order = await Order.findOne(buildOrderQuery(id))
+    const { cancel } = req.query
 
-    if (!order) {
+    if (cancel === 'true') {
+      const order = await Order.findOne(buildOrderQuery(id))
+      if (!order) {
+        return res.status(404).json({ success: false, message: 'Order not found' })
+      }
+      order.status = 'cancelled'
+      await order.save()
+      return res.json({ success: true, message: `Order ${order.orderNumber} cancelled`, order })
+    }
+
+    const deleted = await Order.findOneAndDelete(buildOrderQuery(id))
+    if (!deleted) {
       return res.status(404).json({ success: false, message: 'Order not found' })
     }
 
-    order.status = 'cancelled'
-    await order.save()
-
-    res.json({ success: true, message: `Order ${order.orderNumber} cancelled`, order })
+    res.json({ success: true, message: `Order #${deleted.orderNumber} deleted permanently`, order: deleted })
   } catch (error: any) {
-    res.status(500).json({ success: false, message: 'Failed to cancel order', error: error.message })
+    res.status(500).json({ success: false, message: 'Failed to delete order', error: error.message })
   }
 })
 
