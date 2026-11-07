@@ -3,6 +3,8 @@ const StaffSchema = new Schema({
     name: { type: String, required: true, trim: true },
     email: { type: String, trim: true, lowercase: true },
     phone: { type: String, required: true, trim: true },
+    username: { type: String, trim: true, lowercase: true },
+    password: { type: String, default: '1234' },
     role: {
         type: String,
         required: true,

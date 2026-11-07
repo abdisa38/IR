@@ -19,6 +19,19 @@ function getParam(param) {
         return param[0] || '';
     return param || '';
 }
+function buildOrderQuery(id) {
+    const cleanId = id.trim().toUpperCase();
+    const numOnly = cleanId.replace(/^IL-/, '');
+    const orConditions = [
+        { orderNumber: cleanId },
+        { orderNumber: numOnly },
+        { orderNumber: `IL-${numOnly}` },
+    ];
+    if (/^[0-9a-fA-F]{24}$/.test(id.trim())) {
+        orConditions.push({ _id: id.trim() });
+    }
+    return { $or: orConditions };
+}
 // GET /api/orders - list orders with status, type, and pagination filters
 router.get('/', async (req, res) => {
     try {
@@ -44,16 +57,7 @@ router.get('/', async (req, res) => {
 router.get('/:identifier', async (req, res) => {
     try {
         const id = getParam(req.params.identifier);
-        const cleanId = id.trim().toUpperCase();
-        const numOnly = cleanId.replace(/^IL-/, '');
-        const order = await Order.findOne({
-            $or: [
-                { orderNumber: cleanId },
-                { orderNumber: numOnly },
-                { orderNumber: `IL-${numOnly}` },
-                { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-            ],
-        });
+        const order = await Order.findOne(buildOrderQuery(id));
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
@@ -152,12 +156,7 @@ router.post('/:id/add-items', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Please provide items to add' });
         }
         const id = getParam(req.params.id);
-        const order = await Order.findOne({
-            $or: [
-                { orderNumber: id.toUpperCase() },
-                { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-            ],
-        });
+        const order = await Order.findOne(buildOrderQuery(id));
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
@@ -196,12 +195,7 @@ router.patch('/:id/status', async (req, res) => {
             return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${valid.join(', ')}` });
         }
         const id = getParam(req.params.id);
-        const order = await Order.findOne({
-            $or: [
-                { orderNumber: id.toUpperCase() },
-                { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-            ],
-        });
+        const order = await Order.findOne(buildOrderQuery(id));
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
@@ -222,12 +216,7 @@ router.patch('/:id/payment', async (req, res) => {
             return res.status(400).json({ success: false, message: `Invalid payment status. Must be one of: ${valid.join(', ')}` });
         }
         const id = getParam(req.params.id);
-        const order = await Order.findOne({
-            $or: [
-                { orderNumber: id.toUpperCase() },
-                { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-            ],
-        });
+        const order = await Order.findOne(buildOrderQuery(id));
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
@@ -246,12 +235,7 @@ router.patch('/:id/payment', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const id = getParam(req.params.id);
-        const order = await Order.findOne({
-            $or: [
-                { orderNumber: id.toUpperCase() },
-                { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-            ],
-        });
+        const order = await Order.findOne(buildOrderQuery(id));
         if (!order) {
             return res.status(404).json({ success: false, message: 'Order not found' });
         }
