@@ -24,7 +24,7 @@ const OrderSchema = new Schema({
     },
     source: {
         type: String,
-        enum: ['table_qr', 'web_direct'],
+        enum: ['table_qr', 'web_direct', 'manual_table'],
         default: 'web_direct',
         index: true,
     },

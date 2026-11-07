@@ -90,7 +90,6 @@ export default function OrderFlow({
     }
     return null
   })
-  const [appendToExisting, setAppendToExisting] = useState(true)
 
   const submitting = useRef(false)
   const heading = useRef<HTMLHeadingElement>(null)
@@ -197,12 +196,13 @@ export default function OrderFlow({
     window.dispatchEvent(new CustomEvent('ilillii-clear-cart'))
     setNote('')
 
-    localStorage.setItem('ilillii_active_order_id', order.orderNumber)
+    const cleanNum = String(order.orderNumber).replace(/^IL-/, '')
+    localStorage.setItem('ilillii_active_order_id', cleanNum)
     localStorage.setItem('ilillii_active_order_time', Date.now().toString())
 
     try {
       const historyItem = {
-        orderNumber: order.orderNumber,
+        orderNumber: cleanNum,
         date: new Date().toISOString(),
         total: order.total,
         table: order.table || tableNum || '',
@@ -214,7 +214,7 @@ export default function OrderFlow({
       }
       const prevHistory = JSON.parse(localStorage.getItem('ilillii_order_history') || '[]')
       const filtered = Array.isArray(prevHistory)
-        ? prevHistory.filter((h: any) => h.orderNumber !== order.orderNumber)
+        ? prevHistory.filter((h: any) => String(h.orderNumber).replace(/^IL-/, '') !== cleanNum)
         : []
       localStorage.setItem('ilillii_order_history', JSON.stringify([historyItem, ...filtered].slice(0, 30)))
       window.dispatchEvent(new CustomEvent('ilillii-order-placed', { detail: historyItem }))
@@ -226,7 +226,7 @@ export default function OrderFlow({
         JSON.stringify({
           name: name.trim(),
           phone: phone.trim(),
-          lastOrder: order.orderNumber,
+          lastOrder: cleanNum,
           table: order.table || tableNum || '',
           updatedAt: new Date().toISOString(),
         })
@@ -235,7 +235,7 @@ export default function OrderFlow({
     } catch (e) { }
 
     setSnapshot({
-      reference: order.orderNumber,
+      reference: cleanNum,
       table: order.table || tableNum || '',
       name: order.customerName || name.trim(),
       phone: order.customerPhone || phone.trim(),
@@ -273,22 +273,17 @@ export default function OrderFlow({
         image: l.item.confirmedImage || '',
       }))
 
-      let orderRes
-      if (activeOrderId && appendToExisting) {
-        orderRes = await api.addItemsToOrder(activeOrderId, linePayload, note)
-      } else {
-        orderRes = await api.createOrder({
-          items: linePayload,
-          type: 'Dine in',
-          table: tableNum ? tableNum : undefined,
-          customerName: name.trim(),
-          customerPhone: phone.trim(),
-          note,
-          paymentTiming: 'post_pay',
-          paymentMethod: 'Pay after eating',
-          source,
-        })
-      }
+      const orderRes = await api.createOrder({
+        items: linePayload,
+        type: 'Dine in',
+        table: tableNum ? tableNum : undefined,
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        note,
+        paymentTiming: 'post_pay',
+        paymentMethod: 'Pay after eating',
+        source,
+      })
 
       setBusy(false)
       submitting.current = false
@@ -345,23 +340,18 @@ export default function OrderFlow({
 
       const methodLabel = isVerified ? `ShegerPay (Verified: ${cleanTxn})` : `ShegerPay (${cleanTxn})`
 
-      let orderRes
-      if (activeOrderId && appendToExisting) {
-        orderRes = await api.addItemsToOrder(activeOrderId, linePayload, note)
-      } else {
-        orderRes = await api.createOrder({
-          items: linePayload,
-          type: 'Dine in',
-          table: tableNum ? tableNum : undefined,
-          customerName: name.trim(),
-          customerPhone: phone.trim(),
-          note,
-          paymentTiming: 'pre_pay',
-          paymentMethod: methodLabel,
-          transactionId: cleanTxn,
-          source,
-        })
-      }
+      const orderRes = await api.createOrder({
+        items: linePayload,
+        type: 'Dine in',
+        table: tableNum ? tableNum : undefined,
+        customerName: name.trim(),
+        customerPhone: phone.trim(),
+        note,
+        paymentTiming: 'pre_pay',
+        paymentMethod: methodLabel,
+        transactionId: cleanTxn,
+        source,
+      })
 
       setVerifyingSheger(false)
       if (orderRes.success && orderRes.order) {
@@ -652,9 +642,7 @@ export default function OrderFlow({
                       ) : (
                         <>
                           <span>🔘</span>
-                          {activeOrderId && appendToExisting
-                            ? `+ Add to Order #${String(activeOrderId).replace(/^IL-/, '')}`
-                            : 'Place Order (Pay After Meal)'}
+                          {t('checkout.orderPayAfterMeal')}
                         </>
                       )}
                     </button>
@@ -838,13 +826,16 @@ export default function OrderFlow({
               </div>
             )}
 
-            {/* Step 3: Order Received Confirmation View (No IL-number, no timeline) */}
+            {/* Step 3: Order Received Confirmation View (Clean layout) */}
             {confirmedView && snapshot && (
               <>
                 <div className="order-success-icon">
                   <Icon name="check" size={32} />
                 </div>
-               
+
+                <div className="confirmation-intro">
+                  <h2>{t('order.receivedHeading')}</h2>
+                  <p>{t('order.receivedDesc')}</p>
                   <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-ink)', display: 'block', marginTop: '4px' }}>
                     {snapshot.table ? `${t('checkout.table')} ${snapshot.table}` : 'Direct Order'} · {snapshot.name}
                   </span>
@@ -873,31 +864,7 @@ export default function OrderFlow({
 
                 <div className="order-buttons-group" style={{ marginTop: '26px', gap: '10px' }}>
                   <button
-                    type="button"
                     className="button primary order-full"
-                    style={{
-                      background: '#15803d',
-                      borderColor: '#166534',
-                      color: '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      minHeight: '48px',
-                      fontWeight: 750,
-                      boxShadow: '0 4px 12px rgba(21, 128, 61, 0.25)',
-                    }}
-                    onClick={() => {
-                      handleClose()
-                      window.dispatchEvent(new CustomEvent('ilillii-open-order-status'))
-                    }}
-                  >
-                    <span>{t('order.viewStatus') || 'View Live Order Status & Kitchen Progress'}</span>
-                    <Icon name="arrow" size={17} />
-                  </button>
-
-                  <button
-                    className="button secondary order-full"
                     style={{
                       background: '#b82032',
                       borderColor: '#981827',
