@@ -14,7 +14,7 @@ const SettingsSchema = new Schema<ISettings>(
   {
     restaurantName: { type: String, default: 'Ilillii Bar & Restaurant' },
     managerPhone: { type: String, default: '0938890645' },
-    location: { type: String, default: 'Bale Robe around Awraris and around Wako Gutu Square' },
+    location: { type: String, default: 'Bale Robe around Awraris (7.121960, 40.002844)' },
     announcement: { type: String, default: 'Welcome to Ilillii Bar & Restaurant · Open Daily 7:00 AM – 11:30 PM' },
     currency: { type: String, default: 'ETB' },
     openingHours: { type: String, default: 'Daily 7:00 AM – 11:30 PM' },
