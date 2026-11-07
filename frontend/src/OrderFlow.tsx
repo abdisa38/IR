@@ -504,7 +504,7 @@ export default function OrderFlow({
                     </div>
                     <div>
                       <strong style={{ fontSize: '14px', color: 'var(--color-ink)' }}>
-                        {tableNum ? `${t('checkout.table')} ${tableNum}` : 'Direct Order · No Table Scanned'}
+                        {tableNum ? `${t('checkout.table')} ${tableNum}` : 'choose table number'}
                       </strong>
                       <small
                         style={{
@@ -518,7 +518,7 @@ export default function OrderFlow({
                           ? `${t('checkout.table')} ${tableNum} · ${t('qr.scannedBadge', undefined, { table: tableNum })}`
                           : tableNum
                           ? `${t('checkout.table')} ${tableNum} · Dine-in Table`
-                          : 'Order directly or tap to choose table number'}
+                          : ''}
                       </small>
                     </div>
                   </div>
