@@ -2,6 +2,7 @@ import { useLanguage, languageOptions } from './language'
 import { useState, useEffect } from 'react'
 import { Icon, Logo, Mark, Modal } from './shared-ui'
 import { SiteLink } from './site-routing'
+import { api } from './api/client'
 import './location.css'
 
 export function ContactAction({ kind, className = 'button secondary' }: { kind: 'call' | 'directions'; className?: string }) {
@@ -138,7 +139,47 @@ export function GlobalHeader({
   const [customer, setCustomer] = useState<{ name?: string; phone?: string; email?: string; avatar?: string; lastOrder?: string } | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [activeOrder, setActiveOrder] = useState<SavedPastOrder | null>(null)
   const { language, setLanguage, t } = useLanguage()
+
+  const updateActiveOrder = () => {
+    try {
+      const saved = localStorage.getItem('ilillii_order_history')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const latest = parsed[0]
+          const orderTime = latest.date ? new Date(latest.date).getTime() : 0
+          // Show active order if placed within the last 12 hours
+          if (Date.now() - orderTime < 12 * 60 * 60 * 1000) {
+            setActiveOrder(latest)
+            if (latest.orderNumber) {
+              api.getOrder(latest.orderNumber).then(res => {
+                if (res.success && res.order) {
+                  const s = res.order.status === 'pending'
+                    ? 'Submitted'
+                    : res.order.status === 'accepted'
+                    ? 'Accepted'
+                    : res.order.status === 'preparing'
+                    ? 'Preparing'
+                    : res.order.status === 'ready'
+                    ? 'Ready to Serve'
+                    : res.order.status === 'completed'
+                    ? 'Completed'
+                    : res.order.status
+                  setActiveOrder(curr => (curr ? { ...curr, status: s } : curr))
+                }
+              }).catch(() => {})
+            }
+            return
+          }
+        }
+      }
+      setActiveOrder(null)
+    } catch (e) {
+      setActiveOrder(null)
+    }
+  }
 
   const updateCustomerState = () => {
     try {
@@ -171,12 +212,20 @@ export function GlobalHeader({
 
   useEffect(() => {
     updateCustomerState()
+    updateActiveOrder()
     const handleOpenHistory = () => setHistoryOpen(true)
+    const handleOrderPlaced = () => {
+      updateActiveOrder()
+    }
     window.addEventListener('ilillii-auth-changed', updateCustomerState)
     window.addEventListener('ilillii-open-history', handleOpenHistory)
+    window.addEventListener('ilillii-order-placed', handleOrderPlaced)
+    const interval = setInterval(updateActiveOrder, 15000)
     return () => {
       window.removeEventListener('ilillii-auth-changed', updateCustomerState)
       window.removeEventListener('ilillii-open-history', handleOpenHistory)
+      window.removeEventListener('ilillii-order-placed', handleOrderPlaced)
+      clearInterval(interval)
     }
   }, [])
 
