@@ -1068,7 +1068,7 @@ export default function OrderFlow({
               setModal(null)
             }}
           >
-            Clear / No Table (Direct Order)
+            No Table (Direct Order)
           </button>
         </Modal>
       )}
