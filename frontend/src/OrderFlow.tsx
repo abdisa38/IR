@@ -121,13 +121,19 @@ export default function OrderFlow({
         )
       )
 
-      // Pre-fill customer details if previously saved
+      // Pre-fill customer details if previously saved (purge stale 0909511588)
       try {
         const saved = localStorage.getItem('ilillii_customer')
         if (saved) {
           const parsed = JSON.parse(saved)
           if (parsed.name && !name) setName(parsed.name)
-          if (parsed.phone && !phone) setPhone(parsed.phone)
+          if (parsed.phone && parsed.phone !== '0909511588' && !phone) {
+            setPhone(parsed.phone)
+          } else if (parsed.phone === '0909511588') {
+            parsed.phone = '0938890645'
+            localStorage.setItem('ilillii_customer', JSON.stringify(parsed))
+            setPhone('0938890645')
+          }
         }
       } catch (e) { }
     } else {
@@ -883,8 +889,16 @@ export default function OrderFlow({
                 <div className="confirmation-intro">
                   <h2>{t('order.receivedHeading')}</h2>
                   <p>{t('order.receivedDesc')}</p>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-ink)', display: 'block', marginTop: '8px' }}>
-                    {snapshot.table ? `${t('checkout.table')} ${snapshot.table}` : t('ways.dineIn')} · {snapshot.name}
+                  <div style={{ margin: '14px 0 8px' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--color-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>
+                      Order Number
+                    </span>
+                    <strong style={{ fontSize: '28px', color: 'var(--color-brand)', fontWeight: 800, letterSpacing: '1px' }}>
+                      #{snapshot.reference.replace(/^IL-/, '')}
+                    </strong>
+                  </div>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-ink)', display: 'block', marginTop: '4px' }}>
+                    {snapshot.table ? `${t('checkout.table')} ${snapshot.table}` : 'Direct Order'} · {snapshot.name}
                   </span>
                   {snapshot.paymentMethod && (
                     <div

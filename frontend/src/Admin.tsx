@@ -292,6 +292,9 @@ export default function Admin() {
                   <span className="admin-card-customer-link">
                     {customerDisplayName}
                   </span>
+                  <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--color-brand)', marginLeft: '8px' }}>
+                    #{order.id.replace(/^IL-/, '')}
+                  </span>
                 </div>
                 <span className="admin-card-time-text">{time(order.received)}</span>
               </div>
@@ -399,7 +402,7 @@ export default function Admin() {
                     onClick={() => setSelected(order)}
                     style={{ fontWeight: 700, display: 'block', textAlign: 'left', color: 'var(--color-ink)' }}
                   >
-                    {desktopCustomer}
+                    {desktopCustomer} <span style={{ color: 'var(--color-brand)', fontWeight: 800, marginLeft: '6px' }}>#{order.id.replace(/^IL-/, '')}</span>
                   </button>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '3px' }}>
                     {order.parentOrderId && (

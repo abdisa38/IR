@@ -740,7 +740,7 @@ function PastOrdersModal({ close }: { close: () => void }) {
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <strong style={{ fontSize: '14px', color: 'var(--color-brand)' }}>#{ord.orderNumber}</strong>
+                  <strong style={{ fontSize: '15px', color: 'var(--color-brand)', fontWeight: 800 }}>#{String(ord.orderNumber).replace(/^IL-/, '')}</strong>
                   <span style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
                     {ord.date ? new Date(ord.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Recent'}
                   </span>
@@ -772,20 +772,30 @@ function PastOrdersModal({ close }: { close: () => void }) {
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-          <button
-            type="button"
-            className="button primary"
-            style={{ flex: 1, justifyContent: 'center' }}
-            onClick={startFresh}
-          >
-            {t('history.startFresh')}
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '16px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              className="button primary"
+              style={{ flex: 1, justifyContent: 'center', background: '#b82032', color: '#fff', minHeight: '44px', fontWeight: 700 }}
+              onClick={startFresh}
+            >
+              + {t('order.addMoreDishes') || 'Add More Food'}
+            </button>
+            <a
+              href="tel:0938890645"
+              className="button secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textDecoration: 'none', minHeight: '44px', padding: '0 14px' }}
+            >
+              <Icon name="phone" size={15} />
+              0938890645
+            </a>
+          </div>
           {orders.length > 0 && (
             <button
               type="button"
               className="button secondary"
-              style={{ fontSize: '12px', padding: '6px 12px' }}
+              style={{ fontSize: '11px', padding: '4px 10px', alignSelf: 'center', background: 'transparent', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', textDecoration: 'underline' }}
               onClick={clearHistory}
             >
               {t('history.clear')}

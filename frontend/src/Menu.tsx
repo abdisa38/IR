@@ -387,7 +387,28 @@ export default function Menu() {
           <span>{count} {count === 1 ? t('common.item') : t('common.items')} · {t('common.subtotal')}</span>
           <strong>{formatBirr(subtotal)} <small>ETB</small></strong>
         </div>
-        <button onClick={() => setPanel(true)}>{t('nav.yourCart')}<Icon name="arrow" size={19} /></button>
+        <button
+          type="button"
+          onClick={() => setPanel(true)}
+          style={{
+            background: '#ffffff',
+            color: '#7D1825',
+            fontWeight: 800,
+            fontSize: '14px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            borderRadius: '12px',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+            flexShrink: 0,
+          }}
+        >
+          <span style={{ color: '#7D1825', fontWeight: 800 }}>{t('nav.yourCart') || 'View Cart'}</span>
+          <Icon name="arrow" size={19} />
+        </button>
       </div>
     )}
 

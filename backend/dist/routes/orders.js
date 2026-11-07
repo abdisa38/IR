@@ -1,18 +1,18 @@
 import { Router } from 'express';
 import { Order } from '../models/Order.js';
 const router = Router();
-// Generate next order number e.g. IL-1025
+// Generate next clean order number (e.g. 1025, 1026 - no IL- prefix)
 async function generateOrderNumber() {
     const latest = await Order.findOne().sort({ createdAt: -1 });
     if (!latest || !latest.orderNumber) {
-        return 'IL-1001';
+        return '1001';
     }
-    const match = latest.orderNumber.match(/IL-(\d+)/);
+    const match = latest.orderNumber.match(/(\d+)/);
     if (match && match[1]) {
         const nextNum = parseInt(match[1], 10) + 1;
-        return `IL-${nextNum}`;
+        return `${nextNum}`;
     }
-    return `IL-${Math.floor(1000 + Math.random() * 9000)}`;
+    return `${Math.floor(1000 + Math.random() * 9000)}`;
 }
 function getParam(param) {
     if (Array.isArray(param))
@@ -44,9 +44,13 @@ router.get('/', async (req, res) => {
 router.get('/:identifier', async (req, res) => {
     try {
         const id = getParam(req.params.identifier);
+        const cleanId = id.trim().toUpperCase();
+        const numOnly = cleanId.replace(/^IL-/, '');
         const order = await Order.findOne({
             $or: [
-                { orderNumber: id.toUpperCase() },
+                { orderNumber: cleanId },
+                { orderNumber: numOnly },
+                { orderNumber: `IL-${numOnly}` },
                 { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
             ],
         });

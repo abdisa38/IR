@@ -198,12 +198,11 @@ export function AuthCard({
       staffRoles.includes(lower) ||
       cleanId === '0938890645' ||
       cleanId === '+251938890645' ||
-      cleanId === '0909511588' ||
       lower === 'abdisaawel313@gmail.com'
     if (isDirectStaff && (loginPassword === 'ilillii2026' || loginPassword === 'admin' || loginPassword === 'manager' || loginPassword.length >= 4)) {
       const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin'
       const staffName =
-        cleanId === '0938890645' || cleanId === '+251938890645' || cleanId === '0909511588' || lower === 'abdisaawel313@gmail.com'
+        cleanId === '0938890645' || cleanId === '+251938890645' || lower === 'abdisaawel313@gmail.com'
           ? 'Abdisa Awel (Manager)'
           : `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)}`
       const mockToken = `staff-${lower}-${Date.now()}`
