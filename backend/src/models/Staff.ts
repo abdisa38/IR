@@ -8,6 +8,8 @@ export interface IStaff extends Document {
   status: 'Active' | 'On Break' | 'Off Duty' | 'Inactive'
   shift?: string
   assignedTables?: string[]
+  username?: string
+  password?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -17,6 +19,8 @@ const StaffSchema = new Schema<IStaff>(
     name: { type: String, required: true, trim: true },
     email: { type: String, trim: true, lowercase: true },
     phone: { type: String, required: true, trim: true },
+    username: { type: String, trim: true, lowercase: true },
+    password: { type: String, default: '1234' },
     role: {
       type: String,
       required: true,

@@ -160,19 +160,79 @@ router.post('/sheger-verify', async (req: Request, res: Response) => {
   }
 })
 
-// PATCH /api/orders/:id/status - update status (pending, preparing, ready, completed, cancelled)
+// POST /api/orders/:id/add-items - Add extra food to existing active order
+router.post('/:id/add-items', async (req: Request, res: Response) => {
+  try {
+    const { items, note } = req.body
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please provide items to add' })
+    }
+
+    const id = getParam(req.params.id)
+    const cleanId = id.trim().toUpperCase()
+    const numOnly = cleanId.replace(/^IL-/, '')
+
+    const order = await Order.findOne({
+      $or: [
+        { orderNumber: cleanId },
+        { orderNumber: numOnly },
+        { orderNumber: `IL-${numOnly}` },
+        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
+      ],
+    })
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' })
+    }
+
+    const additionalItems = items.map((i: any, index: number) => ({
+      menuItemId: String(i.menuItemId || i.id || `item-${Date.now()}-${index}`),
+      name: i.name || 'Additional dish',
+      price: Number(i.price) || 0,
+      quantity: Number(i.quantity) || 1,
+      image: i.image || '',
+    }))
+
+    order.items.push(...additionalItems)
+    const additionalSubtotal = additionalItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    order.subtotal += additionalSubtotal
+    order.total += additionalSubtotal
+
+    if (note) {
+      order.note = order.note ? `${order.note} | Extra: ${note}` : `Extra: ${note}`
+    }
+
+    // Reopen preparation stage so kitchen sees new food
+    if (['ready', 'completed'].includes(order.status)) {
+      order.status = 'preparing'
+    }
+
+    await order.save()
+    console.log(`[Order Updated with Additional Items] ${order.orderNumber} - New Total: ${order.total} ETB`)
+    res.json({ success: true, message: 'Additional items added to order', order })
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Failed to add items to order', error: error.message })
+  }
+})
+
+// PATCH /api/orders/:id/status - update status (pending, accepted, preparing, ready, completed, cancelled)
 router.patch('/:id/status', async (req: Request, res: Response) => {
   try {
     const { status } = req.body
-    const valid = ['pending', 'preparing', 'ready', 'completed', 'cancelled']
+    const valid = ['pending', 'accepted', 'preparing', 'ready', 'completed', 'cancelled']
     if (!valid.includes(status)) {
       return res.status(400).json({ success: false, message: `Invalid status. Must be one of: ${valid.join(', ')}` })
     }
 
     const id = getParam(req.params.id)
+    const cleanId = id.trim().toUpperCase()
+    const numOnly = cleanId.replace(/^IL-/, '')
+
     const order = await Order.findOne({
       $or: [
-        { orderNumber: id.toUpperCase() },
+        { orderNumber: cleanId },
+        { orderNumber: numOnly },
+        { orderNumber: `IL-${numOnly}` },
         { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
       ],
     })
@@ -200,9 +260,14 @@ router.patch('/:id/payment', async (req: Request, res: Response) => {
     }
 
     const id = getParam(req.params.id)
+    const cleanId = id.trim().toUpperCase()
+    const numOnly = cleanId.replace(/^IL-/, '')
+
     const order = await Order.findOne({
       $or: [
-        { orderNumber: id.toUpperCase() },
+        { orderNumber: cleanId },
+        { orderNumber: numOnly },
+        { orderNumber: `IL-${numOnly}` },
         { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
       ],
     })
@@ -225,9 +290,14 @@ router.patch('/:id/payment', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = getParam(req.params.id)
+    const cleanId = id.trim().toUpperCase()
+    const numOnly = cleanId.replace(/^IL-/, '')
+
     const order = await Order.findOne({
       $or: [
-        { orderNumber: id.toUpperCase() },
+        { orderNumber: cleanId },
+        { orderNumber: numOnly },
+        { orderNumber: `IL-${numOnly}` },
         { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
       ],
     })

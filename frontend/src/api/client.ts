@@ -146,6 +146,8 @@ export interface ApiStaff {
   status: 'Active' | 'On Break' | 'Off Duty' | 'Inactive'
   shift?: string
   assignedTables?: string[]
+  username?: string
+  password?: string
   createdAt?: string
 }
 

@@ -16,11 +16,13 @@ router.get('/', async (_req: Request, res: Response) => {
 // POST /api/staff - create new staff member
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { name, phone, email, role = 'Waiter', status = 'Active', shift = 'Day Shift', assignedTables = [] } = req.body
+    const { name, phone, email, role = 'Waiter', status = 'Active', shift = 'Day Shift', assignedTables = [], username, password = '1234' } = req.body
 
     if (!name || !phone) {
       return res.status(400).json({ success: false, message: 'Name and phone number are required' })
     }
+
+    const defaultUsername = (username || name.toLowerCase().replace(/[^a-z0-9]/g, '') || phone).slice(0, 20)
 
     const newStaff = new Staff({
       name,
@@ -30,6 +32,8 @@ router.post('/', async (req: Request, res: Response) => {
       status,
       shift,
       assignedTables,
+      username: defaultUsername,
+      password: password || '1234',
     })
 
     await newStaff.save()
@@ -42,7 +46,7 @@ router.post('/', async (req: Request, res: Response) => {
 // PUT /api/staff/:id - update staff
 router.put('/:id', async (req: Request, res: Response) => {
   try {
-    const { name, phone, email, role, status, shift, assignedTables } = req.body
+    const { name, phone, email, role, status, shift, assignedTables, username, password } = req.body
     const staff = await Staff.findById(req.params.id)
 
     if (!staff) {
@@ -56,6 +60,8 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (status) staff.status = status
     if (shift) staff.shift = shift
     if (assignedTables) staff.assignedTables = assignedTables
+    if (username !== undefined) staff.username = username
+    if (password !== undefined) staff.password = password
 
     await staff.save()
     res.json({ success: true, staff })

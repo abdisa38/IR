@@ -183,9 +183,14 @@ router.post('/:id/add-items', async (req: Request, res: Response) => {
     }
 
     const id = getParam(req.params.id)
+    const cleanId = id.trim().toUpperCase()
+    const numOnly = cleanId.replace(/^IL-/, '')
+
     const order = await Order.findOne({
       $or: [
-        { orderNumber: id.toUpperCase() },
+        { orderNumber: cleanId },
+        { orderNumber: numOnly },
+        { orderNumber: `IL-${numOnly}` },
         { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
       ],
     })
@@ -234,9 +239,14 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     }
 
     const id = getParam(req.params.id)
+    const cleanId = id.trim().toUpperCase()
+    const numOnly = cleanId.replace(/^IL-/, '')
+
     const order = await Order.findOne({
       $or: [
-        { orderNumber: id.toUpperCase() },
+        { orderNumber: cleanId },
+        { orderNumber: numOnly },
+        { orderNumber: `IL-${numOnly}` },
         { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
       ],
     })
@@ -264,9 +274,14 @@ router.patch('/:id/payment', async (req: Request, res: Response) => {
     }
 
     const id = getParam(req.params.id)
+    const cleanId = id.trim().toUpperCase()
+    const numOnly = cleanId.replace(/^IL-/, '')
+
     const order = await Order.findOne({
       $or: [
-        { orderNumber: id.toUpperCase() },
+        { orderNumber: cleanId },
+        { orderNumber: numOnly },
+        { orderNumber: `IL-${numOnly}` },
         { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
       ],
     })
@@ -289,9 +304,14 @@ router.patch('/:id/payment', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = getParam(req.params.id)
+    const cleanId = id.trim().toUpperCase()
+    const numOnly = cleanId.replace(/^IL-/, '')
+
     const order = await Order.findOne({
       $or: [
-        { orderNumber: id.toUpperCase() },
+        { orderNumber: cleanId },
+        { orderNumber: numOnly },
+        { orderNumber: `IL-${numOnly}` },
         { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
       ],
     })
