@@ -515,7 +515,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'checkout.paidViaSheger': 'በShegerPay ተከፍሏል',
     'cart.dineInWithTable': 'እዚሁ መመገብ (ጠረጴዛ {table})',
     'qr.scannedTableTag': 'ጠረጴዛ {table} · በQR የተቃኘ',
-    'checkout.activeOrderNotice': 'ንቁ የጠረጴዛ ትዕዛዝ #{id}',
     'checkout.appendExpl': 'አዲሱ ምግብ ከቀደመው የጠረጴዛ ትዕዛዝዎ ጋር ይደመራል።',
     'checkout.separateExpl': 'ይህ እንደ አዲስ የተለየ ትዕዛዝ ተደርጎ ይዘጋጃል።',
     'checkout.appendToActiveBtn': 'ወደ ቀደመው ትዕዛዝ ደምር',

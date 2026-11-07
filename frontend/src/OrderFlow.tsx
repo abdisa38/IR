@@ -615,11 +615,7 @@ export default function OrderFlow({
                         marginBottom: '4px',
                       }}
                     >
-                      <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--color-brand)' }}>
-                        {appendToExisting
-                          ? `${t('checkout.activeOrderNotice', undefined, { id: activeOrderId })}`
-                          : t('')}
-                      </span>
+                    
                       <button
                         type="button"
                         style={{
