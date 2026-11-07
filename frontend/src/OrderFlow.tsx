@@ -641,9 +641,7 @@ export default function OrderFlow({
                         {appendToExisting ? t('') : t('checkout.appendToActiveBtn')}
                       </button>
                     </div>
-                    <small style={{ color: '#78716c', fontSize: '11px', display: 'block' }}>
-                      {appendToExisting ? t('checkout.appendExpl') : t('checkout.separateExpl')}
-                    </small>
+            
                   </div>
                 )}
 
