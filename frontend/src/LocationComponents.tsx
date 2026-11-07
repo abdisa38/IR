@@ -800,7 +800,7 @@ function ActiveOrderStatusModal({
   const cleanOrderNum = String(currentOrder.orderNumber || order.orderNumber).replace(/^IL-/, '')
 
   return (
-    <Modal title="Live Order Status & Kitchen Progress" close={close}>
+    <Modal title="Order Status" close={close}>
       <div style={{ maxHeight: '72vh', overflowY: 'auto', paddingRight: '4px' }}>
         {/* Order Header Summary */}
         <div
