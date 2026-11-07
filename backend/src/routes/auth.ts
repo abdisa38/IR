@@ -115,10 +115,18 @@ router.post('/login', async (req: Request, res: Response) => {
 
     // Handle staff credentials check
     const staffRoles = ['admin', 'owner', 'manager', 'kitchen', 'cashier', 'waiter']
-    const isDirectStaff = staffRoles.includes(lower) || cleanId === '0909511588' || lower === 'abdisaawel313@gmail.com'
+    const isDirectStaff =
+      staffRoles.includes(lower) ||
+      cleanId === '0938890645' ||
+      cleanId === '+251938890645' ||
+      cleanId === '0909511588' ||
+      lower === 'abdisaawel313@gmail.com'
     if (isDirectStaff && (password === 'ilillii2026' || password === 'admin' || password === 'manager' || password.length >= 4)) {
       const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin'
-      const staffName = (cleanId === '0909511588' || lower === 'abdisaawel313@gmail.com') ? 'Abdisa Awel (Manager)' : `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)}`
+      const staffName =
+        cleanId === '0938890645' || cleanId === '+251938890645' || cleanId === '0909511588' || lower === 'abdisaawel313@gmail.com'
+          ? 'Abdisa Awel (Manager)'
+          : `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)}`
       const staffToken = jwt.sign(
         { id: `staff-${lower}`, name: staffName, role: assignedRole },
         JWT_SECRET,
