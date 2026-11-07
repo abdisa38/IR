@@ -56,20 +56,16 @@ export default function OrderFlow({
   const [shegerTxnId, setShegerTxnId] = useState('')
   const [verifyingSheger, setVerifyingSheger] = useState(false)
 
-  // Table resolution
-  const resolvedTable =
-    table ||
-    (typeof window !== 'undefined'
-      ? sessionStorage.getItem('ilillii_table') || localStorage.getItem('ilillii_table') || ''
-      : '') ||
-    '1'
+  // Table resolution - do not force Table 1 if not scanned/selected
+  const resolvedTable = table || ''
   const [tableNum, setTableNum] = useState<string>(resolvedTable)
   const [isTableScanned, setIsTableScanned] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false
-    return (
-      localStorage.getItem('ilillii_table_source') === 'qr' ||
-      sessionStorage.getItem('ilillii_table_source') === 'qr' ||
-      window.location.search.includes('source=qr')
+    return Boolean(
+      table &&
+      (localStorage.getItem('ilillii_table_source') === 'qr' ||
+       sessionStorage.getItem('ilillii_table_source') === 'qr' ||
+       window.location.search.includes('source=qr'))
     )
   })
 
@@ -114,17 +110,15 @@ export default function OrderFlow({
       }
       setStep(initialPayment === 'sheger' ? 'sheger' : 'details')
       setError('')
-      const curTable =
-        table ||
-        (typeof window !== 'undefined'
-          ? sessionStorage.getItem('ilillii_table') || localStorage.getItem('ilillii_table') || ''
-          : '') ||
-        '1'
+      const curTable = table || ''
       setTableNum(curTable)
       setIsTableScanned(
-        localStorage.getItem('ilillii_table_source') === 'qr' ||
-        sessionStorage.getItem('ilillii_table_source') === 'qr' ||
-        window.location.search.includes('source=qr')
+        Boolean(
+          curTable &&
+          (localStorage.getItem('ilillii_table_source') === 'qr' ||
+           sessionStorage.getItem('ilillii_table_source') === 'qr' ||
+           window.location.search.includes('source=qr'))
+        )
       )
 
       // Pre-fill customer details if previously saved
@@ -205,8 +199,8 @@ export default function OrderFlow({
         orderNumber: order.orderNumber,
         date: new Date().toISOString(),
         total: order.total,
-        table: order.table || tableNum || '1',
-        type: 'Dine in',
+        table: order.table || tableNum || '',
+        type: order.type || 'Dine in',
         paymentMethod,
         transactionId,
         items: lines.map(l => ({ name: l.item.name, quantity: l.quantity, price: l.item.price })),
@@ -217,6 +211,7 @@ export default function OrderFlow({
         ? prevHistory.filter((h: any) => h.orderNumber !== order.orderNumber)
         : []
       localStorage.setItem('ilillii_order_history', JSON.stringify([historyItem, ...filtered].slice(0, 30)))
+      window.dispatchEvent(new CustomEvent('ilillii-order-placed', { detail: historyItem }))
     } catch (e) { }
 
     try {
@@ -226,7 +221,7 @@ export default function OrderFlow({
           name: name.trim(),
           phone: phone.trim(),
           lastOrder: order.orderNumber,
-          table: order.table || tableNum,
+          table: order.table || tableNum || '',
           updatedAt: new Date().toISOString(),
         })
       )
@@ -235,7 +230,7 @@ export default function OrderFlow({
 
     setSnapshot({
       reference: order.orderNumber,
-      table: order.table || tableNum || '1',
+      table: order.table || tableNum || '',
       name: order.customerName || name.trim(),
       phone: order.customerPhone || phone.trim(),
       note,
@@ -263,7 +258,7 @@ export default function OrderFlow({
 
     try {
       const isQr = isTableScanned
-      const source = isQr ? 'table_qr' : 'web_direct'
+      const source = isQr ? 'table_qr' : (tableNum ? 'manual_table' : 'web_direct')
       const linePayload = lines.map(l => ({
         menuItemId: l.item.id,
         name: l.item.name,
@@ -279,7 +274,7 @@ export default function OrderFlow({
         orderRes = await api.createOrder({
           items: linePayload,
           type: 'Dine in',
-          table: tableNum || '1',
+          table: tableNum ? tableNum : undefined,
           customerName: name.trim(),
           customerPhone: phone.trim(),
           note,
@@ -333,7 +328,7 @@ export default function OrderFlow({
       }
 
       const isQr = isTableScanned
-      const source = isQr ? 'table_qr' : 'web_direct'
+      const source = isQr ? 'table_qr' : (tableNum ? 'manual_table' : 'web_direct')
       const linePayload = lines.map(l => ({
         menuItemId: l.item.id,
         name: l.item.name,
@@ -351,7 +346,7 @@ export default function OrderFlow({
         orderRes = await api.createOrder({
           items: linePayload,
           type: 'Dine in',
-          table: tableNum || '1',
+          table: tableNum ? tableNum : undefined,
           customerName: name.trim(),
           customerPhone: phone.trim(),
           note,
@@ -420,7 +415,9 @@ export default function OrderFlow({
               <Icon name="meal" size={15} />
               {snapshot?.table
                 ? `${t('checkout.table')} ${snapshot.table}`
-                : `${t('checkout.table')} ${tableNum}`}
+                : tableNum
+                ? `${t('checkout.table')} ${tableNum}`
+                : 'Direct Order'}
               {isTableScanned && <small style={{ color: '#16a34a' }}>· QR</small>}
             </span>
           </div>
