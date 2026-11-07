@@ -131,7 +131,7 @@ export interface ApiOrder {
   paymentMethod?: string
   transactionId?: string
   note?: string
-  source?: 'table_qr' | 'web_direct'
+  source?: 'table_qr' | 'web_direct' | 'manual_table'
   parentOrderId?: string
   createdAt: string
   updatedAt: string
@@ -255,7 +255,7 @@ export const api = {
     paymentTiming?: 'pre_pay' | 'post_pay'
     paymentMethod?: string
     transactionId?: string
-    source?: 'table_qr' | 'web_direct'
+    source?: 'table_qr' | 'web_direct' | 'manual_table'
     parentOrderId?: string
   }) {
     return request<{ success: boolean; order: ApiOrder }>('/orders', {
