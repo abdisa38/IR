@@ -10,7 +10,40 @@ import { Pagination, StatusBadge } from './ui-patterns'
 import { useLanguage } from './language'
 
 const paymentFilters: PaymentStatus[] = ['Unpaid', 'Awaiting Payment', 'Verification Pending', 'Paid', 'Failed', 'Refunded']
-const statusFilters: ('All Orders' | OrderStatus)[] = ['All Orders', 'New', 'Accepted', 'Preparing', 'Ready', 'Completed', 'Cancelled']
+const statusFilters: (OrderStatus | 'All Orders')[] = ['New', 'Accepted', 'Preparing', 'Ready', 'Completed', 'Cancelled', 'All Orders']
+
+const pageToSlug: Record<AdminPage, string> = {
+  Overview: 'overview',
+  Orders: 'orders',
+  'Menu Management': 'menu',
+  Categories: 'categories',
+  Payments: 'payments',
+  'Tables & QR Codes': 'tables',
+  Reports: 'reports',
+  'Staff & Permissions': 'staff',
+  'Hotel Settings': 'settings',
+}
+
+const slugToPage: Record<string, AdminPage> = {
+  overview: 'Overview',
+  orders: 'Orders',
+  menu: 'Menu Management',
+  categories: 'Categories',
+  payments: 'Payments',
+  tables: 'Tables & QR Codes',
+  reports: 'Reports',
+  staff: 'Staff & Permissions',
+  settings: 'Hotel Settings',
+}
+
+function getPageFromHash(): AdminPage | null {
+  const hash = window.location.hash
+  if (hash.startsWith('#admin/')) {
+    const slug = hash.replace('#admin/', '').toLowerCase().split('?')[0].split('/')[0]
+    return slugToPage[slug] || null
+  }
+  return null
+}
 const time = (value: string) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 const Badge = ({ value, type = 'Order' }: { value: string; type?: 'Payment' | 'Order' }) => <StatusBadge label={value} type={type} tone={['Paid', 'Completed', 'Ready for Pickup', 'Ready to Serve'].includes(value) ? 'success' : ['Failed', 'Cancelled', 'Refunded'].includes(value) ? 'error' : ['Submitted', 'Awaiting Payment', 'Verification Pending'].includes(value) ? 'warning' : 'neutral'} />
 type Confirmation = { kind: 'cancel' | 'verify' | 'unable' | 'cash'; order: DemoOrder }
@@ -65,13 +98,13 @@ export default function Admin() {
     return 'Overview'
   }
 
-  const [page, setPage] = useState<AdminPage>(() => mapUserToInitialPage(getStoredUser()))
+  const [page, setPage] = useState<AdminPage>(() => getPageFromHash() || mapUserToInitialPage(getStoredUser()))
   const [role, setRole] = useState<Role>(() => mapUserToRole(getStoredUser()))
   const [orders, setOrders] = useState<DemoOrder[]>([])
   const [mobile, setMobile] = useState(false)
   const [narrow, setNarrow] = useState(() => window.innerWidth <= 1024)
   const [query, setQuery] = useState('')
-  const [filter, setFilter] = useState('All Orders')
+  const [filter, setFilter] = useState('New')
   const [orderPage, setOrderPage] = useState(1)
   const [paymentFilter, setPaymentFilter] = useState('Verification Pending')
   const [period, setPeriod] = useState('Last 7 days')
@@ -103,7 +136,10 @@ export default function Admin() {
       if (u) {
         setCurrentUser(u)
         setRole(mapUserToRole(u))
-        setPage(mapUserToInitialPage(u))
+        const p = getPageFromHash()
+        if (p) {
+          setPage(p)
+        }
       } else {
         setCurrentUser(null)
       }
@@ -164,8 +200,9 @@ export default function Admin() {
           source: (o.source || (o.table ? 'table_qr' : 'web_direct')) as any,
           parentOrderId: o.parentOrderId,
         }))
-        setOrders(mapped)
-        setSelected(curr => (curr ? mapped.find(m => m.id === curr.id) || curr : null))
+        const sorted = mapped.sort((a, b) => new Date(b.received).getTime() - new Date(a.received).getTime())
+        setOrders(sorted)
+        setSelected(curr => (curr ? sorted.find(m => m.id === curr.id) || curr : null))
       }
     } catch (err: any) {
       console.warn('Could not load orders from backend:', err.message)
@@ -231,7 +268,15 @@ export default function Admin() {
   const demoDate = new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' })
   const current = selected ? orders.find(order => order.id === selected.id) : null
   const notify = (text: string) => setNotice(text)
-  const navigate = (next: AdminPage) => { setPage(next); setMobile(false); setQuery(''); setViewState('ready'); setNotice('') }
+  const navigate = (next: AdminPage) => {
+    setPage(next)
+    setMobile(false)
+    setQuery('')
+    setViewState('ready')
+    setNotice('')
+    const slug = pageToSlug[next] || 'overview'
+    window.location.hash = `#admin/${slug}`
+  }
   const changeOrder = async (order: DemoOrder) => {
     if (!operation) return
     const next = nextOrderStatus(order)

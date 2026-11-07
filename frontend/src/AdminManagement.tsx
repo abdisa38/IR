@@ -24,6 +24,72 @@ type ManagedItem = {
 
 type ManagedCategory = { id: string; name: string; original: string; active: boolean }
 
+export type ConfirmDialogState = {
+  title: string
+  message: string
+  confirmText?: string
+  danger?: boolean
+  onConfirm: () => void
+}
+
+export function ConfirmModal({ dialog, close }: { dialog: ConfirmDialogState; close: () => void }) {
+  return (
+    <Modal title={dialog.title} close={close}>
+      <div style={{ padding: '8px 0 14px', textAlign: 'center' }}>
+        <div
+          style={{
+            width: '54px',
+            height: '54px',
+            borderRadius: '50%',
+            background: dialog.danger !== false ? '#fee2e2' : '#fef3c7',
+            color: dialog.danger !== false ? '#dc2626' : '#d97706',
+            display: 'grid',
+            placeItems: 'center',
+            margin: '0 auto 16px',
+            boxShadow: '0 4px 12px rgba(220, 38, 38, 0.15)',
+          }}
+        >
+          <Icon name={dialog.danger !== false ? 'close' : 'info'} size={24} />
+        </div>
+        <h3 style={{ margin: '0 0 8px', fontSize: '18px', fontWeight: 750, color: 'var(--color-ink)' }}>
+          {dialog.title}
+        </h3>
+        <p style={{ margin: '0 auto 24px', fontSize: '14px', color: 'var(--color-muted)', lineHeight: 1.6, maxWidth: '380px' }}>
+          {dialog.message}
+        </p>
+        <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+          <button
+            type="button"
+            className="button secondary"
+            style={{ minWidth: '110px', height: '42px', fontWeight: 600 }}
+            onClick={close}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="button primary"
+            style={{
+              background: dialog.danger !== false ? '#b82032' : 'var(--color-brand)',
+              borderColor: dialog.danger !== false ? '#991b1b' : undefined,
+              color: '#ffffff',
+              minWidth: '130px',
+              height: '42px',
+              fontWeight: 750,
+            }}
+            onClick={() => {
+              dialog.onConfirm()
+              close()
+            }}
+          >
+            {dialog.confirmText || 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 async function compressImageFile(file: File, maxWidth = 1000, maxHeight = 1000, quality = 0.82): Promise<string> {
   return new Promise((resolve) => {
     const reader = new FileReader()
@@ -77,6 +143,7 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
   const [loading, setLoading] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
   const [imageInputMode, setImageInputMode] = useState<'upload' | 'url'>('upload')
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null)
   const images = useRef<string[]>([])
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,16 +248,36 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
     setVerified(Boolean(item?.description))
   }
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete '${name}' from the menu?`)) return
+  const handleToggleAvailability = async (item: ManagedItem) => {
+    const nextAvailability = item.availability === 'Available' ? 'Unavailable' : 'Available'
+    const isAvail = nextAvailability === 'Available'
+    setItems(prev => prev.map(i => (i.id === item.id ? { ...i, availability: nextAvailability } : i)))
+    notify(`${item.name}: ${isAvail ? 'In Stock (Available)' : 'Out of Stock (Unavailable)'}`)
     try {
-      await api.deleteMenuItem(id)
-      setItems(current => current.filter(i => i.id !== id))
+      await api.updateMenuItem(item.id, { available: isAvail })
       window.dispatchEvent(new CustomEvent('ilillii-menu-updated'))
-      notify(`Item '${name}' removed from menu.`)
-    } catch (err: any) {
-      notify(`Error deleting item: ${err.message}`)
+    } catch (e: any) {
+      console.warn('Backend update failed:', e.message)
     }
+  }
+
+  const handleDelete = (id: string, name: string) => {
+    setConfirmDialog({
+      title: 'Delete Menu Item',
+      message: `Are you sure you want to delete '${name}' from the menu? This dish will no longer appear for ordering.`,
+      confirmText: 'Delete Dish',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await api.deleteMenuItem(id)
+          setItems(current => current.filter(i => i.id !== id))
+          window.dispatchEvent(new CustomEvent('ilillii-menu-updated'))
+          notify(`Item '${name}' removed from menu.`)
+        } catch (err: any) {
+          notify(`Error deleting item: ${err.message}`)
+        }
+      },
+    })
   }
 
   const handleSave = async (event: React.FormEvent) => {
@@ -244,11 +331,9 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
         </label>
         <select aria-label="Filter category" value={filter} onChange={event => setFilter(event.target.value)}>
           <option value="all">{t('admin.allCategories')}</option>
-          <option value="food">Main & Traditional Foods</option>
-          <option value="beer-wine">Beer & Wines</option>
-          <option value="cold-drinks">Cold Beverages</option>
-          <option value="spirits">Spirits & Whiskeys</option>
-          <option value="hot-drinks">Hot Drinks</option>
+          <option value="main">Main Dishes (Gosa Nyataa)</option>
+          <option value="additional">Additional Dishes (Nyataa Sooma(a))</option>
+          <option value="drinks">Drinks & Beverages (Gosa Dhugaatii)</option>
         </select>
         <button className="button primary" onClick={() => open()}>
           <Icon name="plus" size={16} />{t('admin.addMenuItem')}
