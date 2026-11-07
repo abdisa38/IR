@@ -651,6 +651,7 @@ export function AdminCategories({ notify }: { notify: (text: string) => void }) 
   )
   const [editing, setEditing] = useState<ManagedCategory | null>(null)
   const [error, setError] = useState('')
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null)
 
   const move = (index: number, delta: number) =>
     setCategories(current => {
