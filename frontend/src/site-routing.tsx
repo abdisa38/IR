@@ -15,5 +15,5 @@ export function sitePage() {
   if (['#home', '#about', '#find-us'].includes(window.location.hash)) return 'home'
   if (['#menu', '#food-menu'].includes(window.location.hash)) return 'menu'
   if (window.location.pathname.replace(/\/$/, '') === '/contact' || window.location.hash === '#contact') return 'contact'
-  return 'home'
+  return 'menu'
 }
