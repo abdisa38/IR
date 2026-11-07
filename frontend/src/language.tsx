@@ -809,7 +809,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'order.receivedHeading': 'Order Received!',
     'order.receivedDesc': 'Your table order has been sent to the Ilillii Hotel kitchen.',
     'order.statusHeading': 'Order Status',
-    'order.addMoreDishes': 'Add More Food / Order Additional Dishes',
+    'order.addMoreDishes': 'Add More Food',
     'order.viewStatus': 'View order status',
     'order.viewPastOrders': 'View My Past Orders',
     'order.callPhone': 'Phone: 0909511588',
