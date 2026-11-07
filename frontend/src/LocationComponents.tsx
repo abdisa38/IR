@@ -139,6 +139,7 @@ export function GlobalHeader({
   const [customer, setCustomer] = useState<{ name?: string; phone?: string; email?: string; avatar?: string; lastOrder?: string } | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [statusModalOpen, setStatusModalOpen] = useState(false)
   const [activeOrder, setActiveOrder] = useState<SavedPastOrder | null>(null)
   const { language, setLanguage, t } = useLanguage()
 
@@ -214,16 +215,19 @@ export function GlobalHeader({
     updateCustomerState()
     updateActiveOrder()
     const handleOpenHistory = () => setHistoryOpen(true)
+    const handleOpenStatus = () => setStatusModalOpen(true)
     const handleOrderPlaced = () => {
       updateActiveOrder()
     }
     window.addEventListener('ilillii-auth-changed', updateCustomerState)
     window.addEventListener('ilillii-open-history', handleOpenHistory)
+    window.addEventListener('ilillii-open-order-status', handleOpenStatus)
     window.addEventListener('ilillii-order-placed', handleOrderPlaced)
     const interval = setInterval(updateActiveOrder, 15000)
     return () => {
       window.removeEventListener('ilillii-auth-changed', updateCustomerState)
       window.removeEventListener('ilillii-open-history', handleOpenHistory)
+      window.removeEventListener('ilillii-open-order-status', handleOpenStatus)
       window.removeEventListener('ilillii-order-placed', handleOrderPlaced)
       clearInterval(interval)
     }
@@ -319,7 +323,7 @@ export function GlobalHeader({
                 <button
                   type="button"
                   className="nav-active-order-btn"
-                  onClick={() => setHistoryOpen(true)}
+                  onClick={() => setStatusModalOpen(true)}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -410,7 +414,7 @@ export function GlobalHeader({
                 style={{ background: '#fff7ed', border: '1.5px solid #fed7aa', color: '#9a3412', marginBottom: '8px' }}
                 onClick={() => {
                   setMobileNav(false)
-                  setHistoryOpen(true)
+                  setStatusModalOpen(true)
                 }}
               >
                 <Icon name="meal" size={18} />
@@ -667,6 +671,21 @@ export function GlobalHeader({
       {historyOpen && (
         <PastOrdersModal close={() => setHistoryOpen(false)} />
       )}
+
+      {statusModalOpen && activeOrder && (
+        <ActiveOrderStatusModal
+          order={activeOrder}
+          close={() => setStatusModalOpen(false)}
+          onViewHistory={() => {
+            setStatusModalOpen(false)
+            setHistoryOpen(true)
+          }}
+          onAddFood={() => {
+            setStatusModalOpen(false)
+            window.location.hash = '#menu'
+          }}
+        />
+      )}
     </>
   )
 }
@@ -681,8 +700,293 @@ interface SavedPastOrder {
   status?: string
 }
 
+function ActiveOrderStatusModal({
+  order,
+  close,
+  onViewHistory,
+  onAddFood,
+}: {
+  order: SavedPastOrder
+  close: () => void
+  onViewHistory: () => void
+  onAddFood: () => void
+}) {
+  const [currentOrder, setCurrentOrder] = useState<SavedPastOrder>(order)
+  const [liveStatus, setLiveStatus] = useState<string>(order.status || 'Submitted')
+
+  // 5-step visual stepper stages
+  const stages = [
+    { key: 'Submitted', label: 'Order Sent', sub: 'Kitchen notified', icon: 'clock' },
+    { key: 'Accepted', label: 'Accepted', sub: 'Confirmed by kitchen', icon: 'check' },
+    { key: 'Preparing', label: 'Preparing', sub: 'Cooking on stove & grill', icon: 'meal' },
+    { key: 'Ready', label: 'Ready to Serve', sub: 'At service counter', icon: 'bell' },
+    { key: 'Completed', label: 'Completed', sub: 'Served & finalized', icon: 'check' },
+  ]
+
+  const getStageIndex = (statusStr: string): number => {
+    const s = (statusStr || '').toLowerCase()
+    if (s.includes('cancel')) return -1
+    if (s.includes('complete') || s.includes('served')) return 4
+    if (s.includes('ready')) return 3
+    if (s.includes('prep') || s.includes('kitchen') || s.includes('cook')) return 2
+    if (s.includes('accept')) return 1
+    return 0 // Submitted / pending
+  }
+
+  const activeIndex = getStageIndex(liveStatus)
+
+  // Poll live order status every 4 seconds
+  useEffect(() => {
+    let isMounted = true
+    const poll = async () => {
+      if (!order.orderNumber) return
+      try {
+        const res = await api.getOrder(order.orderNumber)
+        if (res.success && res.order && isMounted) {
+          const apiStatus = res.order.status
+          const normalized =
+            apiStatus === 'pending'
+              ? 'Submitted'
+              : apiStatus === 'accepted'
+              ? 'Accepted'
+              : apiStatus === 'preparing'
+              ? 'Preparing'
+              : apiStatus === 'ready'
+              ? 'Ready to Serve'
+              : apiStatus === 'completed'
+              ? 'Completed'
+              : apiStatus
+          setLiveStatus(normalized)
+          setCurrentOrder(prev => ({
+            ...prev,
+            status: normalized,
+            total: res.order.total || prev.total,
+            items: res.order.items?.length
+              ? res.order.items.map((it: any) => ({
+                  name: it.name,
+                  quantity: it.quantity,
+                  price: it.price,
+                }))
+              : prev.items,
+          }))
+
+          // Update localStorage order history with latest status
+          try {
+            const saved = localStorage.getItem('ilillii_order_history')
+            if (saved) {
+              const parsed = JSON.parse(saved)
+              if (Array.isArray(parsed)) {
+                const updated = parsed.map((o: any) =>
+                  String(o.orderNumber).replace(/^IL-/, '') === String(order.orderNumber).replace(/^IL-/, '')
+                    ? { ...o, status: normalized, total: res.order.total || o.total }
+                    : o
+                )
+                localStorage.setItem('ilillii_order_history', JSON.stringify(updated))
+              }
+            }
+          } catch (e) {}
+        }
+      } catch (e) {}
+    }
+
+    poll()
+    const timer = setInterval(poll, 4000)
+    return () => {
+      isMounted = false
+      clearInterval(timer)
+    }
+  }, [order.orderNumber])
+
+  const cleanOrderNum = String(currentOrder.orderNumber || order.orderNumber).replace(/^IL-/, '')
+
+  return (
+    <Modal title="Live Kitchen Progress & Order Status" close={close}>
+      <div style={{ maxHeight: '72vh', overflowY: 'auto', paddingRight: '4px' }}>
+        {/* Order Header Summary */}
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #fffaf5 0%, #fdf5ed 100%)',
+            border: '1.5px solid #fed7aa',
+            borderRadius: '14px',
+            padding: '16px',
+            marginBottom: '18px',
+            textAlign: 'center',
+          }}
+        >
+          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.8px', color: '#9a3412', fontWeight: 700 }}>
+            Active Order
+          </span>
+          <div style={{ fontSize: '30px', fontWeight: 800, color: '#b82032', letterSpacing: '0.5px', margin: '4px 0' }}>
+            #{cleanOrderNum}
+          </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <span style={{ background: '#fff', border: '1px solid #ebdcd0', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, color: '#44403c' }}>
+              {currentOrder.table ? `Table ${currentOrder.table}` : 'Direct Order'}
+            </span>
+            <span style={{ background: '#dcfce7', border: '1px solid #bbf7d0', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, color: '#15803d' }}>
+              ● {liveStatus}
+            </span>
+          </div>
+        </div>
+
+        {/* 5-Step Visual Stepper */}
+        <div style={{ marginBottom: '22px', padding: '0 8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {stages.map((stg, idx) => {
+              const isPast = activeIndex > idx
+              const isCurrent = activeIndex === idx
+
+              return (
+                <div key={stg.key} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', position: 'relative' }}>
+                  {/* Left Circle & Connecting Line */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '28px' }}>
+                    <div
+                      style={{
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        display: 'grid',
+                        placeItems: 'center',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        background: isCurrent ? '#b82032' : isPast ? '#15803d' : '#f5f5f4',
+                        color: isCurrent || isPast ? '#ffffff' : '#a8a29e',
+                        border: isCurrent ? '2px solid #981827' : isPast ? '2px solid #16a34a' : '2px solid #e7e5e4',
+                        boxShadow: isCurrent ? '0 0 0 4px rgba(184, 32, 50, 0.15)' : 'none',
+                        transition: 'all 0.3s ease',
+                      }}
+                    >
+                      {isPast ? '✓' : idx + 1}
+                    </div>
+                    {idx < stages.length - 1 && (
+                      <div
+                        style={{
+                          width: '2px',
+                          height: '24px',
+                          background: isPast ? '#16a34a' : '#e7e5e4',
+                          marginTop: '4px',
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Step Info */}
+                  <div style={{ flex: 1, paddingTop: '3px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <strong
+                        style={{
+                          fontSize: '14px',
+                          color: isCurrent ? '#b82032' : isPast ? '#15803d' : '#78716c',
+                          fontWeight: isCurrent || isPast ? 750 : 500,
+                        }}
+                      >
+                        {stg.label}
+                      </strong>
+                      {isCurrent && (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            background: '#fee2e2',
+                            color: '#b82032',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            fontWeight: 700,
+                            letterSpacing: '0.4px',
+                            textTransform: 'uppercase',
+                          }}
+                        >
+                          In Progress
+                        </span>
+                      )}
+                    </div>
+                    <small style={{ fontSize: '12px', color: isCurrent ? '#44403c' : '#a8a29e', display: 'block', marginTop: '1px' }}>
+                      {stg.sub}
+                    </small>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Ordered Dishes List */}
+        <div style={{ background: '#fdfbf7', border: '1px solid #ebdcd0', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#44403c', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+            <span>Ordered Dishes</span>
+            <span>{currentOrder.items?.length || 0} items</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '13px' }}>
+            {currentOrder.items?.map((it, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', color: '#292524' }}>
+                <span>{it.quantity} × {it.name}</span>
+                <span style={{ fontWeight: 600 }}>{(it.price * it.quantity).toLocaleString()} ETB</span>
+              </div>
+            ))}
+          </div>
+          <div style={{ borderTop: '1px solid #ebdcd0', marginTop: '10px', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '15px' }}>
+            <span>Total</span>
+            <span style={{ color: '#b82032' }}>{currentOrder.total?.toLocaleString()} ETB</span>
+          </div>
+        </div>
+
+        {/* Live Refresh Notice */}
+        <div style={{ textAlign: 'center', fontSize: '11px', color: '#78716c', marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
+          <span>Live kitchen connection active · Auto-refreshes every 4 seconds</span>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button
+            type="button"
+            className="button primary"
+            style={{
+              background: '#b82032',
+              color: '#ffffff',
+              minHeight: '46px',
+              fontWeight: 700,
+              fontSize: '14px',
+              justifyContent: 'center',
+            }}
+            onClick={onAddFood}
+          >
+            + Add More Food / Order Additional Dishes
+          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              type="button"
+              className="button secondary"
+              style={{ flex: 1, justifyContent: 'center', minHeight: '42px', fontSize: '13px' }}
+              onClick={onViewHistory}
+            >
+              Past Orders History
+            </button>
+            <a
+              href="tel:0938890645"
+              className="button secondary"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '6px',
+                textDecoration: 'none',
+                minHeight: '42px',
+                padding: '0 14px',
+                fontSize: '13px',
+              }}
+            >
+              <Icon name="phone" size={15} /> 0938890645
+            </a>
+          </div>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
 function PastOrdersModal({ close }: { close: () => void }) {
   const [orders, setOrders] = useState<SavedPastOrder[]>([])
+  const [confirmClear, setConfirmClear] = useState(false)
   const { t } = useLanguage()
 
   useEffect(() => {
@@ -696,18 +1000,15 @@ function PastOrdersModal({ close }: { close: () => void }) {
   }, [])
 
   const startFresh = () => {
-    localStorage.removeItem('ilillii_active_order_id')
-    localStorage.removeItem('ilillii_active_order_time')
     close()
     window.location.hash = '#menu'
     window.dispatchEvent(new CustomEvent('ilillii-clear-cart'))
   }
 
   const clearHistory = () => {
-    if (confirm(t('history.clearConfirm'))) {
-      localStorage.removeItem('ilillii_order_history')
-      setOrders([])
-    }
+    localStorage.removeItem('ilillii_order_history')
+    setOrders([])
+    setConfirmClear(false)
   }
 
   return (
@@ -792,14 +1093,38 @@ function PastOrdersModal({ close }: { close: () => void }) {
             </a>
           </div>
           {orders.length > 0 && (
-            <button
-              type="button"
-              className="button secondary"
-              style={{ fontSize: '11px', padding: '4px 10px', alignSelf: 'center', background: 'transparent', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', textDecoration: 'underline' }}
-              onClick={clearHistory}
-            >
-              {t('history.clear')}
-            </button>
+            confirmClear ? (
+              <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: '8px', padding: '10px 14px', textAlign: 'center', marginTop: '6px' }}>
+                <p style={{ margin: '0 0 8px', fontSize: '12px', color: '#9f1239', fontWeight: 600 }}>
+                  {t('history.clearConfirm') || 'Clear all past orders from this device?'}
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                  <button
+                    type="button"
+                    style={{ background: '#e11d48', color: '#fff', border: 'none', padding: '4px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                    onClick={clearHistory}
+                  >
+                    Yes, Clear
+                  </button>
+                  <button
+                    type="button"
+                    style={{ background: '#f5f5f4', border: '1px solid #d6d3d1', padding: '4px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                    onClick={() => setConfirmClear(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                className="button secondary"
+                style={{ fontSize: '11px', padding: '4px 10px', alignSelf: 'center', background: 'transparent', border: 'none', color: 'var(--color-muted)', cursor: 'pointer', textDecoration: 'underline' }}
+                onClick={() => setConfirmClear(true)}
+              >
+                {t('history.clear')}
+              </button>
+            )
           )}
         </div>
       </div>

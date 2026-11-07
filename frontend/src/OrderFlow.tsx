@@ -605,10 +605,10 @@ export default function OrderFlow({
                 {activeOrderId && (
                   <div
                     style={{
-                      background: '#fdfbf7',
-                      border: '1px solid #ebdcd0',
+                      background: '#fff7ed',
+                      border: '1.5px solid #fed7aa',
                       borderRadius: '10px',
-                      padding: '10px 14px',
+                      padding: '12px 14px',
                       marginBottom: '18px',
                     }}
                   >
@@ -617,10 +617,18 @@ export default function OrderFlow({
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        marginBottom: '4px',
+                        flexWrap: 'wrap',
+                        gap: '8px',
                       }}
                     >
-                    
+                      <div>
+                        <strong style={{ fontSize: '13px', color: '#9a3412', display: 'block' }}>
+                          Adding to Active Order #{String(activeOrderId).replace(/^IL-/, '')}
+                        </strong>
+                        <small style={{ fontSize: '11px', color: '#78716c' }}>
+                          These dishes will be appended to your active kitchen order.
+                        </small>
+                      </div>
                       <button
                         type="button"
                         style={{
@@ -633,20 +641,15 @@ export default function OrderFlow({
                           textDecoration: 'underline',
                         }}
                         onClick={() => {
-                          if (appendToExisting) {
-                            setAppendToExisting(false)
-                            setActiveOrderId(null)
-                            localStorage.removeItem('ilillii_active_order_id')
-                            localStorage.removeItem('ilillii_active_order_time')
-                          } else {
-                            setAppendToExisting(true)
-                          }
+                          setActiveOrderId(null)
+                          setAppendToExisting(false)
+                          localStorage.removeItem('ilillii_active_order_id')
+                          localStorage.removeItem('ilillii_active_order_time')
                         }}
                       >
-                        {appendToExisting ? t('') : t('checkout.appendToActiveBtn')}
+                        Start fresh order
                       </button>
                     </div>
-            
                   </div>
                 )}
 
@@ -673,7 +676,9 @@ export default function OrderFlow({
                     ) : (
                       <>
                         <span style={{ fontSize: '15px', marginRight: '4px' }}>🔘</span>
-                        {t('checkout.orderPayAfterMeal')}
+                        {activeOrderId && appendToExisting
+                          ? `+ Add Dishes to Order #${String(activeOrderId).replace(/^IL-/, '')} · Pay After Meal`
+                          : t('checkout.orderPayAfterMeal')}
                       </>
                     )}
                   </button>
@@ -925,15 +930,41 @@ export default function OrderFlow({
 
                 <div className="order-buttons-group" style={{ marginTop: '26px', gap: '10px' }}>
                   <button
+                    type="button"
                     className="button primary order-full"
                     style={{
-                      background: '#b82032',
+                      background: '#15803d',
+                      borderColor: '#166534',
                       color: '#fff',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
                       minHeight: '48px',
+                      fontWeight: 750,
+                      boxShadow: '0 4px 12px rgba(21, 128, 61, 0.25)',
+                    }}
+                    onClick={() => {
+                      handleClose()
+                      window.dispatchEvent(new CustomEvent('ilillii-open-order-status'))
+                    }}
+                  >
+                    <span>{t('order.viewStatus') || 'View Live Order Status & Kitchen Progress'}</span>
+                    <Icon name="arrow" size={17} />
+                  </button>
+
+                  <button
+                    className="button secondary order-full"
+                    style={{
+                      background: '#b82032',
+                      borderColor: '#981827',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      minHeight: '46px',
+                      fontWeight: 700,
                     }}
                     onClick={handleAddMoreDishes}
                   >

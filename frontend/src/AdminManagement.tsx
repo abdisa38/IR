@@ -826,14 +826,30 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
   const [tables, setTables] = useState<{ id: string; active: boolean }[]>(() => {
     try {
       const saved = localStorage.getItem('ilillii_tables')
-      if (saved) return JSON.parse(saved)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length >= 30) return parsed
+        const existingIds = new Set(parsed.map((t: any) => String(t.id)))
+        const all30 = [...parsed]
+        for (let i = 1; i <= 30; i++) {
+          if (!existingIds.has(String(i))) {
+            all30.push({ id: String(i), active: true })
+          }
+        }
+        all30.sort((a, b) => parseInt(a.id, 10) - parseInt(b.id, 10))
+        localStorage.setItem('ilillii_tables', JSON.stringify(all30))
+        return all30
+      }
     } catch {}
-    return ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map(id => ({ id, active: true }))
+    const default30 = Array.from({ length: 30 }, (_, i) => ({ id: String(i + 1), active: true }))
+    try { localStorage.setItem('ilillii_tables', JSON.stringify(default30)) } catch {}
+    return default30
   })
   const [editing, setEditing] = useState<{ id: string; active: boolean; original?: string } | null>(null)
   const [printableTable, setPrintableTable] = useState<string | null>(null)
   const [printableQrUrl, setPrintableQrUrl] = useState<string>('')
   const [error, setError] = useState('')
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null)
 
   useEffect(() => {
     if (printableTable) {
@@ -876,10 +892,17 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
   }
 
   const handleDelete = (id: string) => {
-    if (!confirm(`Are you sure you want to remove Table ${id}?`)) return
-    const updated = tables.filter(t => t.id !== id)
-    saveTables(updated)
-    notify(`Table ${id} removed.`)
+    setConfirmDialog({
+      title: 'Remove Table',
+      message: `Are you sure you want to remove Table ${id}? Its table order URL and QR code will be unassigned.`,
+      confirmText: 'Remove Table',
+      danger: true,
+      onConfirm: () => {
+        const updated = tables.filter(t => t.id !== id)
+        saveTables(updated)
+        notify(`Table ${id} removed.`)
+      },
+    })
   }
 
   return (
@@ -1062,6 +1085,7 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
   const [editing, setEditing] = useState<Partial<ApiStaff> | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null)
 
   const loadStaff = async () => {
     try {
@@ -1116,15 +1140,22 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
     }
   }
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to remove ${name} from staff?`)) return
-    try {
-      await api.deleteStaff(id)
-      setStaffList(current => current.filter(s => s.id !== id))
-      notify(`Staff member ${name} removed.`)
-    } catch (err: any) {
-      notify(`Error: ${err.message}`)
-    }
+  const handleDelete = (id: string, name: string) => {
+    setConfirmDialog({
+      title: 'Remove Staff Member',
+      message: `Are you sure you want to remove ${name} from staff? This will revoke their workspace login access.`,
+      confirmText: 'Remove Staff',
+      danger: true,
+      onConfirm: async () => {
+        try {
+          await api.deleteStaff(id)
+          setStaffList(current => current.filter(s => s.id !== id))
+          notify(`Staff member ${name} removed.`)
+        } catch (err: any) {
+          notify(`Error: ${err.message}`)
+        }
+      },
+    })
   }
 
   return (
@@ -1159,6 +1190,10 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
                 <td data-label="Team member">
                   <strong>{member.name}</strong>
                   <small>{member.email || 'No email registered'}</small>
+                  <div style={{ fontSize: '11px', color: '#78716c', marginTop: '4px', background: '#f5ebe1', padding: '2px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                    <span>Login: <strong>{member.username || member.phone}</strong></span>
+                    <span>· PIN: <code>{member.password || '1234'}</code></span>
+                  </div>
                 </td>
                 <td data-label="Role">{member.role}</td>
                 <td data-label="Phone">{member.phone}</td>
@@ -1236,6 +1271,29 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
                 onChange={event => setEditing({ ...editing, email: event.target.value })}
               />
             </label>
+            <div className="admin-form-grid">
+              <label>
+                Login Username
+                <input
+                  value={editing.username || ''}
+                  maxLength={50}
+                  placeholder="e.g. waiter1 or staff name"
+                  onChange={event => setEditing({ ...editing, username: event.target.value.toLowerCase().replace(/\s+/g, '') })}
+                />
+                <small style={{ fontSize: '11px', color: 'var(--color-muted)', display: 'block', marginTop: '3px' }}>Staff uses this to sign in</small>
+              </label>
+              <label>
+                Login PIN / Password
+                <input
+                  type="text"
+                  value={editing.password || ''}
+                  maxLength={50}
+                  placeholder="e.g. 1234"
+                  onChange={event => setEditing({ ...editing, password: event.target.value })}
+                />
+                <small style={{ fontSize: '11px', color: 'var(--color-muted)', display: 'block', marginTop: '3px' }}>Default PIN is 1234</small>
+              </label>
+            </div>
             <div className="admin-form-grid">
               <label>
                 Role

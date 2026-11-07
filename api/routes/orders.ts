@@ -22,6 +22,20 @@ function getParam(param: string | string[] | undefined): string {
   return param || ''
 }
 
+function buildOrderQuery(id: string) {
+  const cleanId = id.trim().toUpperCase()
+  const numOnly = cleanId.replace(/^IL-/, '')
+  const orConditions: any[] = [
+    { orderNumber: cleanId },
+    { orderNumber: numOnly },
+    { orderNumber: `IL-${numOnly}` },
+  ]
+  if (/^[0-9a-fA-F]{24}$/.test(id.trim())) {
+    orConditions.push({ _id: id.trim() })
+  }
+  return { $or: orConditions }
+}
+
 // GET /api/orders - list orders with status, type, and pagination filters
 router.get('/', async (req: Request, res: Response) => {
   try {
@@ -50,16 +64,7 @@ router.get('/', async (req: Request, res: Response) => {
 router.get('/:identifier', async (req: Request, res: Response) => {
   try {
     const id = getParam(req.params.identifier)
-    const cleanId = id.trim().toUpperCase()
-    const numOnly = cleanId.replace(/^IL-/, '')
-    const order = await Order.findOne({
-      $or: [
-        { orderNumber: cleanId },
-        { orderNumber: numOnly },
-        { orderNumber: `IL-${numOnly}` },
-        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-      ],
-    })
+    const order = await Order.findOne(buildOrderQuery(id))
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' })
@@ -169,17 +174,7 @@ router.post('/:id/add-items', async (req: Request, res: Response) => {
     }
 
     const id = getParam(req.params.id)
-    const cleanId = id.trim().toUpperCase()
-    const numOnly = cleanId.replace(/^IL-/, '')
-
-    const order = await Order.findOne({
-      $or: [
-        { orderNumber: cleanId },
-        { orderNumber: numOnly },
-        { orderNumber: `IL-${numOnly}` },
-        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-      ],
-    })
+    const order = await Order.findOne(buildOrderQuery(id))
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' })
@@ -225,17 +220,7 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     }
 
     const id = getParam(req.params.id)
-    const cleanId = id.trim().toUpperCase()
-    const numOnly = cleanId.replace(/^IL-/, '')
-
-    const order = await Order.findOne({
-      $or: [
-        { orderNumber: cleanId },
-        { orderNumber: numOnly },
-        { orderNumber: `IL-${numOnly}` },
-        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-      ],
-    })
+    const order = await Order.findOne(buildOrderQuery(id))
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' })
@@ -260,17 +245,7 @@ router.patch('/:id/payment', async (req: Request, res: Response) => {
     }
 
     const id = getParam(req.params.id)
-    const cleanId = id.trim().toUpperCase()
-    const numOnly = cleanId.replace(/^IL-/, '')
-
-    const order = await Order.findOne({
-      $or: [
-        { orderNumber: cleanId },
-        { orderNumber: numOnly },
-        { orderNumber: `IL-${numOnly}` },
-        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-      ],
-    })
+    const order = await Order.findOne(buildOrderQuery(id))
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' })
@@ -290,17 +265,7 @@ router.patch('/:id/payment', async (req: Request, res: Response) => {
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const id = getParam(req.params.id)
-    const cleanId = id.trim().toUpperCase()
-    const numOnly = cleanId.replace(/^IL-/, '')
-
-    const order = await Order.findOne({
-      $or: [
-        { orderNumber: cleanId },
-        { orderNumber: numOnly },
-        { orderNumber: `IL-${numOnly}` },
-        { _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null },
-      ],
-    })
+    const order = await Order.findOne(buildOrderQuery(id))
 
     if (!order) {
       return res.status(404).json({ success: false, message: 'Order not found' })
