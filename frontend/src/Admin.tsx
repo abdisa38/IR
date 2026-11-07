@@ -211,8 +211,13 @@ export default function Admin() {
 
   useEffect(() => {
     loadOrders()
-    const timerId = setInterval(loadOrders, 10000)
-    return () => clearInterval(timerId)
+    const handleOrderPlaced = () => loadOrders()
+    window.addEventListener('ilillii-order-placed', handleOrderPlaced)
+    const timerId = setInterval(loadOrders, 5000)
+    return () => {
+      window.removeEventListener('ilillii-order-placed', handleOrderPlaced)
+      clearInterval(timerId)
+    }
   }, [])
   useEffect(() => setOrderPage(1), [filter, query])
   useEffect(() => {
