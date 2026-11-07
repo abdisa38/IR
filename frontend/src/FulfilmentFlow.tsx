@@ -95,7 +95,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
             total: res.order.total || res.order.subtotal,
             table: '',
             type: 'Pickup / Takeaway',
-            items: linePayload.map(lp => ({ name: lp.name, quantity: lp.quantity, price: lp.price })),
+            items: lines.map(l => ({ name: l.item.name, quantity: l.quantity, price: l.item.price })),
             status: 'Submitted',
           }
           const prevHistory = JSON.parse(localStorage.getItem('ilillii_order_history') || '[]')
