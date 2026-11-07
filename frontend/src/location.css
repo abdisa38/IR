@@ -503,3 +503,18 @@
   }
 }
 
+
+
+/* Universal responsive visibility helpers */
+@media (max-width: 850px) {
+  body .nav-active-order-btn,
+  body .nav-actions > .nav-active-order-btn,
+  .desktop-only {
+    display: none !important;
+  }
+}
+@media (min-width: 851px) {
+  .mobile-only {
+    display: none !important;
+  }
+}

@@ -835,7 +835,7 @@ export default function OrderFlow({
 
                 <div className="confirmation-intro">
                   <h2>{t('order.receivedHeading')}</h2>
-                  <p>{t('order.receivedDesc')}</p>
+                  <p>{t('')}</p>
                   <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-ink)', display: 'block', marginTop: '4px' }}>
                     {snapshot.table ? `${t('checkout.table')} ${snapshot.table}` : 'Direct Order'} · {snapshot.name}
                   </span>

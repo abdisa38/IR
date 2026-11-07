@@ -322,7 +322,7 @@ export function GlobalHeader({
               {activeOrder && (
                 <button
                   type="button"
-                  className="nav-active-order-btn"
+                  className="nav-active-order-btn desktop-only"
                   onClick={() => setStatusModalOpen(true)}
                   style={{
                     display: 'inline-flex',
@@ -337,6 +337,10 @@ export function GlobalHeader({
                     fontWeight: 700,
                     cursor: 'pointer',
                     boxShadow: '0 2px 6px rgba(154, 52, 18, 0.08)',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    height: '38px',
+                    minHeight: '38px',
                   }}
                   title="View your ordered food and live kitchen status"
                 >
@@ -790,7 +794,7 @@ function ActiveOrderStatusModal({
     }
 
     poll()
-    const timer = setInterval(poll, 4000)
+    const timer = setInterval(poll, 2500)
     return () => {
       isMounted = false
       clearInterval(timer)
