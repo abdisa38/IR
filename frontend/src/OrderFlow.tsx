@@ -108,7 +108,10 @@ export default function OrderFlow({
   // When dialog opens or closes, manage clean state
   useEffect(() => {
     if (open) {
-      // If we open fresh or with dishes to order, start in details/sheger
+      // If customer has items in cart, start fresh in details/sheger
+      if (lines.length > 0) {
+        setSnapshot(null)
+      }
       setStep(initialPayment === 'sheger' ? 'sheger' : 'details')
       setError('')
       const curTable =
@@ -951,7 +954,7 @@ export default function OrderFlow({
                   </button>
 
                   <a
-                    href="tel:0909511588"
+                    href="tel:0938890645"
                     className="button secondary order-full"
                     style={{
                       display: 'inline-flex',
@@ -1045,7 +1048,7 @@ export default function OrderFlow({
           ) : (
             <p className="modal-description">
               Please ask a member of the team at your table for assistance. If a table number looks
-              wrong, staff will assist you right away. Phone: 0909511588.
+              wrong, staff will assist you right away. Phone: 0938890645.
             </p>
           )}
         </Modal>

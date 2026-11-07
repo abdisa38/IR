@@ -10,7 +10,7 @@ router.get('/', async (_req: Request, res: Response) => {
     if (!settings) {
       settings = await Settings.create({
         restaurantName: 'Ilillii Bar & Restaurant',
-        managerPhone: '0909511588',
+        managerPhone: '0938890645',
         location: 'Bale Robe around Awraris and around Wako Gutu Square',
         announcement: 'Welcome to Ilillii Bar & Restaurant · Open Daily 7:00 AM – 11:30 PM',
         currency: 'ETB',

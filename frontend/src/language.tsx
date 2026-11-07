@@ -216,7 +216,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'order.addMoreDishes': 'Nyaata Dabalataa Ajajaa',
     'order.viewStatus': 'Haala ajajaa ilaalaa',
     'order.viewPastOrders': 'Ajajawwan Kanneen Duraa Ilaalaa',
-    'order.callPhone': 'Bilbila: 0909511588',
+    'order.callPhone': 'Bilbila: 0938890645',
     'order.requestHelp': 'Gargaarsa hojjettootaa gaafadhaa',
     'order.refreshStatus': 'Haala haaromsi',
     'order.needHand': 'Gargaarsi isin barbaachisaa? Gareen keenya gabatee keessan cinaa jira.',
@@ -537,7 +537,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'order.addMoreDishes': 'ተጨማሪ ምግብ ይዘዙ',
     'order.viewStatus': 'የትዕዛዙን ሁኔታ ይመልከቱ',
     'order.viewPastOrders': 'ያለፉ ትዕዛዞቼን ይመልከቱ',
-    'order.callPhone': 'ስልክ፡ 0909511588',
+    'order.callPhone': 'ስልክ፡ 0938890645',
     'order.requestHelp': 'የሰራተኞችን እርዳታ ይጠይቁ',
     'order.refreshStatus': 'ሁኔታውን አድስ',
     'order.needHand': 'እርዳታ ይፈልጋሉ? ሰራተኞቻችን እዚሁ ጠረጴዛዎ አጠገብ ይገኛሉ።',
@@ -734,7 +734,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'location.visitEyebrow': 'YOUR PLACE IN BALE ROBE',
     'location.visitTitleLine1': 'There’s a place',
     'location.visitTitleLine2': 'for you here.',
-    'location.address': 'Around Awraris, near General Wako Gutu Square',
+    'location.address': 'Around Awraris.',
     'location.town': 'Bale Robe, Oromia, Ethiopia',
     'location.hoursTitle': 'Opening hours',
     'location.hoursValue': 'Daily: 6:30 AM – 11:00 PM',
@@ -857,7 +857,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'order.addMoreDishes': 'Add More Food',
     'order.viewStatus': 'View order status',
     'order.viewPastOrders': 'View My Past Orders',
-    'order.callPhone': 'Phone: 0909511588',
+    'order.callPhone': 'Phone: 0938890645',
     'order.requestHelp': 'Request staff assistance',
     'order.refreshStatus': 'Refresh status',
     'order.needHand': 'Need a hand? Our team is available right at your table.',
@@ -888,7 +888,7 @@ export const translations: Record<Language, Record<string, string>> = {
     // Takeaway / Pickup
     'pickup.title': 'Pick Up My Order (Takeaway)',
     'pickup.locationTitle': 'Ilillii Hotel · Bale Robe',
-    'pickup.locationSubtitle': 'Around Awraris, near General Wako Gutu Square',
+    'pickup.locationSubtitle': 'Around Awraris.',
     'pickup.checkMeal': 'Check your meal details',
     'pickup.trackOrder': 'Track your order',
     'pickup.orderRefPlaceholder': 'e.g. IL-1004',
@@ -896,7 +896,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'pickup.orderRefCode': 'Order reference code',
     'pickup.saveCodeNotice': 'Save these codes to track your order anytime.',
     'pickup.readyTitle': 'Ready for Pickup',
-    'pickup.readyDesc': 'Please come to Ilillii Hotel (around Awraris, near General Wako Gutu Square) and present your order reference.',
+    'pickup.readyDesc': 'Please come to Ilillii Hotel (around Awraris) and present your order reference.',
     'pickup.trackProgress': 'Track order progress',
 
     // Past Orders Modal
@@ -932,7 +932,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'contact.privacyShield': 'Your contact details are protected and shared only with our team.',
 
     // Footer
-    'footer.brandAddr': 'Around Awraris, near General Wako Gutu Square · Bale Robe, Oromia',
+    'footer.brandAddr': 'Around Awraris,· Bale Robe, Oromia',
     'footer.explore': 'EXPLORE',
     'footer.language': 'LANGUAGE',
     'footer.rights': 'All rights reserved.',

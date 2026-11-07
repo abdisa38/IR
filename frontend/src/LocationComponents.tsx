@@ -9,13 +9,13 @@ export function ContactAction({ kind, className = 'button secondary' }: { kind: 
   if (kind === 'call') {
     return (
       <a
-        href="tel:0909511588"
+        href="tel:0938890645"
         className={className}
         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
-        aria-label="Call Ilillii Hotel at 0909511588"
+        aria-label="Call Ilillii Hotel at 0938890645"
       >
         <Icon name="phone" size={17} />
-        {t('location.phoneTitle')}: 0909511588
+        {t('location.phoneTitle')}: 0938890645
       </a>
     )
   }
@@ -50,7 +50,7 @@ export function MapPreview() {
             <>
               <span className="map-state-symbol"><Icon name="info" size={30} /></span>
               <h3>{t('location.address')}</h3>
-              <p>{t('location.town')}<br />{t('location.phoneTitle')}: 0909511588</p>
+              <p>{t('location.town')}<br />{t('location.phoneTitle')}: 0938890645</p>
               <button className="map-retry" onClick={() => setState('placeholder')}>
                 Retry map preview<Icon name="arrow" size={15} />
               </button>
@@ -105,8 +105,8 @@ export function FindUsSection() {
             <div className="visit-detail">
               <Icon name="phone" size={21} />
               <div>
-                <strong>{t('location.phoneTitle')}: 0909511588</strong>
-                <a href="tel:0909511588" style={{ color: 'var(--color-brand)', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>
+                <strong>{t('location.phoneTitle')}: 0938890645</strong>
+                <a href="tel:0938890645" style={{ color: 'var(--color-brand)', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>
                   {t('location.tapToCall')}
                 </a>
               </div>
@@ -475,8 +475,8 @@ export function GlobalHeader({
 
             <div className="mobile-drawer-footer">
               <div>{t('location.address')} · {t('location.town')}</div>
-              <a href="tel:0909511588" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <Icon name="phone" size={14} /> {t('location.phoneTitle')}: 0909511588
+              <a href="tel:0938890645" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Icon name="phone" size={14} /> {t('location.phoneTitle')}: 0938890645
               </a>
             </div>
           </div>
@@ -719,9 +719,9 @@ export function GlobalFooter() {
             <p className="footer-addr">
               {t('footer.brandAddr')}
             </p>
-            <a href="tel:0909511588" className="footer-phone">
+            <a href="tel:0938890645" className="footer-phone">
               <Icon name="phone" size={13} />
-              <span>0909511588</span>
+              <span>0938890645</span>
             </a>
           </div>
 

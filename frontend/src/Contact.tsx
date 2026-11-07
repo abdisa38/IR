@@ -51,7 +51,7 @@ export default function Contact() {
         <article>
           <span><Icon name="phone" size={23} /></span>
           <h2>{t('contact.letsTalk')}</h2>
-          <p>{t('location.phoneTitle')}: 0909511588</p>
+          <p>{t('location.phoneTitle')}: 0938890645</p>
           <small>{t('contact.phoneDirect')}</small>
           <ContactAction kind="call" className="contact-text-action" />
         </article>
@@ -92,7 +92,7 @@ export default function Contact() {
 
             <label className="contact-field">
               {t('checkout.phoneLabel')} / email <small>{t('checkout.nameReq')}</small>
-              <input ref={contactInput} value={form.contact} onChange={event => { setForm({ ...form, contact: event.target.value }); setSubmission('idle') }} maxLength={150} placeholder="0909511588 / email" aria-invalid={Boolean(errors.contact)} aria-describedby={errors.contact ? 'contact-detail-error' : undefined} required />
+              <input ref={contactInput} value={form.contact} onChange={event => { setForm({ ...form, contact: event.target.value }); setSubmission('idle') }} maxLength={150} placeholder="0938890645 / email" aria-invalid={Boolean(errors.contact)} aria-describedby={errors.contact ? 'contact-detail-error' : undefined} required />
             </label>
             {errors.contact && <p id="contact-detail-error" className="location-field-error">{errors.contact}</p>}
 
