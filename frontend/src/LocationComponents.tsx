@@ -800,7 +800,7 @@ function ActiveOrderStatusModal({
   const cleanOrderNum = String(currentOrder.orderNumber || order.orderNumber).replace(/^IL-/, '')
 
   return (
-    <Modal title="Live Kitchen Progress & Order Status" close={close}>
+    <Modal title="order" close={close}>
       <div style={{ maxHeight: '72vh', overflowY: 'auto', paddingRight: '4px' }}>
         {/* Order Header Summary */}
         <div
@@ -813,19 +813,7 @@ function ActiveOrderStatusModal({
             textAlign: 'center',
           }}
         >
-          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.8px', color: '#9a3412', fontWeight: 700 }}>
-            Active Order
-          </span>
-          <div style={{ fontSize: '30px', fontWeight: 800, color: '#b82032', letterSpacing: '0.5px', margin: '4px 0' }}>
-            #{cleanOrderNum}
-          </div>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            <span style={{ background: '#fff', border: '1px solid #ebdcd0', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, color: '#44403c' }}>
-              {currentOrder.table ? `Table ${currentOrder.table}` : 'Direct Order'}
-            </span>
-            <span style={{ background: '#dcfce7', border: '1px solid #bbf7d0', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, color: '#15803d' }}>
-              ● {liveStatus}
-            </span>
+        
           </div>
         </div>
 
@@ -929,11 +917,8 @@ function ActiveOrderStatusModal({
           </div>
         </div>
 
-        {/* Live Refresh Notice */}
-        <div style={{ textAlign: 'center', fontSize: '11px', color: '#78716c', marginBottom: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#16a34a', display: 'inline-block' }} />
-          <span>Live kitchen connection active · Auto-refreshes every 4 seconds</span>
-        </div>
+    
+      
 
         {/* Action Buttons */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -950,7 +935,7 @@ function ActiveOrderStatusModal({
             }}
             onClick={onAddFood}
           >
-            + Add More Food / Order Additional Dishes
+            + Add More Food
           </button>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button
