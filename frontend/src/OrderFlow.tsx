@@ -749,13 +749,13 @@ export default function OrderFlow({
                   >
                     <div>
                       <span style={{ fontSize: '10px', color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        CBE (Commercial Bank of Ethiopia)
+                        CBE
                       </span>
                       <strong style={{ display: 'block', fontSize: '15px', color: 'var(--color-ink)', marginTop: '2px' }}>
                         1000533856385
                       </strong>
                       <small style={{ fontSize: '11px', color: '#78716c' }}>
-                        Ilillii Bar & Restaurant
+                        Abdisa Awel
                       </small>
                     </div>
                     <button
@@ -800,7 +800,7 @@ export default function OrderFlow({
                         0938890645
                       </strong>
                       <small style={{ fontSize: '11px', color: '#15803d' }}>
-                        Ilillii Bar & Restaurant
+                        Abdisa
                       </small>
                     </div>
                     <button
