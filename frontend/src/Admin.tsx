@@ -494,7 +494,40 @@ export default function Admin() {
         <Icon name="globe" size={14} />
         <span>{language === 'om' ? 'Oro' : language === 'am' ? 'Amh' : 'Eng'}</span>
       </button>
-      <span className="admin-demo-pill">STAFF WORKSPACE</span><button className="admin-notification" aria-label="View notifications" onClick={() => setOverlay('notifications')}><Icon name="bell" size={20} /><span /></button>
+      <span className="admin-demo-pill">STAFF WORKSPACE</span>
+      <button
+        className="admin-notification"
+        aria-label="View notifications"
+        onClick={() => setOverlay('notifications')}
+        style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Icon name="bell" size={20} />
+        {orders.filter(order => order.status === 'New').length > 0 && (
+          <span
+            style={{
+              position: 'absolute',
+              top: '-4px',
+              right: '-4px',
+              background: '#b82032',
+              color: '#ffffff',
+              fontSize: '11px',
+              fontWeight: 800,
+              minWidth: '18px',
+              height: '18px',
+              borderRadius: '9px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '0 4px',
+              lineHeight: 1,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.25)',
+              border: '1.5px solid #ffffff',
+            }}
+          >
+            {orders.filter(order => order.status === 'New').length}
+          </span>
+        )}
+      </button>
       <div className="admin-profile-menu-wrap" ref={profileMenuRef}>
         <button
           className="admin-profile-button"
@@ -550,8 +583,8 @@ export default function Admin() {
       {page === 'Payments' && reviewing ? <><div className="admin-inline-note"><Icon name="shield" size={17} />Verify against Telebirr or CBE transaction receipts.</div><dl className="review-details"><div><dt>Submitted reference</dt><dd>{current.transferReference || 'Cash on arrival'}</dd></div><div><dt>Reviewer</dt><dd>{current.reviewer || 'Not reviewed'}</dd></div>{current.reviewedAt && <div><dt>Review time</dt><dd>{new Date(current.reviewedAt).toLocaleString()}</dd></div>}</dl>{current.method === 'CBE transfer' && current.payment === 'Verification Pending' && <div className="admin-detail-actions"><button className="button primary" disabled={current.status === 'Cancelled'} onClick={() => confirmAction('verify', current)}>Mark payment verified</button><button className="button secondary" onClick={() => confirmAction('unable', current)}>Unable to verify</button></div>}{current.method === 'Cash' && current.payment !== 'Paid' && <button className="button primary" onClick={() => confirmAction('cash', current)}>Record cash received</button>}</> : operation ? <div className="admin-detail-actions">{nextOrderStatus(current) && <button className="button primary" onClick={() => changeOrder(current)}>{nextOrderStatus(current)!.label}<Icon name="arrow" size={15} /></button>}{!['Cancelled', 'Completed'].includes(current.status) && role !== 'Kitchen Staff' && <button className="button secondary" onClick={() => confirmAction('cancel', current)}>{current.status === 'New' ? 'Reject order' : 'Request cancellation'}</button>}</div> : null}<h3 className="admin-detail-subheading">Order activity</h3><ol className="admin-detail-timeline">{current.activity.map((activity, index) => <li key={`${activity}-${index}`}><span /><p>{activity}</p></li>)}</ol></div></Modal>}
     {confirmation && <Modal title={confirmation.kind === 'cancel' ? 'Confirm order cancellation' : 'Confirm payment update'} close={() => setConfirmation(null)}><form className="admin-form" onSubmit={event => { event.preventDefault(); confirm() }}><p>{confirmation.kind === 'cancel' ? 'Are you sure you want to cancel or reject this order?' : 'Verify this payment against the hotel register or mobile banking record.'}</p><strong>{confirmation.order.id}</strong>{formError && <div className="admin-form-error" role="alert">{formError}</div>}{confirmation.kind === 'cancel' || confirmation.kind === 'unable' ? <label>Reason<textarea value={reason} maxLength={500} onChange={event => setReason(event.target.value)} required rows={3} /></label> : <label className="admin-checkbox"><input type="checkbox" checked={checked} onChange={event => setChecked(event.target.checked)} />I confirm the payment was received via cash or bank record.</label>}<div className="admin-form-actions"><button className="button primary" type="submit">Confirm update</button><button className="button secondary" type="button" onClick={() => setConfirmation(null)}>Cancel</button></div></form></Modal>}
     {overlay === 'notifications' && (
-      <Modal title="Workspace notifications" close={() => setOverlay(null)}>
-        <div className="admin-notification-list">
+      <Modal title={`Incoming Orders (${orders.filter(order => order.status === 'New').length})`} close={() => setOverlay(null)}>
+        <div className="admin-notification-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {orders.filter(order => order.status === 'New').map(order => (
             <button
               key={order.id}
@@ -562,20 +595,83 @@ export default function Admin() {
                   setSelected(order)
                 } else notify('Order details are not available to this role.')
               }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 14px',
+                width: '100%',
+                textAlign: 'left',
+                background: '#ffffff',
+                border: '1px solid #ebdcd0',
+                borderRadius: '8px',
+                cursor: 'pointer',
+              }}
             >
-              <Icon name="bag" size={19} />
-              <span>
-                <strong>New order · {order.id}</strong>
-                <small>{time(order.received)}</small>
+              <span
+                style={{
+                  width: '36px',
+                  height: '36px',
+                  borderRadius: '50%',
+                  background: '#fee2e2',
+                  color: '#b82032',
+                  display: 'grid',
+                  placeItems: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Icon name="bag" size={18} />
               </span>
-              <Icon name="arrow" size={15} />
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <strong style={{ display: 'block', fontSize: '13px', color: 'var(--color-ink)' }}>
+                  {order.table ? `Table ${order.table}` : 'Takeaway'} · {order.customer}
+                </strong>
+                <small style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
+                  {order.items.length} dishes · {formatBirr(orderTotal(order))} ETB · {time(order.received)}
+                </small>
+              </span>
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 750,
+                  color: '#b82032',
+                  background: '#fff1f2',
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  border: '1px solid #fecdd3',
+                }}
+              >
+                View
+              </span>
             </button>
           ))}
+          {orders.some(order => order.status === 'New') && (
+            <button
+              className="button primary order-full"
+              style={{ minHeight: '44px', width: '100%', marginTop: '8px' }}
+              onClick={() => {
+                setOverlay(null)
+                navigate('Orders')
+              }}
+            >
+              Go to Orders Dashboard ({orders.filter(order => order.status === 'New').length})
+            </button>
+          )}
           {!orders.some(order => order.status === 'New') && (
             <div className="admin-empty" style={{ padding: '30px 16px' }}>
               <Icon name="bell" size={28} />
               <h3>No new notifications</h3>
               <p>All orders are up to date.</p>
+              <button
+                className="button secondary"
+                style={{ marginTop: '12px' }}
+                onClick={() => {
+                  setOverlay(null)
+                  navigate('Orders')
+                }}
+              >
+                View All Orders
+              </button>
             </div>
           )}
         </div>

@@ -2,14 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Icon, Logo, Modal, useDialog } from './shared-ui'
 import { formatBirr } from './menu-data'
 import type { MenuItem } from './menu-data'
-import { orderStages, validateGuest } from './order-prototype'
+import { validateGuest } from './order-prototype'
 import { api } from './api/client'
 import { useLanguage, languageOptions } from './language'
 import './order.css'
-import { StatusBadge } from './ui-patterns'
 
 type Line = { item: MenuItem; quantity: number }
-type Step = 'details' | 'sheger' | 'confirmation' | 'tracking'
+type Step = 'details' | 'sheger' | 'confirmation'
 type Snapshot = {
   reference: string
   table: string
@@ -50,9 +49,7 @@ export default function OrderFlow({
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
-  const [stage, setStage] = useState(0)
   const [modal, setModal] = useState<'language' | 'help' | 'table' | null>(null)
-  const [refreshed, setRefreshed] = useState('')
   const [copiedAccount, setCopiedAccount] = useState<string | null>(null)
 
   // ShegerPay state
@@ -106,12 +103,12 @@ export default function OrderFlow({
 
   const total = lines.reduce((sum, line) => sum + line.item.price * line.quantity, 0)
   const locked = busy || verifyingSheger || Boolean(snapshot)
-  const shownLines = snapshot ? snapshot.lines : lines
-  const shownTotal = snapshot ? snapshot.total : total
-  const confirmedView = step === 'confirmation' || step === 'tracking'
+  const confirmedView = step === 'confirmation'
 
+  // When dialog opens or closes, manage clean state
   useEffect(() => {
-    if (open && !snapshot) {
+    if (open) {
+      // If we open fresh or with dishes to order, start in details/sheger
       setStep(initialPayment === 'sheger' ? 'sheger' : 'details')
       setError('')
       const curTable =
@@ -136,14 +133,13 @@ export default function OrderFlow({
           if (parsed.phone && !phone) setPhone(parsed.phone)
         }
       } catch (e) {}
-    }
-  }, [open, snapshot, table, initialPayment])
-
-  useEffect(() => {
-    if (!open) {
+    } else {
+      // Once closed, reset snapshot so next time customer orders it starts completely fresh
+      setSnapshot(null)
+      setStep('details')
       setModal(null)
     }
-  }, [open])
+  }, [open, table, initialPayment])
 
   useDialog(dialog, open)
 
@@ -194,6 +190,10 @@ export default function OrderFlow({
     transactionId?: string,
     verified?: boolean
   ) => {
+    // 1. Clear cart immediately so the menu page subtotal floating bar is removed
+    window.dispatchEvent(new CustomEvent('ilillii-clear-cart'))
+    setNote('')
+
     localStorage.setItem('ilillii_active_order_id', order.orderNumber)
     localStorage.setItem('ilillii_active_order_time', Date.now().toString())
 
@@ -376,6 +376,13 @@ export default function OrderFlow({
     close()
   }
 
+  const handleClose = () => {
+    if (busy || verifyingSheger) return
+    setSnapshot(null)
+    setStep('details')
+    close()
+  }
+
   const { t } = useLanguage()
 
   return (
@@ -385,7 +392,7 @@ export default function OrderFlow({
       aria-labelledby="order-page-title"
       onCancel={event => {
         event.preventDefault()
-        if (!busy && !verifyingSheger) close()
+        handleClose()
       }}
     >
       <header className="order-nav">
@@ -423,7 +430,7 @@ export default function OrderFlow({
           onClick={() => {
             if (busy || verifyingSheger) return
             if (step === 'sheger') go('details')
-            else close()
+            else handleClose()
           }}
           disabled={busy || verifyingSheger}
         >
@@ -444,25 +451,15 @@ export default function OrderFlow({
               <>{t('checkout.whoJoining')}</>
             ) : step === 'sheger' ? (
               <>{t('checkout.shegerTitle')}</>
-            ) : step === 'confirmation' ? (
-              <>{t('order.stepAllTogether')}</>
             ) : (
-              <>{t('order.stepKitchenToTable')}</>
+              <>{t('order.stepAllTogether')}</>
             )}
           </h1>
         </div>
 
-        <div className={`order-layout ${confirmedView ? 'single-card' : ''}`}>
+        {/* Clean, spacious centered card without compacted side cards */}
+        <div className="order-layout single-card">
           <div className="order-main-card">
-            {confirmedView && snapshot && (
-              <div className="checkout-status-pair">
-                <StatusBadge
-                  type="Order"
-                  label={t(`stage.${orderStages[stage]?.toLowerCase()}`, orderStages[stage])}
-                />
-              </div>
-            )}
-
             {error && (
               <div className="order-error" role="alert" id="dine-form-error">
                 <Icon name="info" size={20} />
@@ -578,7 +575,7 @@ export default function OrderFlow({
                     value={phone}
                     maxLength={24}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="0909511588"
+                    placeholder="0938890645"
                   />
                   <small>{t('checkout.phoneHelp')}</small>
                 </label>
@@ -651,27 +648,7 @@ export default function OrderFlow({
                   </div>
                 )}
 
-                {/* Mobile Cart Summary Preview */}
-                <div className="review-meal-summary">
-                  <div className="review-meal-title">
-                    <Icon name="bag" size={17} />
-                    <span>{t('checkout.yourMeal')} ({lines.reduce((s, l) => s + l.quantity, 0)} items)</span>
-                  </div>
-                  <div className="review-meal-items">
-                    {lines.map(line => (
-                      <div key={line.item.id} className="review-meal-row">
-                        <span>{line.quantity} × {line.item.name}</span>
-                        <b>{formatBirr(line.item.price * line.quantity)} ETB</b>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="review-meal-total">
-                    <span>{t('common.total')}</span>
-                    <strong>{formatBirr(total)} ETB</strong>
-                  </div>
-                </div>
-
-                {/* Payment Action Buttons (matching TikTok Image 5) */}
+                {/* Payment Action Buttons */}
                 <div className="order-buttons-group" style={{ gap: '12px', marginTop: '22px' }}>
                   {/* Button 1: Order Now (Pay After Meal) */}
                   <button
@@ -713,7 +690,7 @@ export default function OrderFlow({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
-                      fontWeight: 700,
+                      fontWeight: 750,
                     }}
                   >
                     <span style={{ fontSize: '16px' }}>💳</span>
@@ -728,7 +705,7 @@ export default function OrderFlow({
               </form>
             )}
 
-            {/* Step 2: ShegerPay Payment Modal / Form */}
+            {/* Step 2: ShegerPay Payment Form */}
             {step === 'sheger' && (
               <div className="sheger-checkout-container">
                 <div
@@ -901,23 +878,16 @@ export default function OrderFlow({
               </div>
             )}
 
-            {/* Confirmation & Tracking Views */}
+            {/* Step 3: Order Received Confirmation View (No IL-number, no timeline) */}
             {confirmedView && snapshot && (
               <>
                 <div className="order-success-icon">
                   <Icon name="check" size={32} />
                 </div>
                 <div className="confirmation-intro">
-                  <h2>
-                    {step === 'tracking'
-                      ? orderStages[stage]
-                        ? t(`stage.${orderStages[stage].toLowerCase()}`, orderStages[stage])
-                        : orderStages[stage]
-                      : t('order.receivedHeading')}
-                  </h2>
+                  <h2>{t('order.receivedHeading')}</h2>
                   <p>{t('order.receivedDesc')}</p>
-                  <strong className="order-reference">{snapshot.reference}</strong>
-                  <span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-ink)', display: 'block', marginTop: '8px' }}>
                     {snapshot.table ? `${t('checkout.table')} ${snapshot.table}` : t('ways.dineIn')} · {snapshot.name}
                   </span>
                   {snapshot.paymentMethod && (
@@ -928,11 +898,11 @@ export default function OrderFlow({
                         gap: '6px',
                         background: snapshot.transactionId ? '#dcfce7' : '#fef3c7',
                         color: snapshot.transactionId ? '#15803d' : '#92400e',
-                        padding: '4px 10px',
+                        padding: '5px 12px',
                         borderRadius: '6px',
                         fontSize: '11px',
                         fontWeight: 700,
-                        marginTop: '10px',
+                        marginTop: '12px',
                       }}
                     >
                       <Icon name="check" size={13} />
@@ -943,49 +913,7 @@ export default function OrderFlow({
                   )}
                 </div>
 
-                <div className="order-buttons-group">
-                  {step === 'tracking' ? (
-                    <>
-                      <ol className="order-timeline">
-                        {orderStages.map((label, index) => (
-                          <li
-                            key={label}
-                            className={index < stage ? 'done' : index === stage ? 'active' : ''}
-                            aria-current={index === stage ? 'step' : undefined}
-                          >
-                            <span>{index < stage ? <Icon name="check" size={14} /> : index + 1}</span>
-                            <div>
-                              <strong>{t(`stage.${label.toLowerCase()}`, label)}</strong>
-                            </div>
-                          </li>
-                        ))}
-                      </ol>
-                      <div className="status-refresh">
-                        <p>{refreshed || t('order.statusUpdated')}</p>
-                        <button
-                          className="button secondary"
-                          onClick={() =>
-                            setRefreshed(
-                              t('order.checkedAt', undefined, {
-                                time: new Date().toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                }),
-                              })
-                            )
-                          }
-                        >
-                          {t('order.refreshStatus')}
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <button className="button secondary order-full" onClick={() => go('tracking')}>
-                      {t('order.viewStatus')}
-                      <Icon name="arrow" size={18} />
-                    </button>
-                  )}
-
+                <div className="order-buttons-group" style={{ marginTop: '26px', gap: '10px' }}>
                   <button
                     className="button primary order-full"
                     style={{
@@ -995,6 +923,7 @@ export default function OrderFlow({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
+                      minHeight: '48px',
                     }}
                     onClick={handleAddMoreDishes}
                   >
@@ -1010,9 +939,10 @@ export default function OrderFlow({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '0.5rem',
+                      minHeight: '44px',
                     }}
                     onClick={() => {
-                      close()
+                      handleClose()
                       window.dispatchEvent(new CustomEvent('ilillii-open-history'))
                     }}
                   >
@@ -1029,11 +959,13 @@ export default function OrderFlow({
                       justifyContent: 'center',
                       gap: '0.5rem',
                       textDecoration: 'none',
+                      minHeight: '44px',
                     }}
                   >
                     <Icon name="phone" size={16} />
                     {t('order.callPhone')}
                   </a>
+
                   <button className="continue-button" onClick={() => setModal('help')}>
                     {t('order.requestHelp')}
                     <Icon name="heart" size={16} />
@@ -1042,56 +974,6 @@ export default function OrderFlow({
               </>
             )}
           </div>
-
-          {/* Desktop Summary Card (Always visible alongside form to eliminate review screen) */}
-          {!confirmedView && (
-            <aside className="order-summary-card">
-              <div className="summary-heading">
-                <Icon name="bag" size={20} />
-                <h2>{t('checkout.yourMeal')}</h2>
-                {!locked && <button onClick={close}>{t('common.edit')}</button>}
-              </div>
-              <div className="summary-table">
-                <span>{`${t('checkout.table')} ${tableNum}`}</span>
-                <small>{isTableScanned ? 'SCANNED QR' : t('checkout.dineInBadge')}</small>
-              </div>
-              <div className="summary-lines">
-                {shownLines.map(line => {
-                  const displayName =
-                    language === 'am' && line.item.translations?.am
-                      ? line.item.translations.am
-                      : language === 'om' && line.item.translations?.om
-                      ? line.item.translations.om
-                      : line.item.name
-                  return (
-                    <div key={line.item.id}>
-                      <span>{line.quantity} ×</span>
-                      <div>
-                        <strong>{displayName}</strong>
-                      </div>
-                      {shownLines.length > 1 && <b>{formatBirr(line.item.price * line.quantity)} ETB</b>}
-                    </div>
-                  )
-                })}
-              </div>
-              <div className="summary-total">
-                <span>{t('common.total')}</span>
-                <strong>
-                  {formatBirr(shownTotal)} <small>ETB</small>
-                </strong>
-              </div>
-              {note && (
-                <div className="summary-order-note">
-                  <strong>{t('cart.orderNote')}</strong>
-                  <p>{note}</p>
-                </div>
-              )}
-              <div className="summary-assurance">
-                <Icon name="heart" size={17} />
-                <span>{t('order.enjoyMeal')}</span>
-              </div>
-            </aside>
-          )}
         </div>
 
         <div className="order-bottom-help">
