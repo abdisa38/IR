@@ -847,17 +847,7 @@ export default function OrderFlow({
                 <div className="order-success-icon">
                   <Icon name="check" size={32} />
                 </div>
-                <div className="confirmation-intro">
-                  <h2>{t('order.receivedHeading')}</h2>
-                  <p>{t('order.receivedDesc')}</p>
-                  <div style={{ margin: '14px 0 8px' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--color-muted)', display: 'block', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 600 }}>
-                      Order Number
-                    </span>
-                    <strong style={{ fontSize: '28px', color: 'var(--color-brand)', fontWeight: 800, letterSpacing: '1px' }}>
-                      #{snapshot.reference.replace(/^IL-/, '')}
-                    </strong>
-                  </div>
+               
                   <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-ink)', display: 'block', marginTop: '4px' }}>
                     {snapshot.table ? `${t('checkout.table')} ${snapshot.table}` : 'Direct Order'} · {snapshot.name}
                   </span>

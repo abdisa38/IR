@@ -200,7 +200,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
               <div className="order-success-icon"><Icon name="check" size={31} /></div>
               <div className="confirmation-intro">
                 <h2>{t('order.receivedHeading')}</h2>
-                <p>{t('order.receivedDesc')}</p>
+            
                 <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--color-ink)', display: 'block', marginTop: '8px' }}>
                   {t('ways.pickup')} · {name || 'Guest'}
                 </span>

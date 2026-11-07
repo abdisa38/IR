@@ -209,7 +209,6 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Order Confirmation & Tracking
     'order.receivedHeading': 'Ajajni Nu Ga’eera!',
-    'order.receivedDesc': 'Kushiinaan keenya ajaja keessan qopheessuu jalqabeera.',
     'order.statusHeading': 'Haala Ajajaa',
     'order.addMoreDishes': 'Waan Biraa Dabali',
     'order.viewStatus': 'Haala ajajaa ilaali',
@@ -528,7 +527,6 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Order Confirmation & Tracking
     'order.receivedHeading': 'ትዕዛዝዎ ደርሶናል!',
-    'order.receivedDesc': 'ኩሽናችን ትዕዛዝዎን ማዘጋጀት ጀምሯል።',
     'order.statusHeading': 'የትዕዛዝ ሁኔታ',
     'order.addMoreDishes': 'ሌላ ምግብ ጨምር',
     'order.viewStatus': 'ሁኔታውን እይ',
