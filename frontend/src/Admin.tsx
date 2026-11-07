@@ -46,7 +46,7 @@ function getPageFromHash(): AdminPage | null {
 }
 const time = (value: string) => new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 const Badge = ({ value, type = 'Order' }: { value: string; type?: 'Payment' | 'Order' }) => <StatusBadge label={value} type={type} tone={['Paid', 'Completed', 'Ready for Pickup', 'Ready to Serve'].includes(value) ? 'success' : ['Failed', 'Cancelled', 'Refunded'].includes(value) ? 'error' : ['Submitted', 'Awaiting Payment', 'Verification Pending'].includes(value) ? 'warning' : 'neutral'} />
-type Confirmation = { kind: 'cancel' | 'verify' | 'unable' | 'cash'; order: DemoOrder }
+type Confirmation = { kind: 'cancel' | 'verify' | 'unable' | 'cash' | 'delete'; order: DemoOrder }
 
 function ActivityChart({ orders }: { orders: DemoOrder[] }) {
   if (orders.length === 0) {
@@ -310,11 +310,16 @@ export default function Admin() {
   const confirm = async () => {
     if (!confirmation) return
     const { kind, order } = confirmation
-    if (kind === 'cancel' ? !operation : !reviewing) return
+    if (kind === 'cancel' ? !operation : kind === 'delete' ? !operation : !reviewing) return
     if ((kind === 'cancel' || kind === 'unable') && !reason.trim()) { setFormError('Add a reason so the team can understand this decision.'); return }
     if ((kind === 'verify' || kind === 'cash') && !checked) { setFormError('Confirm the payment check.'); return }
     try {
-      if (kind === 'cancel') {
+      if (kind === 'delete') {
+        await api.deleteOrder(order.id)
+        notify(`Order #${order.id.replace(/^IL-/, '')} deleted permanently.`)
+        setOrders(prev => prev.filter(o => o.id !== order.id))
+        setSelected(null)
+      } else if (kind === 'cancel') {
         await api.cancelOrder(order.id)
         notify(`Order #${order.id.replace(/^IL-/, '')} cancelled.`)
       } else {
@@ -324,7 +329,7 @@ export default function Admin() {
       setConfirmation(null)
       await loadOrders()
     } catch (err: any) {
-      notify(`Payment action error: ${err.message}`)
+      notify(`Order action error: ${err.message}`)
     }
   }
   const orderTable = (data: DemoOrder[]) => (
@@ -682,8 +687,8 @@ export default function Admin() {
         <div className="admin-workspace-footnote"><span>ILILLII HOTEL · BALE ROBE</span><span>Around Awraris· Phone: 0938890645</span></div>
       </main></div>
     {current && visible && <Modal title={page === 'Payments' ? 'Payment review' : 'Order details'} close={() => setSelected(null)}><div className="admin-order-detail"><div className="order-detail-reference"><strong>{current.table ? `Table ${current.table}` : current.customer} · #{current.id.replace(/^IL-/, '')}</strong><Badge value={orderStatusLabel(current)} /></div><div className="order-detail-method" style={{ flexWrap: 'wrap', gap: '8px' }}><span><Icon name={current.type === 'Dine-in' ? 'meal' : 'bag'} size={18} />{current.type}</span>{current.source === 'table_qr' ? <span style={{ color: '#15803d', background: '#dcfce7', padding: '3px 10px', borderRadius: '12px', fontWeight: 700, fontSize: '13px', border: '1px solid #bbf7d0' }}>Table {current.table} (QR Code Verified)</span> : current.table ? <span style={{ color: '#0369a1', background: '#e0f2fe', padding: '3px 10px', borderRadius: '12px', fontWeight: 600, fontSize: '13px' }}>Table {current.table} (Manual Selection)</span> : <span style={{ color: '#6d28d9', background: '#ede9fe', padding: '3px 10px', borderRadius: '12px', fontWeight: 600, fontSize: '13px' }}>Web Direct (No Table QR)</span>}{current.parentOrderId && <span style={{ color: '#b45309', background: '#fef3c7', padding: '3px 8px', borderRadius: '6px', fontWeight: 600, fontSize: '12px' }}>+ Extra Dishes added to active order #{current.parentOrderId}</span>}<small>Received {time(current.received)}</small></div>{canSeeCustomer(role) && <div className="admin-customer-card"><strong>{current.customer}</strong>{current.type !== 'Dine-in' && <span>{current.phone}</span>}</div>}<div className="admin-order-items">{current.items.map(item => <div key={item.id}><span>{item.quantity}×</span><strong>{item.name}<small>{financial ? `${formatBirr(item.price)} ETB each` : ''}</small></strong>{financial && <b>{formatBirr(item.price * item.quantity)} ETB</b>}</div>)}</div>{current.note && <div className="kitchen-note">{current.note}</div>}{financial && <><div className="summary-subtotal"><span>Subtotal</span><strong>{formatBirr(current.items.reduce((sum, item) => sum + item.price * item.quantity, 0))} ETB</strong></div><div className="summary-total"><span>Order total</span><strong>{formatBirr(orderTotal(current))} <small>ETB</small></strong></div></>}<div className="order-detail-payment"><span>{current.method}</span><Badge value={current.payment} type="Payment" /></div>
-      {page === 'Payments' && reviewing ? <><div className="admin-inline-note"><Icon name="shield" size={17} />Verify against Telebirr or CBE transaction receipts.</div><dl className="review-details"><div><dt>Submitted reference</dt><dd>{current.transferReference || 'Cash on arrival'}</dd></div><div><dt>Reviewer</dt><dd>{current.reviewer || 'Not reviewed'}</dd></div>{current.reviewedAt && <div><dt>Review time</dt><dd>{new Date(current.reviewedAt).toLocaleString()}</dd></div>}</dl>{current.method === 'CBE transfer' && current.payment === 'Verification Pending' && <div className="admin-detail-actions"><button className="button primary" disabled={current.status === 'Cancelled'} onClick={() => confirmAction('verify', current)}>Mark payment verified</button><button className="button secondary" onClick={() => confirmAction('unable', current)}>Unable to verify</button></div>}{current.method === 'Cash' && current.payment !== 'Paid' && <button className="button primary" onClick={() => confirmAction('cash', current)}>Record cash received</button>}</> : operation ? <div className="admin-detail-actions">{nextOrderStatus(current) && <button className="button primary" onClick={() => changeOrder(current)}>{nextOrderStatus(current)!.label}<Icon name="arrow" size={15} /></button>}{!['Cancelled', 'Completed'].includes(current.status) && role !== 'Kitchen Staff' && <button className="button secondary" onClick={() => confirmAction('cancel', current)}>{current.status === 'New' ? 'Reject order' : 'Request cancellation'}</button>}</div> : null}<h3 className="admin-detail-subheading">Order activity</h3><ol className="admin-detail-timeline">{current.activity.map((activity, index) => <li key={`${activity}-${index}`}><span /><p>{activity}</p></li>)}</ol></div></Modal>}
-    {confirmation && <Modal title={confirmation.kind === 'cancel' ? 'Confirm order cancellation' : 'Confirm payment update'} close={() => setConfirmation(null)}><form className="admin-form" onSubmit={event => { event.preventDefault(); confirm() }}><p>{confirmation.kind === 'cancel' ? 'Are you sure you want to cancel or reject this order?' : 'Verify this payment against the hotel register or mobile banking record.'}</p><strong>#{confirmation.order.id.replace(/^IL-/, '')}</strong>{formError && <div className="admin-form-error" role="alert">{formError}</div>}{confirmation.kind === 'cancel' || confirmation.kind === 'unable' ? <label>Reason<textarea value={reason} maxLength={500} onChange={event => setReason(event.target.value)} required rows={3} /></label> : <label className="admin-checkbox"><input type="checkbox" checked={checked} onChange={event => setChecked(event.target.checked)} />I confirm the payment was received via cash or bank record.</label>}<div className="admin-form-actions"><button className="button primary" type="submit">Confirm update</button><button className="button secondary" type="button" onClick={() => setConfirmation(null)}>Cancel</button></div></form></Modal>}
+      {page === 'Payments' && reviewing ? <><div className="admin-inline-note"><Icon name="shield" size={17} />Verify against Telebirr or CBE transaction receipts.</div><dl className="review-details"><div><dt>Submitted reference</dt><dd>{current.transferReference || 'Cash on arrival'}</dd></div><div><dt>Reviewer</dt><dd>{current.reviewer || 'Not reviewed'}</dd></div>{current.reviewedAt && <div><dt>Review time</dt><dd>{new Date(current.reviewedAt).toLocaleString()}</dd></div>}</dl>{current.method === 'CBE transfer' && current.payment === 'Verification Pending' && <div className="admin-detail-actions"><button className="button primary" disabled={current.status === 'Cancelled'} onClick={() => confirmAction('verify', current)}>Mark payment verified</button><button className="button secondary" onClick={() => confirmAction('unable', current)}>Unable to verify</button></div>}{current.method === 'Cash' && current.payment !== 'Paid' && <button className="button primary" onClick={() => confirmAction('cash', current)}>Record cash received</button>}</> : operation ? <div className="admin-detail-actions">{nextOrderStatus(current) && <button className="button primary" onClick={() => changeOrder(current)}>{nextOrderStatus(current)!.label}<Icon name="arrow" size={15} /></button>}{!['Cancelled', 'Completed'].includes(current.status) && role !== 'Kitchen Staff' && <button className="button secondary" onClick={() => confirmAction('cancel', current)}>{current.status === 'New' ? 'Reject order' : 'Request cancellation'}</button>}{role !== 'Kitchen Staff' && <button type="button" className="button secondary" style={{ background: '#fef2f2', borderColor: '#fca5a5', color: '#b91c1c', display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 700, marginLeft: 'auto' }} onClick={() => confirmAction('delete', current)} title="Permanently delete order"><Icon name="trash" size={15} />Delete order</button>}</div> : null}<h3 className="admin-detail-subheading">Order activity</h3><ol className="admin-detail-timeline">{current.activity.map((activity, index) => <li key={`${activity}-${index}`}><span /><p>{activity}</p></li>)}</ol></div></Modal>}
+    {confirmation && <Modal title={confirmation.kind === 'delete' ? 'Delete Order Permanently' : confirmation.kind === 'cancel' ? 'Confirm order cancellation' : 'Confirm payment update'} close={() => setConfirmation(null)}><form className="admin-form" onSubmit={event => { event.preventDefault(); confirm() }}><p>{confirmation.kind === 'delete' ? 'Are you sure you want to permanently delete this order? This will remove it completely from the database and dashboard.' : confirmation.kind === 'cancel' ? 'Are you sure you want to cancel or reject this order?' : 'Verify this payment against the hotel register or mobile banking record.'}</p><strong style={{ fontSize: '20px', color: confirmation.kind === 'delete' ? '#b91c1c' : 'var(--color-brand)' }}>#{confirmation.order.id.replace(/^IL-/, '')}</strong>{formError && <div className="admin-form-error" role="alert">{formError}</div>}{confirmation.kind === 'cancel' || confirmation.kind === 'unable' ? <label>Reason<textarea value={reason} maxLength={500} onChange={event => setReason(event.target.value)} required rows={3} /></label> : confirmation.kind === 'delete' ? null : <label className="admin-checkbox"><input type="checkbox" checked={checked} onChange={event => setChecked(event.target.checked)} />I confirm the payment was received via cash or bank record.</label>}<div className="admin-form-actions"><button className="button primary" type="submit" style={confirmation.kind === 'delete' ? { background: '#dc2626', borderColor: '#b91c1c', color: '#fff' } : undefined}>{confirmation.kind === 'delete' ? 'Delete permanently' : 'Confirm update'}</button><button className="button secondary" type="button" onClick={() => setConfirmation(null)}>Cancel</button></div></form></Modal>}
     {overlay === 'notifications' && (
       <Modal title={`Incoming Orders (${orders.filter(order => order.status === 'New').length})`} close={() => setOverlay(null)}>
         <div className="admin-notification-list" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -715,18 +720,18 @@ export default function Admin() {
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
-                  background: '#fee2e2',
-                  color: '#b82032',
+                  background: order.type === 'Pickup' ? '#f3e8ff' : '#fee2e2',
+                  color: order.type === 'Pickup' ? '#7e22ce' : '#b82032',
                   display: 'grid',
                   placeItems: 'center',
                   flexShrink: 0,
                 }}
               >
-                <Icon name="bag" size={18} />
+                <Icon name={order.type === 'Pickup' ? 'bag' : 'meal'} size={18} />
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <strong style={{ display: 'block', fontSize: '13px', color: 'var(--color-ink)' }}>
-                  {order.table ? `Table ${order.table}` : 'Takeaway'} · {order.customer}
+                  {order.table ? `Table ${order.table}` : order.type === 'Pickup' ? 'Takeaway' : 'Dine-in (Direct)'} · {order.customer}
                 </strong>
                 <small style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
                   {order.items.length} dishes · {formatBirr(orderTotal(order))} ETB · {time(order.received)}
