@@ -821,7 +821,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'checkout.orderPayAfterMeal': 'Order Now (Pay After Meal)',
     'checkout.payNowSheger': 'Pay Now with ShegerPay',
     'checkout.shegerTitle': 'ShegerPay Instant Payment',
-    'checkout.shegerInstructions': 'Transfer with Telebirr (0938890645) or CBE Bank (1000533856385), then enter your Transaction ID to verify.',
     'checkout.txnIdLabel': 'Transaction Reference / ID',
     'checkout.txnIdPlaceholder': 'e.g. FT26062K7WMY or Telebirr Txn ID',
     'checkout.verifyAndOrder': 'Verify & Place Order',
@@ -844,7 +843,6 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Order Confirmation & Tracking
     'order.receivedHeading': 'Order Received!',
-    'order.receivedDesc': 'Your table order has been sent to the Ilillii Hotel kitchen.',
     'order.statusHeading': 'Order Status',
     'order.addMoreDishes': 'Add More Food',
     'order.viewStatus': 'View order status',

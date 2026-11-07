@@ -602,56 +602,7 @@ export default function OrderFlow({
                 </label>
 
                 {/* Active Order Notice */}
-                {activeOrderId && (
-                  <div
-                    style={{
-                      background: '#fff7ed',
-                      border: '1.5px solid #fed7aa',
-                      borderRadius: '10px',
-                      padding: '12px 14px',
-                      marginBottom: '18px',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        flexWrap: 'wrap',
-                        gap: '8px',
-                      }}
-                    >
-                      <div>
-                        <strong style={{ fontSize: '13px', color: '#9a3412', display: 'block' }}>
-                          Adding to Active Order #{String(activeOrderId).replace(/^IL-/, '')}
-                        </strong>
-                        <small style={{ fontSize: '11px', color: '#78716c' }}>
-                          These dishes will be appended to your active kitchen order.
-                        </small>
-                      </div>
-                      <button
-                        type="button"
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#b82032',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                        }}
-                        onClick={() => {
-                          setActiveOrderId(null)
-                          setAppendToExisting(false)
-                          localStorage.removeItem('ilillii_active_order_id')
-                          localStorage.removeItem('ilillii_active_order_time')
-                        }}
-                      >
-                        Start fresh order
-                      </button>
-                    </div>
-                  </div>
-                )}
+               
 
                 {/* Payment Action Buttons */}
                 <div className="order-buttons-group" style={{ gap: '12px', marginTop: '22px' }}>
