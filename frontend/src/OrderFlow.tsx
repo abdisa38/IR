@@ -1011,6 +1011,20 @@ export default function OrderFlow({
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            className="button secondary order-full"
+            style={{ minHeight: '42px', width: '100%' }}
+            onClick={() => {
+              setTableNum('')
+              setIsTableScanned(false)
+              localStorage.removeItem('ilillii_table')
+              sessionStorage.removeItem('ilillii_table')
+              setModal(null)
+            }}
+          >
+            Clear / No Table (Direct Order)
+          </button>
         </Modal>
       )}
 
