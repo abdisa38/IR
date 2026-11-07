@@ -600,52 +600,7 @@ export default function OrderFlow({
                   />
                 </label>
 
-                {/* Active Order Notice */}
-                {activeOrderId && appendToExisting && (
-                  <div
-                    style={{
-                      background: '#f0fdf4',
-                      border: '1px solid #86efac',
-                      borderRadius: '8px',
-                      padding: '10px 14px',
-                      marginBlock: '14px 18px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: '8px',
-                    }}
-                  >
-                    <div>
-                      <strong style={{ fontSize: '13px', color: '#14532d', display: 'block' }}>
-                        Order #{String(activeOrderId).replace(/^IL-/, '')} Active
-                      </strong>
-                      <small style={{ fontSize: '11px', color: '#166534' }}>
-                        Adding to your kitchen order
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#b82032',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        textDecoration: 'underline',
-                      }}
-                      onClick={() => {
-                        setActiveOrderId(null)
-                        setAppendToExisting(false)
-                        localStorage.removeItem('ilillii_active_order_id')
-                        localStorage.removeItem('ilillii_active_order_time')
-                      }}
-                    >
-                      Start fresh
-                    </button>
-                  </div>
-                )}
+               
 
                 {/* Single Payment Action Button (No Duplicate Buttons) */}
                 <div className="order-buttons-group" style={{ gap: '10px', marginTop: '20px' }}>

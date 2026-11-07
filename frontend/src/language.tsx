@@ -818,7 +818,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'checkout.notePlaceholder': 'Add a note for the kitchen',
     'checkout.noteHelp': 'Let us know if you have any dietary preferences.',
     'checkout.reviewBtn': 'Review your order',
-    'checkout.privacyNote': 'Direct to kitchen',
     'checkout.placeOrder': 'Place Order',
     'checkout.placingOrder': 'Placing order…',
     'checkout.orderPayAfterMeal': 'Confirm Order (Pay After Meal)',
