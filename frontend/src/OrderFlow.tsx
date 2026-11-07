@@ -775,7 +775,7 @@ export default function OrderFlow({
                         CBE (Commercial Bank of Ethiopia)
                       </span>
                       <strong style={{ display: 'block', fontSize: '15px', color: 'var(--color-ink)', marginTop: '2px' }}>
-                        1000552313131
+                        1000533856385
                       </strong>
                       <small style={{ fontSize: '11px', color: '#78716c' }}>
                         Ilillii Bar & Restaurant
@@ -783,7 +783,7 @@ export default function OrderFlow({
                     </div>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard('1000552313131', 'cbe')}
+                      onClick={() => copyToClipboard('1000533856385', 'cbe')}
                       style={{
                         background: copiedAccount === 'cbe' ? '#dcfce7' : '#ffffff',
                         color: copiedAccount === 'cbe' ? '#15803d' : '#1c1917',
@@ -820,15 +820,15 @@ export default function OrderFlow({
                         Telebirr
                       </span>
                       <strong style={{ display: 'block', fontSize: '15px', color: '#14532d', marginTop: '2px' }}>
-                        0909511588
+                        0938890645
                       </strong>
                       <small style={{ fontSize: '11px', color: '#15803d' }}>
-                        Abdisa Awel (Ilillii Bar & Restaurant)
+                        Ilillii Bar & Restaurant
                       </small>
                     </div>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard('0909511588', 'telebirr')}
+                      onClick={() => copyToClipboard('0938890645', 'telebirr')}
                       style={{
                         background: copiedAccount === 'telebirr' ? '#dcfce7' : '#ffffff',
                         color: copiedAccount === 'telebirr' ? '#15803d' : '#1c1917',
