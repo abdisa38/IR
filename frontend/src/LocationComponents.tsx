@@ -315,6 +315,34 @@ export function GlobalHeader({
               )}
             </nav>
             <div className="nav-actions">
+              {activeOrder && (
+                <button
+                  type="button"
+                  className="nav-active-order-btn"
+                  onClick={() => setHistoryOpen(true)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    background: '#fff7ed',
+                    border: '1.5px solid #fed7aa',
+                    color: '#9a3412',
+                    padding: '6px 12px',
+                    borderRadius: '24px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(154, 52, 18, 0.08)',
+                  }}
+                  title="View your ordered food and live kitchen status"
+                >
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ea580c' }} />
+                  <span className="desktop-only">{activeOrder.table ? `Table ${activeOrder.table}` : 'My Order'}</span>
+                  <span style={{ background: '#ea580c', color: '#fff', padding: '1px 7px', borderRadius: '8px', fontSize: '10px', fontWeight: 800 }}>
+                    {activeOrder.status || 'Received'}
+                  </span>
+                </button>
+              )}
               <button
                 type="button"
                 className="language-button"
@@ -375,6 +403,26 @@ export function GlobalHeader({
                 <Icon name="close" size={18} />
               </button>
             </div>
+
+            {activeOrder && (
+              <button
+                className="mobile-drawer-cta"
+                style={{ background: '#fff7ed', border: '1.5px solid #fed7aa', color: '#9a3412', marginBottom: '8px' }}
+                onClick={() => {
+                  setMobileNav(false)
+                  setHistoryOpen(true)
+                }}
+              >
+                <Icon name="meal" size={18} />
+                <span style={{ flex: 1, textAlign: 'left' }}>
+                  <strong style={{ display: 'block', fontSize: '13px' }}>My Order ({activeOrder.status || 'Received'})</strong>
+                  <small style={{ fontSize: '11px', color: '#ea580c' }}>
+                    {activeOrder.table ? `Table ${activeOrder.table}` : 'Direct Order'} · {activeOrder.items?.length || 0} items
+                  </small>
+                </span>
+                <Icon name="arrow" size={15} />
+              </button>
+            )}
 
             {cartCount !== undefined && cartCount > 0 ? (
               <button
