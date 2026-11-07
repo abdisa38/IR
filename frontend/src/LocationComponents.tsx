@@ -21,12 +21,12 @@ export function ContactAction({ kind, className = 'button secondary' }: { kind: 
   }
   return (
     <a
-      href="https://www.google.com/maps/search/?api=1&query=General+Wako+Gutu+Square+Bale+Robe+Ethiopia"
+      href="https://maps.app.goo.gl/c5xWhAaUGHdzynk77"
       target="_blank"
       rel="noopener noreferrer"
       className={className}
       style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
-      aria-label="Get directions to General Wako Gutu Square, Bale Robe"
+      aria-label="Get directions to Ilillii Bar & Restaurant, Bale Robe"
     >
       <Icon name="pin" size={17} />
       {t('location.directions')}
@@ -34,50 +34,43 @@ export function ContactAction({ kind, className = 'button secondary' }: { kind: 
   )
 }
 export function MapPreview() {
-  const [state, setState] = useState('placeholder')
   const { t } = useLanguage()
   return (
-    <div className="location-map-component">
-      <div className={`location-map-stage map-state-${state}`} aria-live="polite">
-        <div className="location-map-lines" aria-hidden="true" />
-        <div className="location-map-content">
-          {state === 'loading' ? (
-            <>
-              <span className="map-state-symbol"><Icon name="globe" size={30} /></span>
-              <h3>Loading map preview…</h3>
-            </>
-          ) : state === 'error' ? (
-            <>
-              <span className="map-state-symbol"><Icon name="info" size={30} /></span>
-              <h3>{t('location.address')}</h3>
-              <p>{t('location.town')}<br />{t('location.phoneTitle')}: 0938890645</p>
-              <button className="map-retry" onClick={() => setState('placeholder')}>
-                Retry map preview<Icon name="arrow" size={15} />
-              </button>
-            </>
-          ) : state === 'external' ? (
-            <>
-              <span className="map-state-symbol"><Icon name="arrow" size={28} /></span>
-              <h3>Continue in your maps app.</h3>
-              <button className="map-retry" onClick={() => setState('placeholder')}>
-                Return to location preview
-              </button>
-            </>
-          ) : (
-            <>
-              <span className="reserved-location-mark"><Mark /></span>
-              <h3>{t('location.mapTitle')}</h3>
-              <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--color-muted)' }}>
-                {t('location.address')}
-              </p>
-              <span className="location-town-tag">
-                <Icon name="pin" size={13} />
-                {t('location.town').toUpperCase()}
-              </span>
-            </>
-          )}
-        </div>
-      </div>
+    <div className="location-map-component" style={{ position: 'relative', overflow: 'hidden', borderRadius: '14px', minHeight: '320px' }}>
+      <iframe
+        src="https://maps.google.com/maps?q=7.121960,40.002844&hl=en&z=16&output=embed"
+        width="100%"
+        height="100%"
+        style={{ border: 0, minHeight: '320px', width: '100%', display: 'block' }}
+        allowFullScreen
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        title="Ilillii Bar & Restaurant Location"
+      />
+      <a
+        href="https://maps.app.goo.gl/c5xWhAaUGHdzynk77"
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          position: 'absolute',
+          bottom: '12px',
+          left: '12px',
+          background: 'rgba(255, 255, 255, 0.95)',
+          padding: '6px 12px',
+          borderRadius: '20px',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+          fontSize: '11px',
+          fontWeight: 700,
+          color: 'var(--color-brand)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '5px',
+          textDecoration: 'none',
+        }}
+      >
+        <Icon name="pin" size={12} />
+        7.121960, 40.002844 · Open in Maps
+      </a>
     </div>
   )
 }
