@@ -145,11 +145,14 @@ export default function Admin() {
             ? 'Completed'
             : 'Cancelled') as OrderStatus,
           payment: (o.paymentStatus === 'paid' ? 'Paid' : 'Unpaid') as PaymentStatus,
-          method: (o.paymentMethod?.includes('Telebirr')
+          method: (o.paymentMethod?.includes('ShegerPay')
+            ? 'ShegerPay'
+            : o.paymentMethod?.includes('Telebirr')
             ? 'Telebirr'
             : o.paymentMethod?.includes('CBE')
             ? 'CBE transfer'
-            : 'Cash') as any,
+            : o.paymentMethod || 'Cash') as any,
+          transferReference: o.transactionId || (o.paymentMethod?.includes('(') ? o.paymentMethod.split('(')[1].replace(')', '') : undefined),
           received: o.createdAt,
           table: o.table || undefined,
           customer: o.customerName || (o.table ? `Table ${o.table}` : 'Guest'),

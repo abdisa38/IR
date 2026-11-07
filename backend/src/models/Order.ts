@@ -21,6 +21,7 @@ export interface IOrder extends Document {
   paymentStatus: 'unpaid' | 'paid' | 'pay_after_eating'
   paymentTiming: 'pre_pay' | 'post_pay' | 'pay_before' | 'pay_after'
   paymentMethod?: string
+  transactionId?: string
   note?: string
   source?: 'table_qr' | 'web_direct'
   parentOrderId?: string
@@ -77,6 +78,7 @@ const OrderSchema = new Schema<IOrder>(
       default: 'post_pay',
     },
     paymentMethod: { type: String, default: 'Pay after eating' },
+    transactionId: { type: String, trim: true },
     note: { type: String, trim: true, default: '' },
   },
   {

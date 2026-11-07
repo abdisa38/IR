@@ -98,6 +98,7 @@ export default function Menu() {
   const [qrOptions, setQrOptions] = useState(false)
   const [checkout, setCheckout] = useState(false)
   const [dineInCheckout, setDineInCheckout] = useState(false)
+  const [initialPayment, setInitialPayment] = useState<'pay_after' | 'sheger'>('pay_after')
   const [checkoutEntry, setCheckoutEntry] = useState<'details' | 'lookup'>('details')
   const [note, setNote] = useState('')
   const [tableHelp, setTableHelp] = useState(false)
@@ -446,7 +447,7 @@ export default function Menu() {
                 onClick={() => setMode('Dine in')}
               >
                 <Icon name="meal" size={17} />
-                <span>{t('cart.dineIn')}</span>
+                <span>{qr.table ? `${t('checkout.table')} ${qr.table}` : t('cart.dineIn')}</span>
               </button>
               <button
                 type="button"
@@ -458,6 +459,21 @@ export default function Menu() {
                 <span>{t('cart.pickup')}</span>
               </button>
             </div>
+            {qr.table && mode === 'Dine in' && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '6px 10px', marginTop: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#15803d', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <Icon name="check" size={12} />
+                  {localStorage.getItem('ilillii_table_source') === 'qr' ? `${t('checkout.table')} ${qr.table} · Scanned QR` : `${t('checkout.table')} ${qr.table}`}
+                </span>
+                <button
+                  type="button"
+                  style={{ background: 'none', border: 'none', color: '#15803d', fontSize: '11px', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                  onClick={() => setQrOptions(true)}
+                >
+                  {t('common.edit')}
+                </button>
+              </div>
+            )}
           </div>
 
           <label className="order-field cart-note-field">
@@ -470,9 +486,66 @@ export default function Menu() {
               <span>{t('common.total')}</span>
               <strong>{formatBirr(subtotal)} ETB</strong>
             </div>
-            <button className="button primary cart-checkout-btn" onClick={() => { setPanel(false); if (mode === 'Pickup') { setCheckoutEntry('details'); setCheckout(true) } else { setDineInCheckout(true) } }}>
-              {t('cart.continueToOrder')}<Icon name="arrow" size={18} />
-            </button>
+            {mode === 'Dine in' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginTop: '6px' }}>
+                <button
+                  className="button primary cart-checkout-btn"
+                  style={{
+                    background: '#b82032',
+                    borderColor: '#981827',
+                    color: '#ffffff',
+                    minHeight: '46px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                  onClick={() => {
+                    setPanel(false)
+                    setInitialPayment('pay_after')
+                    setDineInCheckout(true)
+                  }}
+                >
+                  <span style={{ fontSize: '14px' }}>🔘</span>
+                  {t('checkout.orderPayAfterMeal')}
+                </button>
+                <button
+                  className="button secondary cart-checkout-btn"
+                  style={{
+                    background: '#ffffff',
+                    border: '1.5px solid #d6d3d1',
+                    color: '#1c1917',
+                    minHeight: '44px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                  }}
+                  onClick={() => {
+                    setPanel(false)
+                    setInitialPayment('sheger')
+                    setDineInCheckout(true)
+                  }}
+                >
+                  <span style={{ fontSize: '15px' }}>💳</span>
+                  {t('checkout.payNowSheger')}
+                </button>
+              </div>
+            ) : (
+              <button
+                className="button primary cart-checkout-btn"
+                onClick={() => {
+                  setPanel(false)
+                  setCheckoutEntry('details')
+                  setCheckout(true)
+                }}
+              >
+                {t('cart.continueToOrder')}
+                <Icon name="arrow" size={18} />
+              </button>
+            )}
             <button className="continue-button" onClick={() => setPanel(false)}>
               {t('cart.continueBrowsing')}
             </button>
@@ -490,7 +563,7 @@ export default function Menu() {
       )}
     </dialog>
     <Suspense fallback={checkout ? <p role="status">{t('common.loading')}</p> : null}><FulfilmentFlow open={checkout} entry={checkoutEntry} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
-    <Suspense fallback={dineInCheckout ? <p role="status">{t('common.loading')}</p> : null}><OrderFlow open={dineInCheckout} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setDineInCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
+    <Suspense fallback={dineInCheckout ? <p role="status">{t('common.loading')}</p> : null}><OrderFlow open={dineInCheckout} table={qr.table} initialPayment={initialPayment} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setDineInCheckout(false)} language={language} setLanguage={setLanguage} /></Suspense>
     {tableHelp && <Modal title={t('menu.checkTable')} close={() => setTableHelp(false)}><p className="modal-description">{t('history.desc')}</p><button className="button secondary" onClick={() => { setTableHelp(false); setQrOptions(true) }}>{t('qr.selectTable')}</button></Modal>}
     {modal && <Modal title={modal === 'language' ? 'Feel at home.' : 'A considered menu preview'} close={() => setModal(null)}>
       {modal === 'language' ? (

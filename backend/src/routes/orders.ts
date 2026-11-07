@@ -79,6 +79,7 @@ router.post('/', async (req: Request, res: Response) => {
       note,
       paymentTiming = 'post_pay',
       paymentMethod,
+      transactionId,
       source = 'web_direct',
       parentOrderId
     } = req.body
@@ -114,6 +115,7 @@ router.post('/', async (req: Request, res: Response) => {
       paymentStatus: normalizedPaymentStatus,
       paymentTiming: normalizedTiming,
       paymentMethod: normalizedPaymentMethod,
+      transactionId: transactionId || undefined,
       note: note || '',
       source: source === 'table_qr' ? 'table_qr' : 'web_direct',
       parentOrderId: parentOrderId || undefined,
@@ -126,6 +128,45 @@ router.post('/', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Error creating order:', error)
     res.status(500).json({ success: false, message: 'Failed to place order', error: error.message })
+  }
+})
+
+// POST /api/orders/sheger-verify - quick-verify transaction with ShegerPay
+router.post('/sheger-verify', async (req: Request, res: Response) => {
+  try {
+    const { transaction_id, amount } = req.body
+    if (!transaction_id) {
+      return res.status(400).json({ success: false, message: 'Transaction ID is required' })
+    }
+
+    const shegerKey = process.env.SHEGER_API_KEY || 'sk_live__vQeXOv3TpF-Td1izdQZE_GFw-eZxftq'
+    const cleanId = String(transaction_id).trim()
+    const cleanAmount = Number(amount) || 0
+
+    const shegerRes = await fetch('https://api.shegerpay.com/api/v1/quick-verify', {
+      method: 'POST',
+      headers: {
+        'X-API-Key': shegerKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        transaction_id: cleanId,
+        amount: cleanAmount,
+      }),
+    })
+
+    const data = await shegerRes.json()
+    const isVerified = Boolean(data && (data.valid === true || data.status === 'verified' || data.status === 'success'))
+
+    return res.json({
+      success: true,
+      verified: isVerified,
+      sheger: data,
+      message: isVerified ? 'Transaction verified successfully by ShegerPay' : (data.reason || 'Verification processing'),
+    })
+  } catch (error: any) {
+    console.error('ShegerPay quick-verify error:', error)
+    return res.status(500).json({ success: false, message: 'ShegerPay verification request failed', error: error.message })
   }
 })
 

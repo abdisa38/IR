@@ -129,6 +129,7 @@ export interface ApiOrder {
   paymentStatus: 'unpaid' | 'paid' | 'pay_after_eating'
   paymentTiming: 'pre_pay' | 'post_pay'
   paymentMethod?: string
+  transactionId?: string
   note?: string
   source?: 'table_qr' | 'web_direct'
   parentOrderId?: string
@@ -251,12 +252,20 @@ export const api = {
     note?: string
     paymentTiming?: 'pre_pay' | 'post_pay'
     paymentMethod?: string
+    transactionId?: string
     source?: 'table_qr' | 'web_direct'
     parentOrderId?: string
   }) {
     return request<{ success: boolean; order: ApiOrder }>('/orders', {
       method: 'POST',
       body: JSON.stringify(orderData),
+    })
+  },
+
+  async verifyShegerPayment(transactionId: string, amount: number) {
+    return request<{ success: boolean; verified: boolean; message: string; sheger?: any }>('/orders/sheger-verify', {
+      method: 'POST',
+      body: JSON.stringify({ transaction_id: transactionId, amount }),
     })
   },
 

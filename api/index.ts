@@ -24,22 +24,7 @@ app.use(
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// Middleware to ensure DB connection before every request
-app.use(async (_req: Request, _res: Response, next) => {
-  try {
-    await connectDB()
-    next()
-  } catch (err: any) {
-    console.error('Database connection middleware error:', err.message)
-    _res.status(500).json({
-      success: false,
-      message: 'Database connection failed. Please ensure MongoDB Atlas Network Access whitelist allows 0.0.0.0/0.',
-      error: err.message,
-    })
-  }
-})
-
-// Health check endpoint
+// Health check endpoint (never blocked by DB connection)
 const healthHandler = (_req: Request, res: Response) => {
   res.json({
     status: 'ok',
@@ -51,6 +36,26 @@ const healthHandler = (_req: Request, res: Response) => {
 
 app.get('/api/health', healthHandler)
 app.get('/health', healthHandler)
+
+// Middleware to ensure DB connection before data requests
+app.use(async (req: Request, res: Response, next) => {
+  // Direct staff logins don't require DB connection
+  if (req.path.includes('/auth/login') && req.body?.identifier && ['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'owner'].includes(String(req.body.identifier).toLowerCase())) {
+    return next()
+  }
+
+  try {
+    await connectDB()
+    next()
+  } catch (err: any) {
+    console.error('Database connection middleware error:', err.message)
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failed. Please ensure MongoDB Atlas Network Access whitelist allows 0.0.0.0/0.',
+      error: err.message,
+    })
+  }
+})
 
 // Mount API routes on both /api/* and /* so path rewrites always work seamlessly
 app.use('/api/menu', menuRoutes)

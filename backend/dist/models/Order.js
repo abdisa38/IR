@@ -43,6 +43,7 @@ const OrderSchema = new Schema({
         default: 'post_pay',
     },
     paymentMethod: { type: String, default: 'Pay after eating' },
+    transactionId: { type: String, trim: true },
     note: { type: String, trim: true, default: '' },
 }, {
     timestamps: true,
