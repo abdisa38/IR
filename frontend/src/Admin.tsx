@@ -155,7 +155,7 @@ export default function Admin() {
           transferReference: o.transactionId || (o.paymentMethod?.includes('(') ? o.paymentMethod.split('(')[1].replace(')', '') : undefined),
           received: o.createdAt,
           table: o.table || undefined,
-          customer: o.customerName || (o.table ? `Table ${o.table}` : 'Guest'),
+          customer: o.customerName?.trim() || (o.table ? `Table ${o.table} Guest` : 'Guest Customer'),
           phone: o.customerPhone || '0938890645',
           items: o.items.map(i => ({ id: i.menuItemId, name: i.name, price: i.price, quantity: i.quantity })),
           note: o.note,
@@ -248,7 +248,7 @@ export default function Admin() {
         : 'pending'
     try {
       await api.updateOrderStatus(order.id, apiStatus as any)
-      notify(`Order ${order.id}: ${next.label}`)
+      notify(`Order #${order.id.replace(/^IL-/, '')}: ${next.label}`)
       setOrders(prev => prev.map(o => (o.id === order.id ? { ...o, status: next.status } : o)))
       setSelected(curr => (curr && curr.id === order.id ? { ...curr, status: next.status } : curr))
       await loadOrders()
@@ -266,10 +266,10 @@ export default function Admin() {
     try {
       if (kind === 'cancel') {
         await api.cancelOrder(order.id)
-        notify(`Order ${order.id} cancelled.`)
+        notify(`Order #${order.id.replace(/^IL-/, '')} cancelled.`)
       } else {
         await api.updateOrderPayment(order.id, 'paid', kind === 'cash' ? 'Cash' : 'Bank Transfer')
-        notify(`Payment verified for order ${order.id}.`)
+        notify(`Payment verified for order #${order.id.replace(/^IL-/, '')}.`)
       }
       setConfirmation(null)
       await loadOrders()

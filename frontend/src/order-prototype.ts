@@ -18,9 +18,6 @@ export function tableFromUrl(search: string) {
     }
   }
   let value = params.get('table') || params.get('demoTable')
-  if (!value && typeof window !== 'undefined') {
-    value = sessionStorage.getItem('ilillii_table') || localStorage.getItem('ilillii_table') || null
-  }
   if (!value) return { table: null, invalid: false }
   const clean = value.trim()
   if (/^[0-9a-zA-Z_-]{1,10}$/.test(clean)) {

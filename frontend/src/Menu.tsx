@@ -179,11 +179,12 @@ export default function Menu() {
           sessionStorage.setItem('ilillii_table_source', 'manual')
         }
       } else {
-        // Direct website visit without table in URL (e.g. from Google)
-        if (!urlStr.includes('table=') && !sessionStorage.getItem('ilillii_table_source')) {
-          setQr({ table: null, invalid: false })
-          localStorage.removeItem('ilillii_table_source')
-        }
+        // Direct website visit without table in URL (e.g. from Google or home)
+        setQr({ table: null, invalid: false })
+        localStorage.removeItem('ilillii_table')
+        sessionStorage.removeItem('ilillii_table')
+        localStorage.removeItem('ilillii_table_source')
+        sessionStorage.removeItem('ilillii_table_source')
       }
     }
     checkTableUrl()
