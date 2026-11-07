@@ -800,7 +800,7 @@ function ActiveOrderStatusModal({
   const cleanOrderNum = String(currentOrder.orderNumber || order.orderNumber).replace(/^IL-/, '')
 
   return (
-    <Modal title="order" close={close}>
+    <Modal title="Live Order Status & Kitchen Progress" close={close}>
       <div style={{ maxHeight: '72vh', overflowY: 'auto', paddingRight: '4px' }}>
         {/* Order Header Summary */}
         <div
@@ -813,7 +813,19 @@ function ActiveOrderStatusModal({
             textAlign: 'center',
           }}
         >
-        
+          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.8px', color: '#9a3412', fontWeight: 700 }}>
+            Active Order
+          </span>
+          <div style={{ fontSize: '30px', fontWeight: 800, color: '#b82032', letterSpacing: '0.5px', margin: '4px 0' }}>
+            #{cleanOrderNum}
+          </div>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+            <span style={{ background: '#fff', border: '1px solid #ebdcd0', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, color: '#44403c' }}>
+              {currentOrder.table ? `Table ${currentOrder.table}` : 'Direct Order'}
+            </span>
+            <span style={{ background: '#dcfce7', border: '1px solid #bbf7d0', padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, color: '#15803d' }}>
+              ● {liveStatus}
+            </span>
           </div>
         </div>
 
