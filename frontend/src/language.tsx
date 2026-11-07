@@ -165,6 +165,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'cart.each': 'tokko',
 
     // Order Flow / Dine In Checkout
+    'checkout.optional': 'Filannoo',
     'checkout.detailsStep': 'Odeeffannoo',
     'checkout.reviewStep': 'Mirkaneessi',
     'checkout.whoJoining': 'Maqaa eenyuutiin qopheessinu?',
@@ -483,6 +484,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'cart.each': 'አንዱ',
 
     // Order Flow / Dine In Checkout
+    'checkout.optional': 'አማራጭ',
     'checkout.detailsStep': 'መረጃ',
     'checkout.reviewStep': 'አረጋግጥ',
     'checkout.whoJoining': 'በማን ስም ይዘጋጅ?',
@@ -801,9 +803,10 @@ export const translations: Record<Language, Record<string, string>> = {
     'cart.each': 'each',
 
     // Order Flow / Dine In Checkout
-    'checkout.detailsStep': 'Your details',
+    'checkout.optional': 'Optional',
+    'checkout.detailsStep': 'Details',
     'checkout.reviewStep': 'Review order',
-    'checkout.whoJoining': 'Who’s joining us?',
+    'checkout.whoJoining': 'Your Details',
     'checkout.nameLabel': 'Your name',
     'checkout.nameReq': 'Required',
     'checkout.nameRequiredError': 'Please enter your name so the kitchen staff know who this meal is for.',
@@ -811,14 +814,14 @@ export const translations: Record<Language, Record<string, string>> = {
     'checkout.nameHelp': 'So we know who this meal is for.',
     'checkout.phoneLabel': 'Phone number',
     'checkout.phoneHelp': 'For order coordination, if needed.',
-    'checkout.noteLabel': 'Anything we should know?',
+    'checkout.noteLabel': 'Kitchen Note',
     'checkout.notePlaceholder': 'Add a note for the kitchen',
     'checkout.noteHelp': 'Let us know if you have any dietary preferences.',
     'checkout.reviewBtn': 'Review your order',
-    'checkout.privacyNote': 'Your order goes straight to the kitchen staff.',
+    'checkout.privacyNote': 'Direct to kitchen',
     'checkout.placeOrder': 'Place Order',
     'checkout.placingOrder': 'Placing order…',
-    'checkout.orderPayAfterMeal': 'Order Now (Pay After Meal)',
+    'checkout.orderPayAfterMeal': 'Confirm Order (Pay After Meal)',
     'checkout.payNowSheger': 'Pay Now with ShegerPay',
     'checkout.shegerTitle': 'ShegerPay Instant Payment',
     'checkout.txnIdLabel': 'Transaction Reference / ID',

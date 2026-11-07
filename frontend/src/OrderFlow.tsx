@@ -562,7 +562,7 @@ export default function OrderFlow({
                       setName(e.target.value)
                       if (error && e.target.value.trim()) setError('')
                     }}
-                    placeholder={t('checkout.namePlaceholder')}
+                    placeholder="Your name"
                     aria-invalid={Boolean(error && !name.trim())}
                     aria-describedby={error ? 'dine-form-error name-help' : 'name-help'}
                     required
@@ -573,7 +573,7 @@ export default function OrderFlow({
 
                 {/* Phone Field (Optional) */}
                 <label className="order-field">
-                  {t('checkout.phoneLabel')} <span>{t('checkout.optional')}</span>
+                  {t('checkout.phoneLabel')} <span>({t('checkout.optional') || 'Optional'})</span>
                   <input
                     type="tel"
                     aria-invalid={Boolean(error && error.toLowerCase().includes('phone'))}
@@ -590,72 +590,122 @@ export default function OrderFlow({
 
                 {/* Kitchen Note Field (Optional) */}
                 <label className="order-field">
-                  {t('checkout.noteLabel')} <span>{t('checkout.optional')}</span>
+                  {t('checkout.noteLabel')} <span>({t('checkout.optional') || 'Optional'})</span>
                   <textarea
                     value={note}
                     onChange={e => setNote(e.target.value)}
                     maxLength={500}
-                    placeholder={t('checkout.notePlaceholder')}
+                    placeholder="Note for kitchen (optional)"
                     rows={2}
                   />
-                  <small>{t('checkout.noteHelp')}</small>
                 </label>
 
                 {/* Active Order Notice */}
-               
-
-                {/* Payment Action Buttons */}
-                <div className="order-buttons-group" style={{ gap: '12px', marginTop: '22px' }}>
-                  {/* Button 1: Order Now (Pay After Meal) */}
-                  <button
-                    className="button primary order-full pay-after-btn"
-                    type="submit"
-                    disabled={locked}
-                    aria-busy={busy}
+                {activeOrderId && appendToExisting && (
+                  <div
                     style={{
-                      background: '#b82032',
-                      borderColor: '#981827',
-                      color: '#ffffff',
-                      boxShadow: '0 4px 14px rgba(184,32,50,0.25)',
-                    }}
-                  >
-                    {busy ? (
-                      <>
-                        <span className="order-spinner" />
-                        {t('checkout.placingOrder')}
-                      </>
-                    ) : (
-                      <>
-                        <span style={{ fontSize: '15px', marginRight: '4px' }}>🔘</span>
-                        {activeOrderId && appendToExisting
-                          ? `+ Add Dishes to Order #${String(activeOrderId).replace(/^IL-/, '')} · Pay After Meal`
-                          : t('checkout.orderPayAfterMeal')}
-                      </>
-                    )}
-                  </button>
-
-                  {/* Button 2: Pay Now with ShegerPay */}
-                  <button
-                    className="button secondary order-full sheger-pay-btn"
-                    type="button"
-                    onClick={handleStartShegerPay}
-                    disabled={locked}
-                    style={{
-                      background: '#ffffff',
-                      color: '#1c1917',
-                      border: '1.5px solid #d6d3d1',
+                      background: '#f0fdf4',
+                      border: '1px solid #86efac',
+                      borderRadius: '8px',
+                      padding: '10px 14px',
+                      marginBlock: '14px 18px',
                       display: 'flex',
+                      justifyContent: 'space-between',
                       alignItems: 'center',
-                      justifyContent: 'center',
+                      flexWrap: 'wrap',
                       gap: '8px',
-                      fontWeight: 750,
                     }}
                   >
-                    <span style={{ fontSize: '16px' }}>💳</span>
-                    {t('checkout.payNowSheger')}
-                  </button>
+                    <div>
+                      <strong style={{ fontSize: '13px', color: '#14532d', display: 'block' }}>
+                        Order #{String(activeOrderId).replace(/^IL-/, '')} Active
+                      </strong>
+                      <small style={{ fontSize: '11px', color: '#166534' }}>
+                        Adding to your kitchen order
+                      </small>
+                    </div>
+                    <button
+                      type="button"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#b82032',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                      onClick={() => {
+                        setActiveOrderId(null)
+                        setAppendToExisting(false)
+                        localStorage.removeItem('ilillii_active_order_id')
+                        localStorage.removeItem('ilillii_active_order_time')
+                      }}
+                    >
+                      Start fresh
+                    </button>
+                  </div>
+                )}
 
-                  <p className="order-privacy">
+                {/* Single Payment Action Button (No Duplicate Buttons) */}
+                <div className="order-buttons-group" style={{ gap: '10px', marginTop: '20px' }}>
+                  {initialPayment === 'sheger' ? (
+                    <button
+                      className="button primary order-full sheger-pay-btn"
+                      type="button"
+                      onClick={handleStartShegerPay}
+                      disabled={locked}
+                      style={{
+                        background: '#b82032',
+                        borderColor: '#981827',
+                        color: '#ffffff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        fontWeight: 750,
+                        minHeight: '46px',
+                      }}
+                    >
+                      <span style={{ fontSize: '16px' }}>💳</span>
+                      {t('checkout.payNowSheger')}
+                    </button>
+                  ) : (
+                    <button
+                      className="button primary order-full pay-after-btn"
+                      type="submit"
+                      disabled={locked}
+                      aria-busy={busy}
+                      style={{
+                        background: '#b82032',
+                        borderColor: '#981827',
+                        color: '#ffffff',
+                        boxShadow: '0 4px 14px rgba(184,32,50,0.25)',
+                        minHeight: '46px',
+                        fontWeight: 750,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      {busy ? (
+                        <>
+                          <span className="order-spinner" />
+                          {t('checkout.placingOrder')}
+                        </>
+                      ) : (
+                        <>
+                          <span>🔘</span>
+                          {activeOrderId && appendToExisting
+                            ? `+ Add to Order #${String(activeOrderId).replace(/^IL-/, '')}`
+                            : 'Place Order (Pay After Meal)'}
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  <p className="order-privacy" style={{ fontSize: '11px', color: '#78716c', textAlign: 'center', margin: '4px 0 0' }}>
                     <Icon name="check" size={13} />
                     {t('checkout.privacyNote')}
                   </p>

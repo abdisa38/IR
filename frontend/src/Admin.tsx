@@ -167,7 +167,7 @@ export default function Admin() {
       const res = await api.getOrders({ limit: 100 })
       if (res.success && res.orders) {
         const mapped: DemoOrder[] = res.orders.map(o => ({
-          id: o.orderNumber,
+          id: String(o.orderNumber || '').replace(/^IL-/, ''),
           type: (o.type === 'Pickup' ? 'Pickup' : 'Dine-in') as 'Dine-in' | 'Pickup',
           status: (o.status === 'pending'
             ? 'New'
@@ -198,7 +198,7 @@ export default function Admin() {
           activity: [`Order created at ${time(o.createdAt)}`],
           fee: 0,
           source: (o.source || (o.table ? 'table_qr' : 'web_direct')) as any,
-          parentOrderId: o.parentOrderId,
+          parentOrderId: o.parentOrderId ? String(o.parentOrderId).replace(/^IL-/, '') : undefined,
         }))
         const sorted = mapped.sort((a, b) => new Date(b.received).getTime() - new Date(a.received).getTime())
         setOrders(sorted)

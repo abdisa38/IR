@@ -11,10 +11,10 @@ import { CompactCheckoutAmount, StatusBadge } from './ui-patterns'
 
 type Line = { item: MenuItem; quantity: number }
 type Receipt = { reference: string; accessCode: string; mode: Fulfilment; lines: Line[]; subtotal: number; created: string }
-type Page = 'details' | 'review' | 'confirmation' | 'tracking' | 'lookup'
+type Page = 'details' | 'review' | 'confirmation' | 'tracking'
 
 export default function FulfilmentFlow({ open, entry = 'details', table, lines, note, setNote, close, language, setLanguage }: {
-  open: boolean; entry?: 'method' | 'lookup' | 'details'; table: string | null; lines: Line[]; note: string; setNote: (value: string) => void; close: () => void; language: string; setLanguage: (value: string) => void
+  open: boolean; entry?: 'method' | 'details'; table: string | null; lines: Line[]; note: string; setNote: (value: string) => void; close: () => void; language: string; setLanguage: (value: string) => void
 }) {
   const [page, setPage] = useState<Page>('details')
   const [mode, setMode] = useState<Fulfilment>('pickup')
@@ -26,9 +26,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
   const [scenario, setScenario] = useState('normal')
   const [busy, setBusy] = useState(false)
   const [modal, setModal] = useState<'help' | 'language' | 'cancel' | null>(null)
-  const [lookupRef, setLookupRef] = useState('')
   const [code, setCode] = useState('')
-  const [lookupState, setLookupState] = useState('initial')
   const [lastUpdated, setLastUpdated] = useState('No live updates connected.')
   const [cancellation, setCancellation] = useState(false)
   const dialog = useRef<HTMLDialogElement>(null)
@@ -39,7 +37,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
 
   useEffect(() => {
     if (open && !previousOpen.current) {
-      setPage(entry === 'lookup' ? 'lookup' : receipt ? 'tracking' : 'details')
+      setPage(receipt ? 'tracking' : 'details')
       setError('')
       try {
         const saved = localStorage.getItem('ilillii_customer')
@@ -134,38 +132,8 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
       setError(err.message || 'Failed to submit order. Please try again.')
     }
   }
-  const lookup = async () => {
-    if (!lookupRef.trim()) { setLookupState('incorrect'); return }
-    try {
-      const res = await api.getOrder(lookupRef.trim())
-      if (res.success && res.order) {
-        setReceipt({
-          reference: res.order.orderNumber,
-          accessCode: res.order.id.slice(-6).toUpperCase(),
-          mode: res.order.type === 'Pickup' ? 'pickup' : 'dine',
-          lines: res.order.items.map(i => ({
-            item: {
-              id: i.menuItemId,
-              name: i.name,
-              price: i.price,
-              category: 'main',
-              availability: 'available',
-            },
-            quantity: i.quantity,
-          })),
-          subtotal: res.order.subtotal,
-          created: res.order.createdAt,
-        })
-        setLookupState('found')
-      } else {
-        setLookupState('not-found')
-      }
-    } catch (e) {
-      setLookupState('not-found')
-    }
-  }
   const { t } = useLanguage()
-  const title = page === 'details' ? <>{t('order.stepAboutYou')}</> : page === 'review' ? <>{t('order.stepOneLastLook')}</> : page === 'lookup' ? <>{t('pickup.trackOrder')}</> : page === 'confirmation' ? <>{t('order.stepAllTogether')}</> : <>{t('order.stepKitchenToTable')}</>
+  const title = page === 'details' ? <>{t('order.stepAboutYou')}</> : page === 'review' ? <>{t('order.stepOneLastLook')}</> : page === 'confirmation' ? <>{t('order.stepAllTogether')}</> : <>{t('order.stepKitchenToTable')}</>
   return <dialog ref={dialog} className="order-flow" aria-labelledby="fulfilment-title" onCancel={event => { event.preventDefault(); if (!busy) close() }}>
     <header className="order-nav">
       <div className="order-shell">
@@ -176,20 +144,16 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
             <span className="lang-code-pill">{language === 'om' ? 'Oro' : language === 'am' ? 'Amh' : 'Eng'}</span>
             <Icon name="down" size={11} />
           </button>
-          <span className="table-badge"><Icon name="bag" size={15} />{page === 'lookup' ? t('pickup.trackOrder') : t('ways.pickup')}</span>
+          <span className="table-badge"><Icon name="bag" size={15} />{t('ways.pickup')}</span>
         </div>
       </div>
     </header>
     <div className="order-shell order-content">
       <div className="fulfilment-utility">
-        <button className="order-back" disabled={busy} onClick={() => { if (isReceipt || page === 'details' || page === 'lookup') close(); else go('details') }}>
-          <Icon name="arrow" size={16} />{isReceipt || page === 'details' || page === 'lookup' ? t('order.backToMenu') : t('order.back')}
+        <button className="order-back" disabled={busy} onClick={() => { if (isReceipt || page === 'details') close(); else go('details') }}>
+          <Icon name="arrow" size={16} />{isReceipt || page === 'details' ? t('order.backToMenu') : t('order.back')}
         </button>
-        {page !== 'lookup' && (
-          <button disabled={busy} onClick={() => { setLookupState('initial'); go('lookup') }}>
-            <Icon name="user" size={15} />{t('nav.signIn')}
-          </button>
-        )}
+        
       </div>
       <div className="order-page-heading">
         <span className="eyebrow">{t('brand.hotel')} · {t('announcement.location')}</span>
@@ -280,29 +244,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
               </div>
             </>
           )}
-          {page === 'lookup' && (
-            <div className="lookup-box" style={{ padding: '16px 0' }}>
-              <h2 style={{ fontSize: '20px', fontWeight: 750, margin: '0 0 6px', color: 'var(--color-ink)' }}>{t('pickup.trackOrder')}</h2>
-              <p style={{ fontSize: '13px', color: 'var(--color-muted)', margin: '0 0 16px' }}>{t('pickup.saveCodeNotice')}</p>
-              {lookupState === 'not-found' && <div className="auth-alert-error" role="alert" style={{ marginBottom: '14px' }}><Icon name="info" size={16} /><span>{t('menu.noMatches')}</span></div>}
-              <form onSubmit={(e) => { e.preventDefault(); lookup() }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <label className="auth-field" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600 }}>{t('pickup.orderRefCode')}</span>
-                  <input
-                    type="text"
-                    placeholder={t('pickup.orderRefPlaceholder')}
-                    value={lookupRef}
-                    onChange={(e) => setLookupRef(e.target.value)}
-                    required
-                    style={{ height: '46px', paddingInline: '14px', border: '1px solid var(--color-line)', borderRadius: '8px', fontSize: '14px' }}
-                  />
-                </label>
-                <button type="submit" className="button primary order-full" disabled={busy} style={{ width: '100%', height: '48px', justifyContent: 'center' }}>
-                  <Icon name="search" size={16} />{t('pickup.findOrderBtn')}
-                </button>
-              </form>
-            </div>
-          )}
+          
         </div>
       </div>
     </div>
