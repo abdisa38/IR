@@ -660,10 +660,7 @@ export default function OrderFlow({
                     </button>
                   )}
 
-                  <p className="order-privacy" style={{ fontSize: '11px', color: '#78716c', textAlign: 'center', margin: '4px 0 0' }}>
-                    <Icon name="check" size={13} />
-                    {t('checkout.privacyNote')}
-                  </p>
+                
                 </div>
               </form>
             )}
