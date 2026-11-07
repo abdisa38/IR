@@ -201,22 +201,44 @@ export default function OrderFlow({
     localStorage.setItem('ilillii_active_order_time', Date.now().toString())
 
     try {
+      const allDishes = order.items && order.items.length > 0
+        ? order.items.map((it: any) => ({ name: it.name, quantity: it.quantity, price: it.price }))
+        : lines.map(l => ({ name: l.item.name, quantity: l.quantity, price: l.item.price }))
+
+      const prevHistory = JSON.parse(localStorage.getItem('ilillii_order_history') || '[]')
+      const existingIdx = Array.isArray(prevHistory)
+        ? prevHistory.findIndex((h: any) => String(h.orderNumber).replace(/^IL-/, '') === cleanNum)
+        : -1
+
       const historyItem = {
         orderNumber: cleanNum,
-        date: new Date().toISOString(),
+        date: order.createdAt || new Date().toISOString(),
         total: order.total,
         table: order.table || tableNum || '',
         type: order.type || 'Dine in',
         paymentMethod,
         transactionId,
-        items: lines.map(l => ({ name: l.item.name, quantity: l.quantity, price: l.item.price })),
-        status: 'Submitted',
+        items: allDishes,
+        status: order.status === 'completed' ? 'Completed' : 'Submitted',
       }
-      const prevHistory = JSON.parse(localStorage.getItem('ilillii_order_history') || '[]')
-      const filtered = Array.isArray(prevHistory)
-        ? prevHistory.filter((h: any) => String(h.orderNumber).replace(/^IL-/, '') !== cleanNum)
-        : []
-      localStorage.setItem('ilillii_order_history', JSON.stringify([historyItem, ...filtered].slice(0, 30)))
+
+      let updatedHistory: any[]
+      if (existingIdx !== -1) {
+        updatedHistory = [...prevHistory]
+        updatedHistory[existingIdx] = {
+          ...updatedHistory[existingIdx],
+          items: allDishes,
+          total: order.total,
+          status: order.status === 'completed' ? 'Completed' : updatedHistory[existingIdx].status || 'Submitted',
+        }
+      } else {
+        const filtered = Array.isArray(prevHistory)
+          ? prevHistory.filter((h: any) => String(h.orderNumber).replace(/^IL-/, '') !== cleanNum)
+          : []
+        updatedHistory = [historyItem, ...filtered]
+      }
+
+      localStorage.setItem('ilillii_order_history', JSON.stringify(updatedHistory.slice(0, 30)))
       window.dispatchEvent(new CustomEvent('ilillii-order-placed', { detail: historyItem }))
     } catch (e) { }
 
@@ -273,17 +295,37 @@ export default function OrderFlow({
         image: l.item.confirmedImage || '',
       }))
 
-      const orderRes = await api.createOrder({
-        items: linePayload,
-        type: 'Dine in',
-        table: tableNum ? tableNum : undefined,
-        customerName: name.trim(),
-        customerPhone: phone.trim(),
-        note,
-        paymentTiming: 'post_pay',
-        paymentMethod: 'Pay after eating',
-        source,
-      })
+      let orderRes
+      if (activeOrderId) {
+        try {
+          const check = await api.getOrder(activeOrderId)
+          if (check.success && check.order && !['completed', 'cancelled'].includes(check.order.status)) {
+            // Still active! Add additional food to existing order
+            orderRes = await api.addItemsToOrder(activeOrderId, linePayload, note)
+          } else {
+            // Finished or cancelled, clear activeOrderId
+            localStorage.removeItem('ilillii_active_order_id')
+            localStorage.removeItem('ilillii_active_order_time')
+            setActiveOrderId(null)
+          }
+        } catch (e) {
+          // If order not found, fallback to fresh order
+        }
+      }
+
+      if (!orderRes) {
+        orderRes = await api.createOrder({
+          items: linePayload,
+          type: 'Dine in',
+          table: tableNum ? tableNum : undefined,
+          customerName: name.trim(),
+          customerPhone: phone.trim(),
+          note,
+          paymentTiming: 'post_pay',
+          paymentMethod: 'Pay after eating',
+          source,
+        })
+      }
 
       setBusy(false)
       submitting.current = false
@@ -340,18 +382,34 @@ export default function OrderFlow({
 
       const methodLabel = isVerified ? `ShegerPay (Verified: ${cleanTxn})` : `ShegerPay (${cleanTxn})`
 
-      const orderRes = await api.createOrder({
-        items: linePayload,
-        type: 'Dine in',
-        table: tableNum ? tableNum : undefined,
-        customerName: name.trim(),
-        customerPhone: phone.trim(),
-        note,
-        paymentTiming: 'pre_pay',
-        paymentMethod: methodLabel,
-        transactionId: cleanTxn,
-        source,
-      })
+      let orderRes
+      if (activeOrderId) {
+        try {
+          const check = await api.getOrder(activeOrderId)
+          if (check.success && check.order && !['completed', 'cancelled'].includes(check.order.status)) {
+            orderRes = await api.addItemsToOrder(activeOrderId, linePayload, note)
+          } else {
+            localStorage.removeItem('ilillii_active_order_id')
+            localStorage.removeItem('ilillii_active_order_time')
+            setActiveOrderId(null)
+          }
+        } catch (e) {}
+      }
+
+      if (!orderRes) {
+        orderRes = await api.createOrder({
+          items: linePayload,
+          type: 'Dine in',
+          table: tableNum ? tableNum : undefined,
+          customerName: name.trim(),
+          customerPhone: phone.trim(),
+          note,
+          paymentTiming: 'pre_pay',
+          paymentMethod: methodLabel,
+          transactionId: cleanTxn,
+          source,
+        })
+      }
 
       setVerifyingSheger(false)
       if (orderRes.success && orderRes.order) {
@@ -642,7 +700,7 @@ export default function OrderFlow({
                       ) : (
                         <>
                           <span>🔘</span>
-                          {t('checkout.orderPayAfterMeal')}
+                          {activeOrderId ? `+ Add to Active Order #${String(activeOrderId).replace(/^IL-/, '')}` : t('checkout.orderPayAfterMeal')}
                         </>
                       )}
                     </button>
