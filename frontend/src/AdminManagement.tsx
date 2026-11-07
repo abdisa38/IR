@@ -378,9 +378,55 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
                   <strong>{formatBirr(item.price)} ETB</strong>
                 </td>
                 <td data-label="Availability">
-                  <span className={`admin-badge ${item.availability === 'Available' ? 'badge-green' : 'badge-neutral'}`}>
-                    {item.availability === 'Available' ? t('admin.available') : t('admin.unavailable')}
-                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleAvailability(item)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                    }}
+                    title={item.availability === 'Available' ? 'Click to mark Out of Stock' : 'Click to mark In Stock'}
+                  >
+                    <span
+                      style={{
+                        position: 'relative',
+                        display: 'inline-block',
+                        width: '38px',
+                        height: '22px',
+                        background: item.availability === 'Available' ? '#16a34a' : '#cbd5e1',
+                        borderRadius: '12px',
+                        transition: 'background 0.2s',
+                      }}
+                    >
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: '2px',
+                          left: item.availability === 'Available' ? '18px' : '2px',
+                          width: '18px',
+                          height: '18px',
+                          background: '#ffffff',
+                          borderRadius: '50%',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.25)',
+                          transition: 'left 0.2s',
+                        }}
+                      />
+                    </span>
+                    <span
+                      style={{
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        color: item.availability === 'Available' ? '#15803d' : '#64748b',
+                      }}
+                    >
+                      {item.availability === 'Available' ? 'In Stock' : 'Unavailable'}
+                    </span>
+                  </button>
                 </td>
                 <td data-label="House Special">
                   {item.houseSpecial ? <span className="admin-badge badge-amber">{t('admin.houseSpecial')}</span> : '—'}
@@ -444,11 +490,9 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
                   value={editing.category}
                   onChange={event => setEditing({ ...editing, category: event.target.value })}
                 >
-                  <option value="food">Main Dishes & Platters</option>
-                  <option value="beer-wine">Beer & Wine</option>
-                  <option value="cold-drinks">Cold Beverages</option>
-                  <option value="spirits">Spirits & Liquors</option>
-                  <option value="hot-drinks">Hot Drinks & Coffee</option>
+                  <option value="main">Main Dishes (Gosa Nyataa)</option>
+                  <option value="additional">Additional Dishes (Nyataa Sooma(a))</option>
+                  <option value="drinks">Drinks & Beverages (Gosa Dhugaatii)</option>
                 </select>
               </label>
 
@@ -596,6 +640,7 @@ export function AdminMenu({ notify }: { notify: (text: string) => void }) {
           </form>
         </Modal>
       )}
+      {confirmDialog && <ConfirmModal dialog={confirmDialog} close={() => setConfirmDialog(null)} />}
     </>
   )
 }
@@ -714,6 +759,7 @@ export function AdminCategories({ notify }: { notify: (text: string) => void }) 
           </form>
         </Modal>
       )}
+      {confirmDialog && <ConfirmModal dialog={confirmDialog} close={() => setConfirmDialog(null)} />}
     </>
   )
 }
@@ -1006,6 +1052,7 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
           </form>
         </Modal>
       )}
+      {confirmDialog && <ConfirmModal dialog={confirmDialog} close={() => setConfirmDialog(null)} />}
     </>
   )
 }
@@ -1238,6 +1285,7 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
           </form>
         </Modal>
       )}
+      {confirmDialog && <ConfirmModal dialog={confirmDialog} close={() => setConfirmDialog(null)} />}
     </>
   )
 }
