@@ -23,7 +23,7 @@ export interface IOrder extends Document {
   paymentMethod?: string
   transactionId?: string
   note?: string
-  source?: 'table_qr' | 'web_direct'
+  source?: 'table_qr' | 'web_direct' | 'manual_table'
   parentOrderId?: string
   createdAt: Date
   updatedAt: Date
@@ -59,7 +59,7 @@ const OrderSchema = new Schema<IOrder>(
     },
     source: {
       type: String,
-      enum: ['table_qr', 'web_direct'],
+      enum: ['table_qr', 'web_direct', 'manual_table'],
       default: 'web_direct',
       index: true,
     },

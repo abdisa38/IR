@@ -165,7 +165,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'cart.each': 'tokko',
 
     // Order Flow / Dine In Checkout
-    'checkout.optional': 'Filannoo',
     'checkout.detailsStep': 'Odeeffannoo',
     'checkout.reviewStep': 'Mirkaneessi',
     'checkout.whoJoining': 'Maqaa eenyuutiin qopheessinu?',
@@ -180,6 +179,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'checkout.notePlaceholder': 'Kushiinaaf yaada barreessaa',
     'checkout.noteHelp': 'Akkaataa nyaanni itti isiniif hojjetamu yoo filattan.',
     'checkout.reviewBtn': 'Itti Fufi',
+    'checkout.privacyNote': 'Ajajni keessan kallattiin kushiinaa seena.',
     'checkout.placeOrder': 'Ajaja Ergi',
     'checkout.placingOrder': 'Ergamaa jira…',
     'checkout.orderPayAfterMeal': 'Amma Ajaji (Booda Kaffali)',
@@ -482,7 +482,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'cart.each': 'አንዱ',
 
     // Order Flow / Dine In Checkout
-    'checkout.optional': 'አማራጭ',
     'checkout.detailsStep': 'መረጃ',
     'checkout.reviewStep': 'አረጋግጥ',
     'checkout.whoJoining': 'በማን ስም ይዘጋጅ?',
@@ -497,6 +496,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'checkout.notePlaceholder': 'ለኩሽና ማስታወሻ ይጻፉ',
     'checkout.noteHelp': 'በምግቡ አሰራር ላይ ምርጫ ካለዎት።',
     'checkout.reviewBtn': 'ቀጥል',
+    'checkout.privacyNote': 'ትዕዛዝዎ በቀጥታ ወደ ኩሽና ይገባል።',
     'checkout.placeOrder': 'ትዕዛዝ ላክ',
     'checkout.placingOrder': 'በመላክ ላይ…',
     'checkout.orderPayAfterMeal': 'አሁን እዘዝ (በኋላ ክፈል)',
@@ -799,10 +799,9 @@ export const translations: Record<Language, Record<string, string>> = {
     'cart.each': 'each',
 
     // Order Flow / Dine In Checkout
-    'checkout.optional': 'Optional',
-    'checkout.detailsStep': 'Details',
+    'checkout.detailsStep': 'Your details',
     'checkout.reviewStep': 'Review order',
-    'checkout.whoJoining': 'Your Details',
+    'checkout.whoJoining': 'Who’s joining us?',
     'checkout.nameLabel': 'Your name',
     'checkout.nameReq': 'Required',
     'checkout.nameRequiredError': 'Please enter your name so the kitchen staff know who this meal is for.',
@@ -810,13 +809,14 @@ export const translations: Record<Language, Record<string, string>> = {
     'checkout.nameHelp': 'So we know who this meal is for.',
     'checkout.phoneLabel': 'Phone number',
     'checkout.phoneHelp': 'For order coordination, if needed.',
-    'checkout.noteLabel': 'Kitchen Note',
+    'checkout.noteLabel': 'Anything we should know?',
     'checkout.notePlaceholder': 'Add a note for the kitchen',
     'checkout.noteHelp': 'Let us know if you have any dietary preferences.',
     'checkout.reviewBtn': 'Review your order',
+    'checkout.privacyNote': 'Your order goes straight to the kitchen staff.',
     'checkout.placeOrder': 'Place Order',
     'checkout.placingOrder': 'Placing order…',
-    'checkout.orderPayAfterMeal': 'Confirm Order (Pay After Meal)',
+    'checkout.orderPayAfterMeal': 'Order Now (Pay After Meal)',
     'checkout.payNowSheger': 'Pay Now with ShegerPay',
     'checkout.shegerTitle': 'ShegerPay Instant Payment',
     'checkout.txnIdLabel': 'Transaction Reference / ID',
