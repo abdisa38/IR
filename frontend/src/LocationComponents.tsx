@@ -322,31 +322,15 @@ export function GlobalHeader({
               {activeOrder && (
                 <button
                   type="button"
-                  className="nav-active-order-btn desktop-only"
+                  className="nav-active-order-btn"
                   onClick={() => setStatusModalOpen(true)}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    background: '#fff7ed',
-                    border: '1.5px solid #fed7aa',
-                    color: '#9a3412',
-                    padding: '6px 12px',
-                    borderRadius: '24px',
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    boxShadow: '0 2px 6px rgba(154, 52, 18, 0.08)',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                    height: '38px',
-                    minHeight: '38px',
-                  }}
                   title="View your ordered food and live kitchen status"
+                  aria-label={`View active order status: ${activeOrder.status || 'Received'}`}
                 >
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ea580c' }} />
-                  <span className="desktop-only">{activeOrder.table ? `Table ${activeOrder.table}` : 'My Order'}</span>
-                  <span style={{ background: '#ea580c', color: '#fff', padding: '1px 7px', borderRadius: '8px', fontSize: '10px', fontWeight: 800 }}>
+                  <span className="nav-order-dot" />
+                  <span className="desktop-order-title desktop-only">{activeOrder.table ? `Table ${activeOrder.table}` : 'My Order'}</span>
+                  <span className="mobile-order-title mobile-only">{activeOrder.table ? `T-${activeOrder.table}` : 'Order'}</span>
+                  <span className="nav-order-status-badge">
                     {activeOrder.status || 'Received'}
                   </span>
                 </button>
