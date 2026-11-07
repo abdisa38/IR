@@ -326,7 +326,7 @@ export function AuthCard({
             <input
               type="text"
               autoComplete="username"
-              placeholder="e.g. 0909511588 or name@example.com"
+              placeholder="e.g. 0909511588"
               value={loginIdentifier}
               onChange={(e) => setLoginIdentifier(e.target.value)}
               required
