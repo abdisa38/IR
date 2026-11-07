@@ -160,7 +160,7 @@ export function GlobalHeader({
                   if (['completed', 'cancelled'].includes(res.order.status)) {
                     localStorage.removeItem('ilillii_active_order_id')
                     localStorage.removeItem('ilillii_active_order_time')
-                    setActiveOrder(null)
+                    window.dispatchEvent(new CustomEvent('ilillii-order-completed'))
                     return
                   }
                   const s = res.order.status === 'pending'
@@ -225,16 +225,21 @@ export function GlobalHeader({
     const handleOrderPlaced = () => {
       updateActiveOrder()
     }
+    const handleOrderCompleted = () => {
+      setActiveOrder(null)
+    }
     window.addEventListener('ilillii-auth-changed', updateCustomerState)
     window.addEventListener('ilillii-open-history', handleOpenHistory)
     window.addEventListener('ilillii-open-order-status', handleOpenStatus)
     window.addEventListener('ilillii-order-placed', handleOrderPlaced)
+    window.addEventListener('ilillii-order-completed', handleOrderCompleted)
     const interval = setInterval(updateActiveOrder, 15000)
     return () => {
       window.removeEventListener('ilillii-auth-changed', updateCustomerState)
       window.removeEventListener('ilillii-open-history', handleOpenHistory)
       window.removeEventListener('ilillii-open-order-status', handleOpenStatus)
       window.removeEventListener('ilillii-order-placed', handleOrderPlaced)
+      window.removeEventListener('ilillii-order-completed', handleOrderCompleted)
       clearInterval(interval)
     }
   }, [])
@@ -741,7 +746,7 @@ function ActiveOrderStatusModal({
           if (['completed', 'cancelled'].includes(apiStatus)) {
             localStorage.removeItem('ilillii_active_order_id')
             localStorage.removeItem('ilillii_active_order_time')
-            setActiveOrder(null)
+            window.dispatchEvent(new CustomEvent('ilillii-order-completed'))
           }
           const normalized =
             apiStatus === 'pending'
