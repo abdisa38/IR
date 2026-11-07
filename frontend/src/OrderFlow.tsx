@@ -123,8 +123,8 @@ export default function OrderFlow({
       setTableNum(curTable)
       setIsTableScanned(
         localStorage.getItem('ilillii_table_source') === 'qr' ||
-          sessionStorage.getItem('ilillii_table_source') === 'qr' ||
-          window.location.search.includes('source=qr')
+        sessionStorage.getItem('ilillii_table_source') === 'qr' ||
+        window.location.search.includes('source=qr')
       )
 
       // Pre-fill customer details if previously saved
@@ -135,7 +135,7 @@ export default function OrderFlow({
           if (parsed.name && !name) setName(parsed.name)
           if (parsed.phone && !phone) setPhone(parsed.phone)
         }
-      } catch (e) {}
+      } catch (e) { }
     } else {
       // Once closed, reset snapshot so next time customer orders it starts completely fresh
       setSnapshot(null)
@@ -184,7 +184,7 @@ export default function OrderFlow({
       await navigator.clipboard.writeText(text)
       setCopiedAccount(label)
       setTimeout(() => setCopiedAccount(null), 2500)
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const handleOrderSuccess = (
@@ -217,7 +217,7 @@ export default function OrderFlow({
         ? prevHistory.filter((h: any) => h.orderNumber !== order.orderNumber)
         : []
       localStorage.setItem('ilillii_order_history', JSON.stringify([historyItem, ...filtered].slice(0, 30)))
-    } catch (e) {}
+    } catch (e) { }
 
     try {
       localStorage.setItem(
@@ -231,7 +231,7 @@ export default function OrderFlow({
         })
       )
       window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
-    } catch (e) {}
+    } catch (e) { }
 
     setSnapshot({
       reference: order.orderNumber,
@@ -441,8 +441,8 @@ export default function OrderFlow({
           {confirmedView
             ? t('order.backToMenu')
             : step === 'sheger'
-            ? t('order.back')
-            : t('order.backToCart')}
+              ? t('order.back')
+              : t('order.backToCart')}
         </button>
 
         <div className="order-page-heading">
@@ -618,7 +618,7 @@ export default function OrderFlow({
                       <span style={{ fontWeight: 700, fontSize: '13px', color: 'var(--color-brand)' }}>
                         {appendToExisting
                           ? `${t('checkout.activeOrderNotice', undefined, { id: activeOrderId })}`
-                          : t('checkout.startSeparateBtn')}
+                          : t('')}
                       </span>
                       <button
                         type="button"
@@ -642,7 +642,7 @@ export default function OrderFlow({
                           }
                         }}
                       >
-                        {appendToExisting ? t('checkout.startSeparateBtn') : t('checkout.appendToActiveBtn')}
+                        {appendToExisting ? t('') : t('checkout.appendToActiveBtn')}
                       </button>
                     </div>
                     <small style={{ color: '#78716c', fontSize: '11px', display: 'block' }}>
