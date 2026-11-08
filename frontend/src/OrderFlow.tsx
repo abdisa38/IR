@@ -52,11 +52,11 @@ export default function OrderFlow({
   const [modal, setModal] = useState<'language' | 'help' | 'table' | null>(null)
   const [copiedAccount, setCopiedAccount] = useState<string | null>(null)
 
-  // Payo Gateway state
-  const [payoTxnId, setPayoTxnId] = useState('')
-  const [verifyingPayo, setVerifyingPayo] = useState(false)
-  const [loadingPayoLink, setLoadingPayoLink] = useState(false)
-  const [payoData, setPayoData] = useState<{ orderId: string; paymentUrl: string; expiresAt?: string } | null>(null)
+  // Chapa Gateway state
+  const [chapaTxRef, setChapaTxRef] = useState('')
+  const [verifyingChapa, setVerifyingChapa] = useState(false)
+  const [loadingChapa, setLoadingChapa] = useState(false)
+  const [chapaData, setChapaData] = useState<{ txRef: string; checkoutUrl: string } | null>(null)
 
   // Legacy fallback state
   const [shegerTxnId, setShegerTxnId] = useState('')
@@ -103,7 +103,7 @@ export default function OrderFlow({
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   const total = lines.reduce((sum, line) => sum + line.item.price * line.quantity, 0)
-  const locked = busy || verifyingSheger || verifyingPayo || loadingPayoLink || Boolean(snapshot)
+  const locked = busy || verifyingSheger || verifyingChapa || loadingChapa || Boolean(snapshot)
   const confirmedView = step === 'confirmation'
 
   // When dialog opens or closes, manage clean state
@@ -126,7 +126,7 @@ export default function OrderFlow({
         )
       )
 
-      // Pre-fill customer details if previously saved (purge stale 0909511588)
+      // Pre-fill customer details if previously saved
       try {
         const saved = localStorage.getItem('ilillii_customer')
         if (saved) {
@@ -134,10 +134,6 @@ export default function OrderFlow({
           if (parsed.name && !name) setName(parsed.name)
           if (parsed.phone && parsed.phone !== '0909511588' && !phone) {
             setPhone(parsed.phone)
-          } else if (parsed.phone === '0909511588') {
-            parsed.phone = '0909511588'
-            localStorage.setItem('ilillii_customer', JSON.stringify(parsed))
-            setPhone('0909511588')
           }
         }
       } catch (e) { }
