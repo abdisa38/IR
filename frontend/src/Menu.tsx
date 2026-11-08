@@ -1,6 +1,6 @@
 import { useLanguage, languageOptions } from './language'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
-import { Icon, Logo, Mark, Modal, useDialog } from './shared-ui'
+import { ChapaLogo, Icon, Logo, Mark, Modal, useDialog } from './shared-ui'
 import { SiteLink, sitePage } from './site-routing'
 import { QuantityControl, StatePanel } from './ui-patterns'
 import { categories, formatBirr, menuItems } from './menu-data'
@@ -156,8 +156,13 @@ export default function Menu() {
   useDialog(cartRef, panel)
   useEffect(() => {
     const handleClear = () => setCart({})
+    const handleOpenCart = () => setPanel(true)
+    window.addEventListener('ilillii-open-cart', handleOpenCart)
     window.addEventListener('ilillii-clear-cart', handleClear)
-    return () => window.removeEventListener('ilillii-clear-cart', handleClear)
+    return () => {
+      window.removeEventListener('ilillii-clear-cart', handleClear)
+      window.removeEventListener('ilillii-open-cart', handleOpenCart)
+    }
   }, [])
 
   useEffect(() => {
@@ -550,7 +555,7 @@ export default function Menu() {
                     setDineInCheckout(true)
                   }}
                 >
-                  <Icon name="bank" size={16} />
+                  <ChapaLogo size={18} />
                   {t('checkout.payNowSheger')}
                 </button>
               </div>
@@ -584,7 +589,7 @@ export default function Menu() {
       )}
     </dialog>
     <Suspense fallback={checkout ? <p role="status">{t('common.loading')}</p> : null}><FulfilmentFlow open={checkout} entry={checkoutEntry} table={qr.table} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setCheckout(false)} language={language} setLanguage={setLanguage as any} /></Suspense>
-    <Suspense fallback={dineInCheckout ? <p role="status">{t('common.loading')}</p> : null}><OrderFlow open={dineInCheckout} table={qr.table} initialPayment={initialPayment} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => setDineInCheckout(false)} language={language} setLanguage={setLanguage as any} /></Suspense>
+    <Suspense fallback={dineInCheckout ? <p role="status">{t('common.loading')}</p> : null}><OrderFlow open={dineInCheckout} table={qr.table} initialPayment={initialPayment} lines={selected.map(item => ({ item, quantity: cart[item.id] }))} note={note} setNote={setNote} close={() => { setDineInCheckout(false); setPanel(true) }} language={language} setLanguage={setLanguage as any} /></Suspense>
     {tableHelp && <Modal title={t('menu.checkTable')} close={() => setTableHelp(false)}><p className="modal-description">{t('history.desc')}</p><button className="button secondary" onClick={() => { setTableHelp(false); setQrOptions(true) }}>{t('qr.selectTable')}</button></Modal>}
     {modal && <Modal title={modal === 'language' ? 'Feel at home.' : 'A considered menu preview'} close={() => setModal(null)}>
       {modal === 'language' ? (

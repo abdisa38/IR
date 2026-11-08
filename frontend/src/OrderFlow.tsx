@@ -461,10 +461,11 @@ export default function OrderFlow({
   }
 
   const handleClose = () => {
-    if (busy || verifyingSheger) return
+    if (busy || loadingChapa) return
     setSnapshot(null)
     setStep('details')
     close()
+    window.dispatchEvent(new CustomEvent('ilillii-open-cart'))
   }
 
   const { t } = useLanguage()

@@ -22,6 +22,7 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
     minus: <path d="M5 12h14" />,
     info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v6M12 7h.01" /></>,
     bank: <><path d="m3 9 9-6 9 6H3ZM3 21h18M5 9v9M10 9v9M14 9v9M19 9v9M3 18h18" /></>,
+    chapa: <><rect width="24" height="24" rx="5" fill="#00C070" stroke="none" /><path d="M16 8C13 8 10 10 10 12.5c0 2.8 3 4.5 6 4.5 1.5 0 2.5-.5 3.5-1.5" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" /><circle cx="15.5" cy="12.5" r="1.2" fill="#FFFFFF" stroke="none" /></>,
     cash: <><rect x="3" y="5" width="18" height="14" rx="2" /><circle cx="12" cy="12" r="3" /><path d="M6 9h.01M18 15h.01" /></>,
     shield: <><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" /><path d="m8 12 3 3 5-6" /></>,
     copy: <><rect x="8" y="8" width="12" height="13" rx="2" /><path d="M15 8V3H3v13h5" /></>,
@@ -47,6 +48,16 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
     refresh: <><path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5" /></>,
   }
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name] || paths.arrow}</svg>
+}
+
+export function ChapaLogo({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+      <rect width="32" height="32" rx="7" fill="#00C070" />
+      <path d="M22 11.5C20.8 10 18.8 9 16.5 9C12.4 9 9 12.1 9 16C9 19.9 12.4 23 16.5 23C18.8 23 20.8 22 22 20.5" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="21" cy="16" r="2.2" fill="#FFFFFF" />
+    </svg>
+  )
 }
 
 export function useDialog(ref: RefObject<HTMLDialogElement | null>, open: boolean) {
