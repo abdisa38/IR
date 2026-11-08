@@ -13,6 +13,22 @@ Production Express + TypeScript + Mongoose REST API connected to MongoDB Atlas.
   - `settings`: Restaurant configuration (Manager contact `0909511588`, Location in Bale Robe around Awraris & General Wako Gutu Square).
 - **Analytics Engine**: Real-time aggregation of total revenue, today's sales, active orders, and top selling dishes.
 
+## Security configuration and deployment
+
+Set `MONGODB_URI` and a unique, randomly generated `JWT_SECRET` of at least 32 characters in the deployment environment; neither is bundled with the application. Rotate any database credentials previously committed to the repository and replace any previously used JWT secret. Removing them from current files does not remove them from Git history. Configure `GOOGLE_CLIENT_ID` to the trusted Google OAuth client ID to enable Google sign-in. For a frontend on another origin, set `CORS_ORIGIN` to a comma-separated list of exact permitted origins; same-origin requests need no entry. Do not use `*`.
+
+Staff sign-in requires an active staff record and an individual password. Sensitive management routes require staff authorization, with manager-only access for staff, settings and menu management. Customer order creation remains public. Order lists, lookups, changes and customer order history are restricted because existing orders have no securely verified owner. Guest order tracking, adding items to an existing order and cancellation will not work until secure order ownership is implemented. Legacy accounts with weak or missing staff passwords must be reset before use; use the database's staff record `_id` and run this command locally as a trusted operator from the `backend` directory, with `MONGODB_URI` configured. Do not put the password in a command argument or shell history:
+
+```bash
+read -r -s -p 'New staff password: ' STAFF_PASSWORD; echo
+printf '%s' "$STAFF_PASSWORD" | node scripts/set-staff-password.mjs <staff-mongodb-id>
+unset STAFF_PASSWORD
+```
+
+The password must be at least 12 characters, no more than 72 UTF-8 bytes, and include uppercase and lowercase letters, a number and a symbol. After securely resetting the first manager's password, use the staff management screen to set credentials for other staff. The command only changes existing staff records and is not exposed over HTTP.
+
+Authentication attempts have a per-process rate limit. Serverless instances do not share its counter; configure a shared rate limiter at the deployment edge before exposing the service to the internet. Payment flows are still for testing and are not production-safe. Do not accept real payments until payment verification, webhook authentication and server-side pricing have been secured and tested.
+
 ## 📡 REST API Endpoints
 
 ### Menu
