@@ -1,6 +1,7 @@
-# robots.txt for https://frontend-psi-ten-87.vercel.app/
+# robots.txt for https://ilillihotel.com/
 User-agent: *
 Allow: /
 Disallow: /#admin
+Disallow: /api/
 
-Sitemap: https://frontend-psi-ten-87.vercel.app/sitemap.xml
+Sitemap: https://ilillihotel.com/sitemap.xml

@@ -288,26 +288,7 @@ export const api = {
     })
   },
 
-  async createPayoOrder(amount: number, description?: string, ourOrderId?: string) {
-    return request<{ success: boolean; orderId: string; paymentUrl: string; expiresAt: string; amount: number; currency: string }>('/orders/payo-create', {
-      method: 'POST',
-      body: JSON.stringify({ amount, description, ourOrderId }),
-    })
-  },
-
-  async verifyPayoPayment(payoOrderId: string, ourOrderId?: string) {
-    const q = ourOrderId ? `?ourOrderId=${encodeURIComponent(ourOrderId)}` : ''
-    return request<{ success: boolean; verified: boolean; status: string; payo: any }>(`/orders/payo-verify/${encodeURIComponent(payoOrderId)}${q}`, {
-      method: 'GET',
-    })
-  },
-
-  async verifyShegerPayment(transactionId: string, amount: number) {
-    return request<{ success: boolean; verified: boolean; message: string; sheger?: any }>('/orders/sheger-verify', {
-      method: 'POST',
-      body: JSON.stringify({ transaction_id: transactionId, amount }),
-    })
-  },
+  
 
   async addItemsToOrder(id: string, items: { menuItemId?: string; name: string; price: number; quantity: number; image?: string }[], note?: string) {
     return request<{ success: boolean; message: string; order: ApiOrder }>(`/orders/${id}/add-items`, {

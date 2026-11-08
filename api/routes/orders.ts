@@ -267,10 +267,6 @@ router.post('/chapa-webhook', async (req: Request, res: Response) => {
   }
 })
 
-// POST /api/orders/sheger-verify - fallback compatibility
-router.post('/sheger-verify', async (req: Request, res: Response) => {
-  return res.json({ success: true, verified: true, message: 'Payment recorded' })
-})
 
 // POST /api/orders/:id/add-items - Add extra food to existing active order
 router.post('/:id/add-items', async (req: Request, res: Response) => {
