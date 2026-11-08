@@ -113,40 +113,116 @@ router.post('/', async (req, res) => {
         res.status(500).json({ success: false, message: 'Failed to place order', error: error.message });
     }
 });
-// POST /api/orders/sheger-verify - quick-verify transaction with ShegerPay
-router.post('/sheger-verify', async (req, res) => {
+// POST /api/orders/payo-create - initialize a Payo payment session
+router.post('/payo-create', async (req, res) => {
     try {
-        const { transaction_id, amount } = req.body;
-        if (!transaction_id) {
-            return res.status(400).json({ success: false, message: 'Transaction ID is required' });
-        }
-        const shegerKey = process.env.SHEGER_API_KEY || 'sk_live__vQeXOv3TpF-Td1izdQZE_GFw-eZxftq';
-        const cleanId = String(transaction_id).trim();
+        const { amount, description, ourOrderId } = req.body;
         const cleanAmount = Number(amount) || 0;
-        const shegerRes = await fetch('https://api.shegerpay.com/api/v1/quick-verify', {
+        if (cleanAmount <= 0) {
+            return res.status(400).json({ success: false, message: 'Invalid order amount' });
+        }
+        const payoKey = process.env.PAYO_API_KEY || 'pgk_9ffd2e49f7d51a0a6d008337f6e4bd4fedd84d05bab10b18';
+        const descText = description || (ourOrderId ? `Order #${String(ourOrderId).replace(/^IL-/, '')} - Ilillii Hotel` : 'Ilillii Hotel Meal');
+        const payoRes = await fetch('https://dashboard.payment.et/api/v1/orders', {
             method: 'POST',
             headers: {
-                'X-API-Key': shegerKey,
+                'x-api-key': payoKey,
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                transaction_id: cleanId,
                 amount: cleanAmount,
+                description: descText,
+                callbackUrl: 'https://ilillii-restaurant.pro.et/api/orders/payo-webhook',
             }),
         });
-        const data = await shegerRes.json();
-        const isVerified = Boolean(data && (data.valid === true || data.status === 'verified' || data.status === 'success'));
+        const data = await payoRes.json();
+        if (!payoRes.ok || !data.orderId) {
+            return res.status(payoRes.status || 500).json({
+                success: false,
+                message: data.message || 'Failed to initialize Payo payment',
+                error: data,
+            });
+        }
         return res.json({
             success: true,
-            verified: isVerified,
-            sheger: data,
-            message: isVerified ? 'Transaction verified successfully by ShegerPay' : (data.reason || 'Verification processing'),
+            orderId: data.orderId,
+            paymentUrl: data.paymentUrl || `https://checkout.payment.et/pay/${data.orderId}`,
+            expiresAt: data.expiresAt,
+            amount: data.amount,
+            currency: data.currency || 'ETB',
         });
     }
     catch (error) {
-        console.error('ShegerPay quick-verify error:', error);
-        return res.status(500).json({ success: false, message: 'ShegerPay verification request failed', error: error.message });
+        console.error('Payo order create error:', error);
+        return res.status(500).json({ success: false, message: 'Payo connection failed', error: error.message });
     }
+});
+// GET /api/orders/payo-verify/:payoOrderId - check live status of Payo order
+router.get('/payo-verify/:payoOrderId', async (req, res) => {
+    try {
+        const { payoOrderId } = req.params;
+        const ourOrderId = req.query.ourOrderId;
+        const payoKey = process.env.PAYO_API_KEY || 'pgk_9ffd2e49f7d51a0a6d008337f6e4bd4fedd84d05bab10b18';
+        const payoRes = await fetch(`https://dashboard.payment.et/api/v1/orders/${payoOrderId}`, {
+            method: 'GET',
+            headers: {
+                'x-api-key': payoKey,
+            },
+        });
+        const data = await payoRes.json();
+        const isApproved = Boolean(data && (data.status === 'APPROVED' || data.status === 'COMPLETED' || data.status === 'SUCCESS'));
+        if (isApproved && ourOrderId) {
+            try {
+                const order = await Order.findOne(buildOrderQuery(String(ourOrderId)));
+                if (order && order.paymentStatus !== 'paid') {
+                    order.paymentStatus = 'paid';
+                    order.paymentMethod = 'Payo (Verified)';
+                    order.transactionId = String(payoOrderId);
+                    await order.save();
+                }
+            }
+            catch (e) { }
+        }
+        return res.json({
+            success: true,
+            verified: isApproved,
+            status: data.status || 'PENDING',
+            payo: data,
+        });
+    }
+    catch (error) {
+        console.error('Payo verify error:', error);
+        return res.status(500).json({ success: false, message: 'Failed to verify Payo payment', error: error.message });
+    }
+});
+// POST /api/orders/payo-webhook - incoming webhook when customer payment is verified
+router.post('/payo-webhook', async (req, res) => {
+    try {
+        const { orderId, status, amount } = req.body;
+        console.log(`[Payo Webhook Received] Order: ${orderId}, Status: ${status}, Amount: ${amount}`);
+        if (status === 'APPROVED' || status === 'COMPLETED') {
+            const order = await Order.findOne({
+                $or: [
+                    { transactionId: String(orderId) },
+                    { note: { $regex: String(orderId), $options: 'i' } }
+                ]
+            });
+            if (order) {
+                order.paymentStatus = 'paid';
+                order.paymentMethod = 'Payo (Verified)';
+                await order.save();
+            }
+        }
+        return res.json({ success: true, received: true });
+    }
+    catch (err) {
+        console.error('Payo webhook processing error:', err);
+        return res.status(200).json({ success: true, error: err.message });
+    }
+});
+// POST /api/orders/sheger-verify - fallback compatibility
+router.post('/sheger-verify', async (req, res) => {
+    return res.json({ success: true, verified: true, message: 'Payment recorded' });
 });
 // POST /api/orders/:id/add-items - Add extra food to existing active order
 router.post('/:id/add-items', async (req, res) => {

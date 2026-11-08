@@ -193,12 +193,11 @@ router.get('/payo-verify/:payoOrderId', async (req: Request, res: Response) => {
 
     if (isApproved && ourOrderId) {
       try {
-        const order = await Order.findOne(buildOrderQuery(ourOrderId))
-        if (order && order.payment !== 'Paid') {
-          order.payment = 'Paid'
+        const order = await Order.findOne(buildOrderQuery(String(ourOrderId)))
+        if (order && order.paymentStatus !== 'paid') {
+          order.paymentStatus = 'paid'
           order.paymentMethod = 'Payo (Verified)'
-          order.transactionId = payoOrderId
-          order.activity.push(`[${new Date().toLocaleTimeString()}] Payment verified via Payo (ID: ${payoOrderId})`)
+          order.transactionId = String(payoOrderId)
           await order.save()
         }
       } catch (e) {}
@@ -225,15 +224,14 @@ router.post('/payo-webhook', async (req: Request, res: Response) => {
     if (status === 'APPROVED' || status === 'COMPLETED') {
       const order = await Order.findOne({
         $or: [
-          { transactionId: orderId },
-          { note: { $regex: orderId, $options: 'i' } }
+          { transactionId: String(orderId) },
+          { note: { $regex: String(orderId), $options: 'i' } }
         ]
       })
 
       if (order) {
-        order.payment = 'Paid'
+        order.paymentStatus = 'paid'
         order.paymentMethod = 'Payo (Verified)'
-        order.activity.push(`[${new Date().toLocaleTimeString()}] Payo webhook approved payment (${amount || ''} ETB)`)
         await order.save()
       }
     }

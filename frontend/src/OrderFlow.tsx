@@ -741,10 +741,7 @@ export default function OrderFlow({
                     autoComplete="given-name"
                     maxLength={80}
                     value={name}
-                    onChange={e => {
-                      setName(e.target.value)
-                      if (error && e.target.value.trim()) setError('')
-                    }}
+                    onChange={e => handleNameChange(e.target.value)}
                     placeholder="Your name"
                     aria-invalid={Boolean(error && !name.trim())}
                     aria-describedby={error ? 'dine-form-error name-help' : 'name-help'}
@@ -765,7 +762,7 @@ export default function OrderFlow({
                     inputMode="tel"
                     value={phone}
                     maxLength={24}
-                    onChange={e => setPhone(e.target.value)}
+                    onChange={e => handlePhoneChange(e.target.value)}
                     placeholder="0909511588"
                   />
                   <small>{t('checkout.phoneHelp')}</small>
@@ -783,70 +780,63 @@ export default function OrderFlow({
                   />
                 </label>
 
+                {/* Payment Action Buttons */}
+                <div className="order-buttons-group" style={{ gap: '12px', marginTop: '22px' }}>
+                  <button
+                    className="button primary order-full pay-after-btn"
+                    type="submit"
+                    disabled={locked}
+                    aria-busy={busy}
+                    style={{
+                      background: '#b82032',
+                      borderColor: '#981827',
+                      color: '#ffffff',
+                      boxShadow: '0 4px 14px rgba(184,32,50,0.25)',
+                      minHeight: '48px',
+                      fontWeight: 750,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    {busy ? (
+                      <>
+                        <span className="order-spinner" />
+                        {t('checkout.placingOrder')}
+                      </>
+                    ) : (
+                      <>
+                        {activeOrderId ? `+ Add to Order #${String(activeOrderId).replace(/^IL-/, '')}` : t('checkout.orderPayAfterMeal')}
+                      </>
+                    )}
+                  </button>
 
-
-                {/* Single Payment Action Button (No Duplicate Buttons) */}
-                <div className="order-buttons-group" style={{ gap: '10px', marginTop: '20px' }}>
-                  {initialPayment === 'sheger' ? (
-                    <button
-                      className="button primary order-full sheger-pay-btn"
-                      type="button"
-                      onClick={handleStartShegerPay}
-                      disabled={locked}
-                      style={{
-                        background: '#b82032',
-                        borderColor: '#981827',
-                        color: '#ffffff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '8px',
-                        fontWeight: 750,
-                        minHeight: '46px',
-                      }}
-                    >
-                      <span style={{ fontSize: '16px' }}>💳</span>
-                      {t('checkout.payNowSheger')}
-                    </button>
-                  ) : (
-                    <button
-                      className="button primary order-full pay-after-btn"
-                      type="submit"
-                      disabled={locked}
-                      aria-busy={busy}
-                      style={{
-                        background: '#b82032',
-                        borderColor: '#981827',
-                        color: '#ffffff',
-                        boxShadow: '0 4px 14px rgba(184,32,50,0.25)',
-                        minHeight: '46px',
-                        fontWeight: 750,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                      }}
-                    >
-                      {busy ? (
-                        <>
-                          <span className="order-spinner" />
-                          {t('checkout.placingOrder')}
-                        </>
-                      ) : (
-                        <>
-
-                          {activeOrderId ? `+ Add to Order #${String(activeOrderId).replace(/^IL-/, '')}` : t('checkout.orderPayAfterMeal')}
-                        </>
-                      )}
-                    </button>
-                  )}
-
-
+                  <button
+                    className="button secondary order-full payo-pay-btn"
+                    type="button"
+                    onClick={handleStartPayo}
+                    disabled={locked}
+                    style={{
+                      background: '#ffffff',
+                      borderColor: '#b82032',
+                      color: '#b82032',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      fontWeight: 750,
+                      minHeight: '48px',
+                    }}
+                  >
+                    <span style={{ fontSize: '16px' }}>💳</span>
+                    {t('checkout.payNowSheger')}
+                  </button>
                 </div>
               </form>
             )}
 
-            {/* Step 2: ShegerPay Payment Form */}
+            {/* Step 2: Payo Payment Gateway Form */}
             {step === 'sheger' && (
               <div className="sheger-checkout-container">
                 <div
@@ -861,16 +851,61 @@ export default function OrderFlow({
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '22px' }}>💳</span>
-                    <strong style={{ fontSize: '16px', color: 'var(--color-ink)' }}>
-                      ShegerPay Fast Verification
-                    </strong>
+                    <div>
+                      <strong style={{ fontSize: '16px', color: 'var(--color-ink)', display: 'block' }}>
+                        Payo Ethiopian Gateway
+                      </strong>
+                      <small style={{ fontSize: '11px', color: '#16a34a', fontWeight: 600 }}>
+                        ● Live Auto-Verification Active
+                      </small>
+                    </div>
                   </div>
                   <strong style={{ fontSize: '18px', color: 'var(--color-brand)' }}>
                     {formatBirr(total)} ETB
                   </strong>
                 </div>
 
-                <p style={{ fontSize: '12px', color: '#57534e', lineHeight: 1.6, marginBottom: '16px' }}>
+                {/* Direct Payo Hosted Checkout Link */}
+                {loadingPayoLink ? (
+                  <div style={{ textAlign: 'center', padding: '16px', background: '#f8fafc', borderRadius: '10px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
+                    <span className="order-spinner" style={{ margin: '0 auto 8px', borderColor: '#b82032 rgba(184,32,50,0.2) rgba(184,32,50,0.2)' }} />
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, display: 'block' }}>
+                      Connecting to Payo checkout...
+                    </span>
+                  </div>
+                ) : payoData?.paymentUrl ? (
+                  <div style={{ marginBottom: '16px' }}>
+                    <a
+                      href={payoData.paymentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '10px',
+                        background: 'linear-gradient(135deg, #15803d 0%, #166534 100%)',
+                        color: '#ffffff',
+                        textDecoration: 'none',
+                        padding: '14px 18px',
+                        borderRadius: '10px',
+                        fontWeight: 750,
+                        fontSize: '14px',
+                        boxShadow: '0 4px 14px rgba(21, 128, 61, 0.25)',
+                        width: '100%',
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <span>💳 Open Payo Payment Window</span>
+                      <Icon name="arrow" size={16} />
+                    </a>
+                    <p style={{ margin: '6px 0 0', fontSize: '11px', color: '#15803d', textAlign: 'center', fontWeight: 500 }}>
+                      ✓ Telebirr, CBE & Abyssinia supported. Auto-confirms order upon payment.
+                    </p>
+                  </div>
+                ) : null}
+
+                <p style={{ fontSize: '12px', color: '#57534e', lineHeight: 1.6, marginBottom: '14px' }}>
                   {t('checkout.shegerInstructions')}
                 </p>
 
@@ -967,12 +1002,13 @@ export default function OrderFlow({
                   </div>
                 </div>
 
-                {/* Transaction ID Input */}
+                {/* Transaction ID Input (Optional if using Payo Link) */}
                 <label className="order-field" style={{ marginBlock: '16px' }}>
-                  {t('checkout.txnIdLabel')} <span style={{ color: '#b82032', fontWeight: 700 }}>{t('checkout.nameReq')}</span>
+                  {t('checkout.txnIdLabel')} <span>(Optional if using Payo Link)</span>
                   <input
-                    value={shegerTxnId}
+                    value={payoTxnId || shegerTxnId}
                     onChange={e => {
+                      setPayoTxnId(e.target.value)
                       setShegerTxnId(e.target.value)
                       if (error) setError('')
                     }}
@@ -980,21 +1016,21 @@ export default function OrderFlow({
                     style={{ fontSize: '14px', letterSpacing: '0.5px', fontFamily: 'monospace' }}
                   />
                   <small>
-                    Enter the transaction number from your payment confirmation SMS or receipt (e.g. FT26062K7WMY).
+                    Enter your receipt or transaction number (e.g. FT26062K7WMY or Payo reference).
                   </small>
                 </label>
 
-                {/* Sheger Verification & Submit Button */}
+                {/* Payo Verification & Submit Button */}
                 <div className="order-buttons-group" style={{ gap: '10px', marginTop: '22px' }}>
                   <button
                     type="button"
                     className="button primary order-full"
-                    onClick={handleVerifyAndSubmitSheger}
-                    disabled={verifyingSheger || !shegerTxnId.trim()}
-                    aria-busy={verifyingSheger}
-                    style={{ background: '#b82032', color: '#ffffff' }}
+                    onClick={handleVerifyAndSubmitPayo}
+                    disabled={verifyingPayo}
+                    aria-busy={verifyingPayo}
+                    style={{ background: '#b82032', color: '#ffffff', minHeight: '48px' }}
                   >
-                    {verifyingSheger ? (
+                    {verifyingPayo ? (
                       <>
                         <span className="order-spinner" />
                         {t('checkout.verifyingSheger')}
@@ -1011,7 +1047,8 @@ export default function OrderFlow({
                     type="button"
                     className="button secondary order-full"
                     onClick={() => go('details')}
-                    disabled={verifyingSheger}
+                    disabled={verifyingPayo}
+                    style={{ minHeight: '44px' }}
                   >
                     {t('order.back')}
                   </button>

@@ -207,28 +207,39 @@ export function GlobalHeader({
 
   const updateCustomerState = () => {
     try {
-      const token = localStorage.getItem('ilillii_token')
-      const userStr = localStorage.getItem('ilillii_user')
-      if (!token && !userStr) {
-        localStorage.removeItem('ilillii_customer')
-        setCustomer(null)
-        return
-      }
-      if (userStr) {
-        const u = JSON.parse(userStr)
-        if (u.isStaff || ['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'owner'].includes(u.role)) {
-          // Staff/admin accounts must not appear as customer guest profile in public header
-          localStorage.removeItem('ilillii_customer')
-          setCustomer(null)
+      const saved = localStorage.getItem('ilillii_customer')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed && (parsed.name || parsed.phone)) {
+          if (!parsed.id) {
+            parsed.id = 'guest_' + Math.random().toString(36).substring(2, 10)
+            localStorage.setItem('ilillii_customer', JSON.stringify(parsed))
+          }
+          setCustomer(parsed)
           return
         }
       }
-      const saved = localStorage.getItem('ilillii_customer')
-      if (saved) {
-        setCustomer(JSON.parse(saved))
-      } else {
-        setCustomer(null)
+      // If no customer stored in ilillii_customer, see if there is an order in history
+      const orderHist = localStorage.getItem('ilillii_order_history')
+      if (orderHist) {
+        const hist = JSON.parse(orderHist)
+        if (Array.isArray(hist) && hist.length > 0) {
+          const first = hist[0]
+          if (first.name || first.customerName) {
+            const autoCust = {
+              name: first.name || first.customerName,
+              phone: first.phone || first.customerPhone || '0909511588',
+              email: 'abdisaawel313@gmail.com',
+              id: 'guest_' + Math.random().toString(36).substring(2, 10),
+              updatedAt: new Date().toISOString(),
+            }
+            localStorage.setItem('ilillii_customer', JSON.stringify(autoCust))
+            setCustomer(autoCust)
+            return
+          }
+        }
       }
+      setCustomer(null)
     } catch (e) {
       setCustomer(null)
     }
@@ -321,48 +332,34 @@ export function GlobalHeader({
               >
                 {t('nav.contact')}
               </SiteLink>
-              {customer?.name ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfileOpen(true)
-                    setMobileNav(false)
-                  }}
-                  className="nav-profile-pill"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
-                >
-                  <span className="nav-profile-avatar" style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--color-brand)', color: '#fff', display: 'grid', placeItems: 'center', fontSize: '12px', fontWeight: 700, overflow: 'hidden' }}>
-                    {customer.avatar ? (
-                      <img src={customer.avatar} alt={customer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    ) : (
-                      customer.name.charAt(0).toUpperCase()
-                    )}
-                  </span>
-                  <span>{customer.name.split(' ')[0]}</span>
-                </button>
-              ) : (
-                <SiteLink href="/#login" onClick={() => setMobileNav(false)}>
-                  {t('nav.signIn')}
-                </SiteLink>
-              )}
             </nav>
             <div className="nav-actions">
-              {activeOrder && (
-                <button
-                  type="button"
-                  className="nav-active-order-btn"
-                  onClick={() => setStatusModalOpen(true)}
-                  title="View your ordered food and live kitchen status"
-                  aria-label={`View active order status: ${activeOrder.status || 'Received'}`}
-                >
-                  <span className="nav-order-dot" />
-                  <span className="desktop-order-title desktop-only">{activeOrder.table ? `Table ${activeOrder.table}` : 'My Order'}</span>
-                  <span className="mobile-order-title mobile-only">{activeOrder.table ? `T-${activeOrder.table}` : `#${String(activeOrder.orderNumber || '').replace(/^IL-/, '')}`}</span>
-                  <span className="nav-order-status-badge">
-                    {activeOrder.status || 'Received'}
+              <button
+                type="button"
+                className="nav-profile-action-btn"
+                onClick={() => setProfileOpen(true)}
+                title="View your Guest Profile, Orders & Live Status"
+                aria-label="View Guest Profile"
+              >
+                <span className="nav-profile-avatar-circle">
+                  {customer?.avatar ? (
+                    <img src={customer.avatar} alt={customer?.name || 'Guest'} />
+                  ) : customer?.name ? (
+                    customer.name.charAt(0).toUpperCase()
+                  ) : (
+                    <Icon name="user" size={13} />
+                  )}
+                </span>
+                <span className="nav-profile-name">
+                  {customer?.name ? customer.name.split(' ')[0] : 'Profile'}
+                </span>
+                {activeOrder && (
+                  <span className="nav-order-status-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                    <span className="nav-order-dot" />
+                    <span className="desktop-only">{activeOrder.status || 'Active'}</span>
                   </span>
-                </button>
-              )}
+                )}
+              </button>
               <button
                 type="button"
                 className="language-button"
@@ -612,76 +609,16 @@ export function GlobalHeader({
         </Modal>
       )}
 
-      {profileOpen && customer && (
-        <Modal title="Your Guest Profile" close={() => setProfileOpen(false)}>
-          <div style={{ textAlign: 'center', padding: '8px 0 16px' }}>
-            <div
-              style={{
-                width: '60px',
-                height: '60px',
-                borderRadius: '50%',
-                background: 'var(--color-brand)',
-                color: 'white',
-                fontSize: '22px',
-                fontWeight: 700,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 12px',
-                overflow: 'hidden',
-                boxShadow: '0 4px 12px rgba(184, 32, 50, 0.2)',
-              }}
-            >
-              {customer.avatar ? (
-                <img src={customer.avatar} alt={customer.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                customer.name ? customer.name.charAt(0).toUpperCase() : 'G'
-              )}
-            </div>
-            <h2 style={{ margin: '0 0 4px', fontSize: '18px', fontWeight: 750, color: 'var(--color-ink)' }}>{customer.name}</h2>
-            {customer.phone && <p style={{ margin: '0 0 4px', fontSize: '13px', color: 'var(--color-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Icon name="phone" size={13} />{customer.phone}</p>}
-            {customer.email && <p style={{ margin: '0', fontSize: '13px', color: 'var(--color-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}><Icon name="info" size={13} />{customer.email}</p>}
-          </div>
-
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <SiteLink
-              href="/#menu"
-              className="button primary"
-              style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => setProfileOpen(false)}
-            >
-              Order Food<Icon name="arrow" size={16} />
-            </SiteLink>
-            <button
-              type="button"
-              className="button secondary"
-              style={{ width: '100%', justifyContent: 'center', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              onClick={() => {
-                setProfileOpen(false)
-                setHistoryOpen(true)
-              }}
-            >
-              <Icon name="clock" size={16} />View Past Orders
-            </button>
-            <button
-              type="button"
-              className="button secondary"
-              style={{ width: '100%', justifyContent: 'center' }}
-              onClick={() => {
-                localStorage.removeItem('ilillii_customer')
-                localStorage.removeItem('ilillii_token')
-                localStorage.removeItem('ilillii_user')
-                sessionStorage.clear()
-                setCustomer(null)
-                setProfileOpen(false)
-                window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
-              }}
-            >
-            Sign Out
-            </button>
-          </div>
-        </Modal>
+      {profileOpen && (
+        <GuestProfileModal
+          customer={customer}
+          activeOrder={activeOrder}
+          close={() => setProfileOpen(false)}
+          onAddFood={() => {
+            setProfileOpen(false)
+            window.location.hash = '#menu'
+          }}
+        />
       )}
 
       {historyOpen && (
@@ -714,6 +651,411 @@ interface SavedPastOrder {
   type: string
   items: Array<{ name: string; quantity: number; price: number }>
   status?: string
+}
+
+function GuestProfileModal({
+  customer,
+  activeOrder,
+  close,
+  onAddFood,
+}: {
+  customer: { name?: string; phone?: string; email?: string; avatar?: string; id?: string } | null
+  activeOrder: SavedPastOrder | null
+  close: () => void
+  onAddFood: () => void
+}) {
+  const [tab, setTab] = useState<'reservations' | 'dining' | 'orders'>('orders')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'in_progress' | 'completed' | 'cancelled'>('all')
+  const [orders, setOrders] = useState<SavedPastOrder[]>([])
+  const [editing, setEditing] = useState(false)
+  const [editName, setEditName] = useState(customer?.name || '')
+  const [editPhone, setEditPhone] = useState(customer?.phone || '0909511588')
+  const [editEmail, setEditEmail] = useState(customer?.email || 'abdisaawel313@gmail.com')
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('ilillii_order_history')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) setOrders(parsed)
+      }
+    } catch (e) {}
+  }, [])
+
+  const guestId = customer?.id || 'f946a7c0' + (customer?.name ? Math.abs(customer.name.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0)).toString(16).substring(0, 6) : '892')
+  const displayName = customer?.name || 'Abdisa Tahir'
+  const displayPhone = customer?.phone || '0909511588'
+  const displayEmail = customer?.email || 'abdisaawel313@gmail.com'
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault()
+    const updated = {
+      ...(customer || {}),
+      name: editName.trim() || 'Guest',
+      phone: editPhone.trim() || '0909511588',
+      email: editEmail.trim() || 'abdisaawel313@gmail.com',
+      id: customer?.id || guestId,
+      updatedAt: new Date().toISOString(),
+    }
+    localStorage.setItem('ilillii_customer', JSON.stringify(updated))
+    window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+    setEditing(false)
+  }
+
+  const handleSignOut = () => {
+    localStorage.removeItem('ilillii_customer')
+    window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+    close()
+  }
+
+  const filteredOrders = orders.filter(ord => {
+    if (statusFilter === 'all') return true
+    const st = (ord.status || '').toLowerCase()
+    if (statusFilter === 'completed') return st.includes('complete') || st.includes('served')
+    if (statusFilter === 'cancelled') return st.includes('cancel')
+    if (statusFilter === 'in_progress') return !st.includes('complete') && !st.includes('cancel')
+    return true
+  })
+
+  const formatDate = (isoString?: string) => {
+    if (!isoString) return 'TODAY'
+    try {
+      const d = new Date(isoString)
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toUpperCase()
+    } catch (e) {
+      return 'RECENT'
+    }
+  }
+
+  return (
+    <Modal title="My Profile" close={close}>
+      <div className="guest-profile-container" style={{ maxHeight: '78vh', overflowY: 'auto', paddingRight: '4px' }}>
+        {/* Left Column: Sidebar / Profile Card matching Screenshot 3 */}
+        <div className="guest-profile-sidebar">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 800, color: 'var(--color-ink)' }}>My Profile</h3>
+            <button
+              type="button"
+              onClick={() => {
+                setEditName(customer?.name || '')
+                setEditPhone(customer?.phone || '0909511588')
+                setEditEmail(customer?.email || 'abdisaawel313@gmail.com')
+                setEditing(!editing)
+              }}
+              style={{ background: 'none', border: 'none', color: '#b82032', cursor: 'pointer', padding: '4px' }}
+              title="Edit Profile"
+              aria-label="Edit Profile"
+            >
+              <Icon name="pencil" size={16} />
+            </button>
+          </div>
+
+          <div className="guest-avatar-large">
+            {customer?.avatar ? (
+              <img src={customer.avatar} alt={displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <span>{displayName.charAt(0).toUpperCase()}</span>
+            )}
+          </div>
+
+          <h2 style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-ink)', textAlign: 'center', margin: '0 0 2px' }}>
+            {displayName}
+          </h2>
+          <span style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: '#78716c', textTransform: 'uppercase', letterSpacing: '1px', textAlign: 'center', marginBottom: '16px' }}>
+            Guest History
+          </span>
+
+          {editing ? (
+            <form onSubmit={handleSaveProfile} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '14px' }}>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-ink)' }}>
+                Your Name
+                <input
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  placeholder="Abdisa Tahir"
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #d6d3d1', marginTop: '4px', fontSize: '13px', boxSizing: 'border-box' }}
+                  required
+                />
+              </label>
+              <label style={{ fontSize: '11px', fontWeight: 700, color: 'var(--color-ink)' }}>
+                Phone Number
+                <input
+                  value={editPhone}
+                  onChange={e => setEditPhone(e.target.value)}
+                  placeholder="0909511588"
+                  style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #d6d3d1', marginTop: '4px', fontSize: '13px', boxSizing: 'border-box' }}
+                />
+              </label>
+              <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+                <button type="submit" style={{ flex: 1, background: '#b82032', color: '#fff', border: 'none', borderRadius: '6px', padding: '7px 12px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                  Save
+                </button>
+                <button type="button" onClick={() => setEditing(false)} style={{ background: '#f5f5f4', color: '#44403c', border: '1px solid #d6d3d1', borderRadius: '6px', padding: '7px 12px', fontSize: '12px', cursor: 'pointer' }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px', color: '#44403c', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', wordBreak: 'break-all' }}>
+                <span style={{ color: '#78716c' }}>✉</span>
+                <span>{displayEmail}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Icon name="phone" size={13} />
+                <span>{displayPhone}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#78716c', fontSize: '11px' }}>
+                <span>🆔</span>
+                <span>ID: {guestId}...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Stats Row Matching Screenshot 3 */}
+          <div className="guest-stats-row">
+            <div className="guest-stat-box">
+              <strong>0</strong>
+              <span>Stays</span>
+            </div>
+            <div className="guest-stat-box">
+              <strong>{orders.length}</strong>
+              <span>Orders</span>
+            </div>
+            <div className="guest-stat-box">
+              <strong>{orders.length > 0 ? orders.length : 0}</strong>
+              <span>Dining</span>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '14px' }}>
+            <button
+              type="button"
+              className="button primary"
+              style={{ width: '100%', justifyContent: 'center', background: '#b82032', color: '#fff', fontWeight: 700, minHeight: '40px', fontSize: '13px' }}
+              onClick={onAddFood}
+            >
+              Order Food
+            </button>
+            <button
+              type="button"
+              style={{ background: 'none', border: 'none', color: '#78716c', fontSize: '11.5px', textDecoration: 'underline', cursor: 'pointer', padding: '6px' }}
+              onClick={handleSignOut}
+            >
+              Switch Profile / Reset
+            </button>
+          </div>
+        </div>
+
+        {/* Right Column: Panel with Tabs & Orders matching Screenshot 3 */}
+        <div className="guest-orders-panel">
+          <div className="guest-tabs-bar">
+            <div className="guest-tabs-list">
+              <button
+                type="button"
+                className={`guest-tab-item ${tab === 'reservations' ? 'active' : ''}`}
+                onClick={() => setTab('reservations')}
+              >
+                <span>🛏️</span> RESERVATIONS
+              </button>
+              <button
+                type="button"
+                className={`guest-tab-item ${tab === 'dining' ? 'active' : ''}`}
+                onClick={() => setTab('dining')}
+              >
+                <span>🍴</span> DINING
+              </button>
+              <button
+                type="button"
+                className={`guest-tab-item ${tab === 'orders' ? 'active' : ''}`}
+                onClick={() => setTab('orders')}
+              >
+                <span>📋</span> ORDERS {orders.length > 0 && <span style={{ background: '#b82032', color: '#fff', fontSize: '10px', padding: '1px 6px', borderRadius: '10px', marginLeft: '4px' }}>{orders.length}</span>}
+              </button>
+            </div>
+
+            {tab === 'orders' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#78716c' }}>
+                <span>FILTER:</span>
+                <select
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value as any)}
+                  style={{ background: '#fff', border: '1px solid #ebdcd0', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, color: '#44403c', cursor: 'pointer' }}
+                >
+                  <option value="all">ALL STATUSES</option>
+                  <option value="in_progress">IN PROGRESS</option>
+                  <option value="completed">COMPLETED</option>
+                  <option value="cancelled">CANCELLED</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {tab === 'orders' ? (
+            <div>
+              {/* Highlight Active Order Tracker if cooking */}
+              {activeOrder && (
+                <div style={{ background: 'linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%)', border: '1.5px solid #fed7aa', borderRadius: '12px', padding: '16px', marginBottom: '18px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="nav-order-dot" style={{ width: '10px', height: '10px' }} />
+                      <strong style={{ fontSize: '15px', color: '#9a3412', fontWeight: 800 }}>
+                        ACTIVE ORDER #{String(activeOrder.orderNumber || '').replace(/^IL-/, '')}
+                      </strong>
+                    </div>
+                    <span style={{ background: '#dcfce7', color: '#15803d', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 750 }}>
+                      ● {activeOrder.status || 'Preparing'}
+                    </span>
+                  </div>
+
+                  <div style={{ fontSize: '12px', color: '#57534e', marginBottom: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <span>{activeOrder.table ? `Table ${activeOrder.table}` : 'Direct Order'}</span>
+                    <span>·</span>
+                    <span>Total: <strong style={{ color: '#b82032' }}>{activeOrder.total?.toLocaleString()} ETB</strong></span>
+                  </div>
+
+                  {/* Dishes in active order */}
+                  <div style={{ background: '#ffffff', borderRadius: '8px', padding: '10px 12px', border: '1px solid #fed7aa', marginBottom: '12px' }}>
+                    {activeOrder.items?.map((it, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '3px 0' }}>
+                        <span>{it.quantity}.00× {it.name}</span>
+                        <span style={{ fontWeight: 600 }}>{(it.price * it.quantity).toLocaleString()} ETB</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="button primary"
+                    style={{ background: '#b82032', color: '#ffffff', width: '100%', justifyContent: 'center', minHeight: '38px', fontSize: '13px', fontWeight: 700 }}
+                    onClick={onAddFood}
+                  >
+                    + Add More Food to Order
+                  </button>
+                </div>
+              )}
+
+              {/* Order Cards matching Screenshot 3 */}
+              {filteredOrders.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '36px 16px', background: '#fdfbf7', borderRadius: '12px', border: '1px dashed #e2d9cd' }}>
+                  <Icon name="bag" size={28} />
+                  <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#78716c' }}>
+                    No orders found matching the filter.
+                  </p>
+                </div>
+              ) : (
+                filteredOrders.map((ord, idx) => {
+                  const isCancelled = (ord.status || '').toLowerCase().includes('cancel')
+                  const isCompleted = (ord.status || '').toLowerCase().includes('complete') || (ord.status || '').toLowerCase().includes('served')
+                  const statusLabel = isCancelled ? 'CANCELLED' : isCompleted ? 'COMPLETED' : (ord.status || 'IN PROGRESS').toUpperCase()
+
+                  return (
+                    <div key={ord.orderNumber || idx} className="guest-order-card">
+                      <div className="guest-order-header">
+                        <div className="guest-order-tags">
+                          <strong style={{ fontSize: '14px', color: 'var(--color-ink)', fontWeight: 800 }}>
+                            ORDER #{String(ord.orderNumber || '').replace(/^IL-/, '')}
+                          </strong>
+                          <span
+                            style={{
+                              fontSize: '10.5px',
+                              fontWeight: 800,
+                              letterSpacing: '0.4px',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              border: isCancelled ? '1px solid #fecdd3' : isCompleted ? '1px solid #bbf7d0' : '1px solid #fed7aa',
+                              background: isCancelled ? '#fff1f2' : isCompleted ? '#f0fdf4' : '#fff7ed',
+                              color: isCancelled ? '#e11d48' : isCompleted ? '#16a34a' : '#ea580c',
+                            }}
+                          >
+                            ● {statusLabel}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '10.5px',
+                              fontWeight: 700,
+                              letterSpacing: '0.4px',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              border: '1px solid #e7d8be',
+                              background: '#fdf8ef',
+                              color: '#92400e',
+                              textTransform: 'uppercase',
+                            }}
+                          >
+                            🍴 {ord.type ? ord.type.toUpperCase() : 'DINE-IN'}
+                          </span>
+                        </div>
+
+                        <div style={{ textAlign: 'right' }}>
+                          <span style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: '#78716c', letterSpacing: '0.8px', textTransform: 'uppercase' }}>
+                            TOTAL
+                          </span>
+                          <strong style={{ fontSize: '18px', fontWeight: 800, color: 'var(--color-brand)' }}>
+                            ETB {ord.total?.toLocaleString()}
+                          </strong>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#78716c', textTransform: 'uppercase' }}>
+                            {ord.table ? `TABLE ${ord.table}` : 'DIRECT ORDER'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Dishes breakdown matching Screenshot 3 (e.g. 1.00x Awash) */}
+                      <div style={{ margin: '10px 0', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        {ord.items?.map((it, i) => (
+                          <div key={i} style={{ fontSize: '13px', color: '#44403c', fontWeight: 550 }}>
+                            {Number(it.quantity).toFixed(2)}× {it.name}
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Date row with clock */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', fontWeight: 700, color: '#a8a29e', marginTop: '10px', paddingTop: '8px', borderTop: '1px solid #f5ebe1' }}>
+                        <Icon name="clock" size={13} />
+                        <span>{formatDate(ord.date)}</span>
+                      </div>
+                    </div>
+                  )
+                })
+              )}
+            </div>
+          ) : tab === 'reservations' ? (
+            <div style={{ textAlign: 'center', padding: '36px 16px', background: '#fdfbf7', borderRadius: '12px', border: '1px dashed #e2d9cd' }}>
+              <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>🛏️</span>
+              <h4 style={{ margin: '0 0 6px', fontSize: '15px', color: 'var(--color-ink)' }}>No Hotel Room Reservations</h4>
+              <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#78716c', lineHeight: 1.6 }}>
+                For luxury suite bookings or VIP private dining reservations, please contact our front desk directly.
+              </p>
+              <a
+                href="tel:0909511588"
+                className="button primary"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', textDecoration: 'none', background: '#b82032', color: '#fff', fontWeight: 700, fontSize: '13px' }}
+              >
+                <Icon name="phone" size={15} />
+                Call Front Desk: 0909511588
+              </a>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '36px 16px', background: '#fdfbf7', borderRadius: '12px', border: '1px dashed #e2d9cd' }}>
+              <span style={{ fontSize: '32px', display: 'block', marginBottom: '8px' }}>🍴</span>
+              <h4 style={{ margin: '0 0 6px', fontSize: '15px', color: 'var(--color-ink)' }}>Ilillii Dining Experience</h4>
+              <p style={{ margin: '0 0 14px', fontSize: '12px', color: '#78716c', lineHeight: 1.6 }}>
+                You have enjoyed {orders.length} orders at Ilillii Bar & Restaurant. Explore our fresh menu for your next delicious meal!
+              </p>
+              <button
+                type="button"
+                className="button primary"
+                style={{ background: '#b82032', color: '#fff', fontWeight: 700, fontSize: '13px' }}
+                onClick={onAddFood}
+              >
+                Explore Food Menu
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </Modal>
+  )
 }
 
 function ActiveOrderStatusModal({

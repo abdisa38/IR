@@ -39,6 +39,8 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
     'chevron-right': <path d="m9 5 7 7-7 7" />,
     'chevron-left': <path d="m15 5-7 7 7 7" />,
     up: <path d="m7 14 5-5 5 5" />,
+    user: <><circle cx="12" cy="8" r="4" /><path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2" /></>,
+    pencil: <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />,
     trash: <><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" /></>,
     download: <><path d="M12 3v12M7 10l5 5 5-5M3 16v5h18v-5" /></>,
   }
