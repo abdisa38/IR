@@ -9,7 +9,9 @@ try {
 }
 
 export async function connectDB(): Promise<void> {
-  const uri = process.env.MONGODB_URI || 'mongodb+srv://abdisaawel313_db_user:Z3sThBMkaoNAIprs@cluster0.ssexi1b.mongodb.net/ilillii_db?retryWrites=true&w=majority&appName=Cluster0'
+  const uri = process.env.MONGODB_URI
+
+  if (!uri) throw new Error("MONGODB_URI must be configured")
 
   try {
     const conn = await mongoose.connect(uri, {
@@ -27,5 +29,5 @@ mongoose.connection.on('disconnected', () => {
 })
 
 mongoose.connection.on('error', (err) => {
-  console.error('⚠️ MongoDB connection runtime error:', err)
+  console.error("MongoDB connection error")
 })
