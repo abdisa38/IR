@@ -8,9 +8,6 @@ try {
   // Ignore in environments where setting DNS servers is not allowed
 }
 
-const MONGODB_URI =
-  process.env.MONGODB_URI ||
-  'mongodb+srv://abdisaawel313_db_user:Z3sThBMkaoNAIprs@cluster0.ssexi1b.mongodb.net/ilillii_db?retryWrites=true&w=majority&appName=Cluster0'
 
 let isConnected = false
 
@@ -19,15 +16,20 @@ export async function connectDB() {
     return mongoose.connection
   }
 
+  const mongoUri = process.env.MONGODB_URI
+  if (!mongoUri) {
+    throw new Error("MONGODB_URI must be configured")
+  }
+
   try {
-    const conn = await mongoose.connect(MONGODB_URI, {
+    const conn = await mongoose.connect(mongoUri, {
       bufferCommands: false,
     })
     isConnected = true
-    console.log(`✅ MongoDB Connected for Serverless: ${conn.connection.host} / Database: ${conn.connection.name}`)
+    console.log("MongoDB connected")
     return conn.connection
   } catch (error: any) {
-    console.error('❌ MongoDB Connection Error in Serverless Function:', error.message)
+    console.error("MongoDB connection failed")
     throw error
   }
 }

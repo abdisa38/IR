@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
+import { rateLimit } from 'express-rate-limit'
 import dotenv from 'dotenv'
 import { connectDB } from './db.js'
 import menuRoutes from './routes/menu.js'
@@ -13,13 +14,23 @@ dotenv.config()
 
 const app = express()
 
-// Allow all origins (Vercel, localhost, custom domains)
-app.use(
-  cors({
-    origin: '*',
-    credentials: true,
-  })
-)
+// Browser access from a separate frontend requires an explicit origin allowlist.
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',').map(origin => origin.trim()).filter(Boolean)
+app.use(cors({
+  origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)),
+}))
+
+// This per-instance limit complements a shared rate limit at the deployment edge.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many authentication attempts. Please try again later.' },
+})
+app.use('/api/auth', authLimiter)
+app.use('/auth', authLimiter)
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
@@ -39,11 +50,6 @@ app.get('/health', healthHandler)
 
 // Middleware to ensure DB connection before data requests
 app.use(async (req: Request, res: Response, next) => {
-  // Direct staff logins don't require DB connection
-  if (req.path.includes('/auth/login') && req.body?.identifier && ['admin', 'manager', 'kitchen', 'cashier', 'waiter', 'owner'].includes(String(req.body.identifier).toLowerCase())) {
-    return next()
-  }
-
   try {
     await connectDB()
     next()
@@ -51,8 +57,7 @@ app.use(async (req: Request, res: Response, next) => {
     console.error('Database connection middleware error:', err.message)
     res.status(500).json({
       success: false,
-      message: 'Database connection failed. Please ensure MongoDB Atlas Network Access whitelist allows 0.0.0.0/0.',
-      error: err.message,
+      message: 'Database connection failed.',
     })
   }
 })
@@ -84,7 +89,7 @@ app.use((req: Request, res: Response) => {
 // Error handler
 app.use((err: any, _req: Request, res: Response, _next: any) => {
   console.error('Unhandled Server Error in API handler:', err)
-  res.status(500).json({ success: false, message: 'Internal Server Error', error: err.message })
+  res.status(500).json({ success: false, message: 'Internal Server Error' })
 })
 
 export default app
