@@ -131,7 +131,8 @@ body .global-footer :where(a, button, p, span, small, strong) { color: inherit !
 body .global-footer .modal { color: var(--color-ink); }
 body .global-footer .modal :where(a, button, p, span, small, strong) { color: inherit !important; }
 body .bottom-cart { background: var(--color-brand-deep) !important; color: white; }
-body .cart-toast { background: #292524; color: white; }
+body .cart-toast { background: linear-gradient(135deg, #064e3b 0%, #047857 100%) !important; color: #ffffff !important; border: 1.5px solid #34d399 !important; border-radius: 14px !important; box-shadow: 0 12px 28px -4px rgba(4, 120, 87, 0.45), 0 6px 12px -2px rgba(4, 120, 87, 0.25) !important; font-size: 13.5px !important; font-weight: 650 !important; padding: 12px 20px !important; letter-spacing: -0.2px !important; display: flex !important; align-items: center !important; gap: 10px !important; z-index: 9999 !important; }
+body .cart-toast svg { color: #a7f3d0 !important; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2)) !important; }
 body .payment-state-lab, body .prototype-tools { background: white; }
 body .logo-caption { font-size: 10px; color: inherit; }
 body .logo-caption, body .chart-axis, body .unconfigured-provider small, body .order-field > small:not([id]), body .contact-form-copy > .contact-form-disclosure ~ .contact-copy-signoff { display: none !important; }
