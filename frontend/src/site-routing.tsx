@@ -12,6 +12,7 @@ export function sitePage() {
   if (window.location.pathname.replace(/\/$/, '') === '/design-system' && !window.location.hash) return 'design-system'
   if (window.location.hash.startsWith('#admin') || window.location.pathname.startsWith('/admin')) return 'admin'
   if (['#login', '#register', '#signin', '#signup'].includes(window.location.hash) || ['/login', '/register', '/signin', '/signup'].includes(window.location.pathname.replace(/\/$/, ''))) return 'auth'
+  if (['#profile', '#account', '#orders'].includes(window.location.hash) || ['/profile', '/account', '/orders'].includes(window.location.pathname.replace(/\/$/, ''))) return 'profile'
   if (['#home', '#about', '#find-us'].includes(window.location.hash)) return 'home'
   if (['#menu', '#food-menu'].includes(window.location.hash)) return 'menu'
   if (window.location.pathname.replace(/\/$/, '') === '/contact' || window.location.hash === '#contact') return 'contact'

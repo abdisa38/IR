@@ -232,13 +232,37 @@ export const api = {
   },
 
   // Orders
-  async getOrders(params?: { status?: string; type?: string; limit?: number }) {
+  async getOrders(params?: { status?: string; type?: string; limit?: number; phone?: string; customer?: string }) {
     const query = new URLSearchParams()
     if (params?.status && params.status !== 'all') query.set('status', params.status)
     if (params?.type && params.type !== 'all') query.set('type', params.type)
     if (params?.limit) query.set('limit', String(params.limit))
+    if (params?.phone) query.set('phone', params.phone)
+    if (params?.customer) query.set('customer', params.customer)
     const qs = query.toString() ? `?${query.toString()}` : ''
     return request<{ success: boolean; count: number; orders: ApiOrder[] }>(`/orders${qs}`)
+  },
+
+  async createChapaOrder(payload: {
+    amount: number
+    email?: string
+    firstName?: string
+    lastName?: string
+    phone?: string
+    orderId?: string
+    returnUrl?: string
+  }) {
+    return request<{ success: boolean; checkoutUrl: string; txRef: string; amount: number; currency: string }>('/orders/chapa-create', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  async verifyChapaPayment(txRef: string, ourOrderId?: string) {
+    const q = ourOrderId ? `?ourOrderId=${encodeURIComponent(ourOrderId)}` : ''
+    return request<{ success: boolean; verified: boolean; status: string; data?: any }>(`/orders/chapa-verify/${encodeURIComponent(txRef)}${q}`, {
+      method: 'GET',
+    })
   },
 
   async getOrder(id: string) {

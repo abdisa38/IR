@@ -39,7 +39,7 @@ function buildOrderQuery(id: string) {
 // GET /api/orders - list orders with status, type, and pagination filters
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { status, type, limit = 50 } = req.query
+    const { status, type, phone, customer, limit = 50 } = req.query
     const filter: Record<string, any> = {}
 
     if (status && status !== 'all') {
@@ -47,6 +47,12 @@ router.get('/', async (req: Request, res: Response) => {
     }
     if (type && type !== 'all') {
       filter.type = type
+    }
+    if (phone) {
+      filter.customerPhone = String(phone).trim()
+    }
+    if (customer) {
+      filter.customerName = { $regex: String(customer).trim(), $options: 'i' }
     }
 
     const orders = await Order.find(filter)
@@ -126,78 +132,91 @@ router.post('/', async (req: Request, res: Response) => {
   }
 })
 
-// POST /api/orders/payo-create - initialize a Payo payment session
-router.post('/payo-create', async (req: Request, res: Response) => {
+// POST /api/orders/chapa-create - initialize Chapa checkout
+router.post('/chapa-create', async (req: Request, res: Response) => {
   try {
-    const { amount, description, ourOrderId } = req.body
+    const { amount, email, firstName, lastName, phone, orderId, returnUrl } = req.body
     const cleanAmount = Number(amount) || 0
     if (cleanAmount <= 0) {
-      return res.status(400).json({ success: false, message: 'Invalid order amount' })
+      return res.status(400).json({ success: false, message: 'Valid order amount required' })
     }
 
-    const payoKey = process.env.PAYO_API_KEY || 'pgk_9ffd2e49f7d51a0a6d008337f6e4bd4fedd84d05bab10b18'
-    const descText = description || (ourOrderId ? `Order #${String(ourOrderId).replace(/^IL-/, '')} - Ilillii Hotel` : 'Ilillii Hotel Meal')
+    const secretKey = process.env.CHAPA_SECRET_KEY || 'CHASECK_TEST-SVisq6fT3zWmaHDn4vyEeDZWoAe22YXB'
+    const cleanOrderNum = orderId ? String(orderId).replace(/^IL-/, '') : `${Date.now()}`
+    const txRef = `ilillii-${cleanOrderNum}-${Math.random().toString(36).substring(2, 7)}`
 
-    const payoRes = await fetch('https://dashboard.payment.et/api/v1/orders', {
+    const host = req.get('host') || 'ilillii-restaurant.pro.et'
+    const protocol = req.protocol === 'http' && host.includes('localhost') ? 'http' : 'https'
+
+    const payload = {
+      amount: String(cleanAmount),
+      currency: 'ETB',
+      email: email && email.includes('@') ? email : 'guest@ilillii.com',
+      first_name: firstName || 'Guest',
+      last_name: lastName || 'Customer',
+      phone_number: phone || '0909511588',
+      tx_ref: txRef,
+      callback_url: `${protocol}://${host}/api/orders/chapa-webhook`,
+      return_url: returnUrl || `${protocol}://${host}/#profile`,
+      'customization[title]': 'Ilillii Hotel',
+      'customization[description]': `Order #${cleanOrderNum}`,
+    }
+
+    const chapaRes = await fetch('https://api.chapa.co/v1/transaction/initialize', {
       method: 'POST',
       headers: {
-        'x-api-key': payoKey,
+        Authorization: `Bearer ${secretKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        amount: cleanAmount,
-        description: descText,
-        callbackUrl: 'https://ilillii-restaurant.pro.et/api/orders/payo-webhook',
-      }),
+      body: JSON.stringify(payload),
     })
 
-    const data = await payoRes.json()
-    if (!payoRes.ok || !data.orderId) {
-      return res.status(payoRes.status || 500).json({
+    const data = await chapaRes.json()
+    if (!chapaRes.ok || data.status !== 'success' || !data.data?.checkout_url) {
+      return res.status(chapaRes.status || 500).json({
         success: false,
-        message: data.message || 'Failed to initialize Payo payment',
+        message: data.message || 'Failed to initialize Chapa payment',
         error: data,
       })
     }
 
     return res.json({
       success: true,
-      orderId: data.orderId,
-      paymentUrl: data.paymentUrl || `https://checkout.payment.et/pay/${data.orderId}`,
-      expiresAt: data.expiresAt,
-      amount: data.amount,
-      currency: data.currency || 'ETB',
+      checkoutUrl: data.data.checkout_url,
+      txRef,
+      amount: cleanAmount,
+      currency: 'ETB',
     })
   } catch (error: any) {
-    console.error('Payo order create error:', error)
-    return res.status(500).json({ success: false, message: 'Payo connection failed', error: error.message })
+    console.error('Chapa order create error:', error)
+    return res.status(500).json({ success: false, message: 'Chapa connection failed', error: error.message })
   }
 })
 
-// GET /api/orders/payo-verify/:payoOrderId - check live status of Payo order
-router.get('/payo-verify/:payoOrderId', async (req: Request, res: Response) => {
+// GET /api/orders/chapa-verify/:txRef - check live status of Chapa order
+router.get('/chapa-verify/:txRef', async (req: Request, res: Response) => {
   try {
-    const { payoOrderId } = req.params
+    const { txRef } = req.params
     const ourOrderId = req.query.ourOrderId as string | undefined
-    const payoKey = process.env.PAYO_API_KEY || 'pgk_9ffd2e49f7d51a0a6d008337f6e4bd4fedd84d05bab10b18'
+    const secretKey = process.env.CHAPA_SECRET_KEY || 'CHASECK_TEST-SVisq6fT3zWmaHDn4vyEeDZWoAe22YXB'
 
-    const payoRes = await fetch(`https://dashboard.payment.et/api/v1/orders/${payoOrderId}`, {
+    const chapaRes = await fetch(`https://api.chapa.co/v1/transaction/verify/${txRef}`, {
       method: 'GET',
       headers: {
-        'x-api-key': payoKey,
+        Authorization: `Bearer ${secretKey}`,
       },
     })
 
-    const data = await payoRes.json()
-    const isApproved = Boolean(data && (data.status === 'APPROVED' || data.status === 'COMPLETED' || data.status === 'SUCCESS'))
+    const data = await chapaRes.json()
+    const isSuccess = Boolean(data && data.status === 'success' && data.data && data.data.status === 'success')
 
-    if (isApproved && ourOrderId) {
+    if (isSuccess && ourOrderId) {
       try {
         const order = await Order.findOne(buildOrderQuery(String(ourOrderId)))
         if (order && order.paymentStatus !== 'paid') {
           order.paymentStatus = 'paid'
-          order.paymentMethod = 'Payo (Verified)'
-          order.transactionId = String(payoOrderId)
+          order.paymentMethod = 'Chapa (Verified)'
+          order.transactionId = txRef
           await order.save()
         }
       } catch (e) {}
@@ -205,40 +224,38 @@ router.get('/payo-verify/:payoOrderId', async (req: Request, res: Response) => {
 
     return res.json({
       success: true,
-      verified: isApproved,
-      status: data.status || 'PENDING',
-      payo: data,
+      verified: isSuccess,
+      status: isSuccess ? 'success' : (data?.data?.status || data?.status || 'pending'),
+      data: data?.data,
     })
   } catch (error: any) {
-    console.error('Payo verify error:', error)
-    return res.status(500).json({ success: false, message: 'Failed to verify Payo payment', error: error.message })
+    console.error('Chapa verify error:', error)
+    return res.status(500).json({ success: false, message: 'Failed to verify Chapa payment', error: error.message })
   }
 })
 
-// POST /api/orders/payo-webhook - incoming webhook when customer payment is verified
-router.post('/payo-webhook', async (req: Request, res: Response) => {
+// POST /api/orders/chapa-webhook - incoming webhook when customer payment is verified
+router.post('/chapa-webhook', async (req: Request, res: Response) => {
   try {
-    const { orderId, status, amount } = req.body
-    console.log(`[Payo Webhook Received] Order: ${orderId}, Status: ${status}, Amount: ${amount}`)
-
-    if (status === 'APPROVED' || status === 'COMPLETED') {
+    const { tx_ref, status } = req.body
+    if (status === 'success' && tx_ref) {
       const order = await Order.findOne({
         $or: [
-          { transactionId: String(orderId) },
-          { note: { $regex: String(orderId), $options: 'i' } }
+          { transactionId: String(tx_ref) },
+          { note: { $regex: String(tx_ref), $options: 'i' } }
         ]
       })
 
       if (order) {
         order.paymentStatus = 'paid'
-        order.paymentMethod = 'Payo (Verified)'
+        order.paymentMethod = 'Chapa (Verified)'
         await order.save()
       }
     }
 
     return res.json({ success: true, received: true })
   } catch (err: any) {
-    console.error('Payo webhook processing error:', err)
+    console.error('Chapa webhook processing error:', err)
     return res.status(200).json({ success: true, error: err.message })
   }
 })
