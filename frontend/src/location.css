@@ -685,6 +685,79 @@
   }
 }
 
+@media (max-width: 640px) {
+  body header .nav-inner {
+    padding-inline: 12px !important;
+  }
+
+  body .nav-top-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  body .nav-top-bar > .logo {
+    margin-right: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  body .nav-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
+  }
+
+  body .nav-profile-action-btn,
+  body .nav-actions > .nav-profile-action-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-height: 32px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: grid !important;
+    place-items: center !important;
+    border: 1px solid #ebdcd0 !important;
+    box-shadow: none !important;
+    flex-shrink: 0 !important;
+  }
+
+  body .nav-profile-action-btn .nav-profile-avatar-circle {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: 11px !important;
+  }
+
+  body .nav-profile-action-btn .nav-profile-name,
+  body .nav-profile-action-btn .nav-order-status-badge {
+    display: none !important;
+  }
+
+  body .nav-actions > .cart-trigger.cart-empty {
+    display: none !important;
+  }
+
+  body .nav-actions > .cart-trigger {
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 9px !important;
+    font-size: 12px !important;
+    border-radius: 10px !important;
+    gap: 4px !important;
+  }
+
+  body .nav-actions > .cart-trigger span {
+    display: none !important;
+  }
+
+  body .mobile-toggle {
+    margin-left: 4px !important;
+    flex-shrink: 0 !important;
+  }
+}
+
 /* --- Screenshot 3: Full Guest Profile & Orders Layout --- */
 .guest-profile-modal-shell {
   max-width: 1080px !important;

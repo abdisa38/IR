@@ -56,11 +56,14 @@ export default function Profile() {
     return Boolean(dA && dB && dA === dB)
   }
 
+  const SIX_HOURS_MS = 6 * 60 * 60 * 1000
+
   // Load orders cleanly without blinking
   const fetchOrders = async (silent = false) => {
     if (!silent) setLoading(true)
     const currentCust = customerRef.current
     const localMap = new Map<string, OrderRecord>()
+    const clearedAt = Number(localStorage.getItem('ilillii_history_cleared_at') || 0)
 
     // 1. Read local order history, but ONLY include orders that belong to this customer
     try {
@@ -71,6 +74,15 @@ export default function Profile() {
           for (const ord of parsed) {
             const key = String(ord.orderNumber || ord._id || '').replace(/^IL-/, '')
             if (!key) continue
+
+            const ordTime = new Date(ord.date || ord.createdAt || 0).getTime()
+            // Skip if history was cleared after this order
+            if (clearedAt && ordTime <= clearedAt) continue
+
+            // If order is unfinished and older than 6 hours, do not show on customer dashboard
+            const st = String(ord.status || '').toLowerCase()
+            const isUnfinished = ['submitted', 'pending', 'accepted', 'preparing', 'cooking', 'ready', 'ready to serve'].includes(st)
+            if (isUnfinished && ordTime > 0 && Date.now() - ordTime > SIX_HOURS_MS) continue
 
             // Verify order belongs to this customer
             const activeId = localStorage.getItem('ilillii_active_order_id')
@@ -114,26 +126,35 @@ export default function Profile() {
         if (res && res.success && Array.isArray(res.orders)) {
           for (const ord of res.orders) {
             const key = String(ord.orderNumber || ord._id || '').replace(/^IL-/, '')
-            if (key) {
-              localMap.set(key, {
-                _id: ord._id,
-                orderNumber: ord.orderNumber || key,
-                total: ord.total,
-                table: ord.table,
-                type: ord.type,
-                status: ord.status,
-                paymentMethod: ord.paymentMethod,
-                createdAt: ord.createdAt,
-                date: ord.createdAt,
-                items: Array.isArray(ord.items)
-                  ? ord.items.map((it: any) => ({
-                      name: it.name,
-                      quantity: Number(it.quantity) || 1,
-                      price: Number(it.price) || 0,
-                    }))
-                  : [],
-              })
-            }
+            if (!key) continue
+
+            const ordTime = new Date(ord.createdAt || 0).getTime()
+            // Skip if history was cleared after this order
+            if (clearedAt && ordTime <= clearedAt) continue
+
+            // If order is unfinished and older than 6 hours, do not show on customer dashboard
+            const st = String(ord.status || '').toLowerCase()
+            const isUnfinished = ['submitted', 'pending', 'accepted', 'preparing', 'cooking', 'ready', 'ready to serve'].includes(st)
+            if (isUnfinished && ordTime > 0 && Date.now() - ordTime > SIX_HOURS_MS) continue
+
+            localMap.set(key, {
+              _id: ord._id,
+              orderNumber: ord.orderNumber || key,
+              total: ord.total,
+              table: ord.table,
+              type: ord.type,
+              status: ord.status,
+              paymentMethod: ord.paymentMethod,
+              createdAt: ord.createdAt,
+              date: ord.createdAt,
+              items: Array.isArray(ord.items)
+                ? ord.items.map((it: any) => ({
+                    name: it.name,
+                    quantity: Number(it.quantity) || 1,
+                    price: Number(it.price) || 0,
+                  }))
+                : [],
+            })
           }
         }
       } catch {}
@@ -178,12 +199,19 @@ export default function Profile() {
       fetchOrders(false)
     }
 
+    const handleHistoryCleared = () => {
+      setOrders([])
+      fetchOrders(false)
+    }
+
     window.addEventListener('ilillii-auth-changed', handleAuth)
     window.addEventListener('ilillii-order-placed', handleOrderPlaced)
+    window.addEventListener('ilillii-history-cleared', handleHistoryCleared)
     return () => {
       clearInterval(pollInterval)
       window.removeEventListener('ilillii-auth-changed', handleAuth)
       window.removeEventListener('ilillii-order-placed', handleOrderPlaced)
+      window.removeEventListener('ilillii-history-cleared', handleHistoryCleared)
     }
   }, [])
 
@@ -214,19 +242,88 @@ export default function Profile() {
       localStorage.removeItem('ilillii_active_order_id')
       localStorage.removeItem('ilillii_active_order_time')
       localStorage.removeItem('ilillii_order_history')
+      localStorage.setItem('ilillii_history_cleared_at', Date.now().toString())
       setCustomer(null)
       setOrders([])
       setIsEditing(false)
       window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+      window.dispatchEvent(new CustomEvent('ilillii-history-cleared'))
       window.location.hash = '#home'
     }
   }
 
-  // Active in-progress order
-  const activeOrder = orders.find(ord => {
-    const st = (ord.status || '').toLowerCase()
-    return ['submitted', 'pending', 'accepted', 'preparing', 'cooking', 'ready', 'ready to serve'].includes(st)
-  })
+  // Clear all past history from dashboard
+  const handleClearHistory = () => {
+    if (!window.confirm('Clear all order history from your dashboard?')) return
+    localStorage.removeItem('ilillii_order_history')
+    localStorage.removeItem('ilillii_active_order_id')
+    localStorage.removeItem('ilillii_active_order_time')
+    localStorage.setItem('ilillii_history_cleared_at', Date.now().toString())
+    setOrders([])
+    window.dispatchEvent(new CustomEvent('ilillii-history-cleared'))
+    window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+  }
+
+  // Allow customer to cancel their active order
+  const handleCancelOrder = async (orderNumber: string) => {
+    if (!window.confirm('Are you sure you want to cancel this order?')) return
+    try {
+      await api.updateOrderStatus(orderNumber, 'cancelled')
+      const cleanNum = String(orderNumber).replace(/^IL-/, '')
+      const activeId = localStorage.getItem('ilillii_active_order_id')
+      if (activeId && String(activeId).replace(/^IL-/, '') === cleanNum) {
+        localStorage.removeItem('ilillii_active_order_id')
+        localStorage.removeItem('ilillii_active_order_time')
+      }
+      try {
+        const hist = JSON.parse(localStorage.getItem('ilillii_order_history') || '[]')
+        const updated = hist.map((h: any) =>
+          String(h.orderNumber).replace(/^IL-/, '') === cleanNum ? { ...h, status: 'Cancelled' } : h
+        )
+        localStorage.setItem('ilillii_order_history', JSON.stringify(updated))
+      } catch {}
+      window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+      fetchOrders(false)
+    } catch (err: any) {
+      alert('Unable to cancel order: ' + (err.message || 'Please contact restaurant staff.'))
+    }
+  }
+
+  // Active in-progress order selection (Strictly current & within 6 hours)
+  const activeStoredId = typeof window !== 'undefined' ? localStorage.getItem('ilillii_active_order_id') : null
+
+  let activeOrder: OrderRecord | null = null
+
+  if (activeStoredId) {
+    const found = orders.find(ord => {
+      const key = String(ord.orderNumber).replace(/^IL-/, '')
+      const target = String(activeStoredId).replace(/^IL-/, '')
+      return key === target
+    })
+    if (found) {
+      const st = (found.status || '').toLowerCase()
+      const isFinished = ['completed', 'served', 'cancelled'].includes(st)
+      const ordTime = new Date(found.createdAt || found.date || 0).getTime()
+      const isExpired = ordTime > 0 && Date.now() - ordTime > SIX_HOURS_MS
+      if (isFinished || isExpired) {
+        localStorage.removeItem('ilillii_active_order_id')
+        localStorage.removeItem('ilillii_active_order_time')
+      } else {
+        activeOrder = found
+      }
+    }
+  }
+
+  // If no tracked active order, ONLY select the latest order if unfinished and placed within 6 hours
+  if (!activeOrder && orders.length > 0) {
+    const latest = orders[0]
+    const st = (latest.status || '').toLowerCase()
+    const isUnfinished = ['submitted', 'pending', 'accepted', 'preparing', 'cooking', 'ready', 'ready to serve'].includes(st)
+    const ordTime = new Date(latest.createdAt || latest.date || 0).getTime()
+    if (isUnfinished && ordTime > 0 && Date.now() - ordTime <= SIX_HOURS_MS) {
+      activeOrder = latest
+    }
+  }
 
   // Stepper helper
   const getStepIndex = (status?: string) => {
@@ -237,10 +334,12 @@ export default function Profile() {
     return 0
   }
 
-  // Filtered orders
+  // Filtered orders (Unfinished orders must be within 6 hours)
   const activeOrders = orders.filter(ord => {
     const st = (ord.status || '').toLowerCase()
-    return ['submitted', 'pending', 'accepted', 'preparing', 'cooking', 'ready', 'ready to serve'].includes(st)
+    const isUnfinished = ['submitted', 'pending', 'accepted', 'preparing', 'cooking', 'ready', 'ready to serve'].includes(st)
+    const ordTime = new Date(ord.createdAt || ord.date || 0).getTime()
+    return isUnfinished && (ordTime === 0 || Date.now() - ordTime <= SIX_HOURS_MS)
   })
 
   const completedOrders = orders.filter(ord => {
@@ -470,6 +569,16 @@ export default function Profile() {
                   <Icon name="refresh" size={13} />
                   Refresh
                 </button>
+                <button
+                  type="button"
+                  className="button secondary"
+                  style={{ minHeight: '36px', padding: '0 12px', fontSize: '12.5px', color: '#dc2626', borderColor: '#fca5a5' }}
+                  onClick={() => handleCancelOrder(activeOrder.orderNumber)}
+                  title="Cancel order"
+                >
+                  <Icon name="close" size={13} />
+                  Cancel
+                </button>
                 <SiteLink
                   href="/#menu"
                   className="button primary"
@@ -489,7 +598,29 @@ export default function Profile() {
         {/* Orders History Section */}
         <section>
           <div className="profile-section-heading">
-            <h2>Order History</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <h2>Order History</h2>
+              {orders.length > 0 && (
+                <button
+                  type="button"
+                  className="profile-clear-history-btn"
+                  onClick={handleClearHistory}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: '#dc2626',
+                    fontSize: '12px',
+                    fontWeight: 650,
+                    cursor: 'pointer',
+                    padding: '2px 6px',
+                    textDecoration: 'underline',
+                  }}
+                  title="Clear all order history from device"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
             <div className="profile-filter-tabs">
               <button
                 type="button"

@@ -156,9 +156,9 @@ export function GlobalHeader({
         if (Array.isArray(parsed) && parsed.length > 0) {
           const matching = parsed.find(
             (o: any) => String(o.orderNumber).replace(/^IL-/, '') === String(activeStoredId).replace(/^IL-/, '')
-          ) || parsed[0]
+          )
 
-          if (matching.status === 'Completed' || matching.status === 'Cancelled') {
+          if (!matching || matching.status === 'Completed' || matching.status === 'Cancelled') {
             localStorage.removeItem('ilillii_active_order_id')
             localStorage.removeItem('ilillii_active_order_time')
             setActiveOrder(null)
@@ -166,8 +166,8 @@ export function GlobalHeader({
           }
 
           const orderTime = matching.date ? new Date(matching.date).getTime() : 0
-          // Show active order if placed within the last 12 hours
-          if (Date.now() - orderTime < 12 * 60 * 60 * 1000) {
+          // Show active order if placed within the last 6 hours
+          if (Date.now() - orderTime < 6 * 60 * 60 * 1000) {
             setActiveOrder(matching)
             if (matching.orderNumber) {
               api.getOrder(matching.orderNumber).then(res => {
@@ -352,7 +352,30 @@ export function GlobalHeader({
                     </span>
                   )}
                 </SiteLink>
-              ) : null}
+              ) : (
+                <SiteLink
+                  href="/#profile"
+                  className="nav-signin-link desktop-only"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    color: 'var(--color-ink)',
+                    textDecoration: 'none',
+                    fontWeight: 650,
+                    fontSize: '13px',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    border: '1.5px solid #ebdcd0',
+                    background: '#ffffff',
+                    whiteSpace: 'nowrap',
+                  }}
+                  title="Sign In / Profile"
+                >
+                  <Icon name="user" size={14} />
+                  <span>Sign In</span>
+                </SiteLink>
+              )}
               <button
                 type="button"
                 className="language-button"
@@ -365,7 +388,7 @@ export function GlobalHeader({
               </button>
               {cartCount !== undefined ? (
                 <button
-                  className="cart-trigger button primary nav-order"
+                  className={`cart-trigger button primary nav-order ${cartCount === 0 ? 'cart-empty' : ''}`}
                   onClick={onOpenCart}
                   aria-label={`Open cart, ${cartCount} items`}
                 >
@@ -554,7 +577,25 @@ export function GlobalHeader({
                 </div>
                 <Icon name="arrow" size={16} />
               </SiteLink>
-            ) : null}
+            ) : (
+              <SiteLink
+                href="/#profile"
+                className="mobile-guest-card"
+                style={{ background: '#fffaf5', border: '1.5px solid #ebdcd0' }}
+                onClick={() => setMobileNav(false)}
+              >
+                <div className="mobile-guest-left">
+                  <div className="mobile-avatar-circle" style={{ background: '#b82032', color: '#ffffff' }}>
+                    <Icon name="user" size={18} />
+                  </div>
+                  <div className="mobile-guest-info">
+                    <strong style={{ color: 'var(--color-ink)' }}>Sign In / Profile</strong>
+                    <span style={{ color: '#78716c' }}>View orders & account</span>
+                  </div>
+                </div>
+                <Icon name="arrow" size={16} />
+              </SiteLink>
+            )}
 
             <div className="mobile-drawer-footer">
               <div>{t('location.address')} · {t('location.town')}</div>
@@ -966,11 +1007,22 @@ function PastOrdersModal({ close }: { close: () => void }) {
   useEffect(() => {
     try {
       const saved = localStorage.getItem('ilillii_order_history')
+      const clearedAt = Number(localStorage.getItem('ilillii_history_cleared_at') || 0)
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed)) setOrders(parsed)
+        if (Array.isArray(parsed)) {
+          const valid = parsed.filter((o: any) => {
+            const t = new Date(o.date || o.createdAt || 0).getTime()
+            return !clearedAt || t > clearedAt
+          })
+          setOrders(valid)
+        }
       }
     } catch (e) {}
+
+    const onCleared = () => setOrders([])
+    window.addEventListener('ilillii-history-cleared', onCleared)
+    return () => window.removeEventListener('ilillii-history-cleared', onCleared)
   }, [])
 
   const startFresh = () => {
@@ -981,8 +1033,13 @@ function PastOrdersModal({ close }: { close: () => void }) {
 
   const clearHistory = () => {
     localStorage.removeItem('ilillii_order_history')
+    localStorage.removeItem('ilillii_active_order_id')
+    localStorage.removeItem('ilillii_active_order_time')
+    localStorage.setItem('ilillii_history_cleared_at', Date.now().toString())
     setOrders([])
     setConfirmClear(false)
+    window.dispatchEvent(new CustomEvent('ilillii-history-cleared'))
+    window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
   }
 
   return (
