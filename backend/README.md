@@ -10,7 +10,7 @@ Production Express + TypeScript + Mongoose REST API connected to MongoDB Atlas.
   - `menuitems`: 36 authentic Ethiopian/Oromo dishes & beverages with Afaan Oromo, Amharic translations, prices in ETB, and photos.
   - `orders`: Real-time order tracking (`IL-XXXX`), dine-in (with table assignment) & pickup takeaway, payment statuses (`pay_after_eating`, `paid`).
   - `staffs`: Staff registry with roles (Manager, Waiter, Kitchen Staff, Cashier), contact info, and active/on-break statuses.
-  - `settings`: Restaurant configuration (Manager contact `0938890645`, Location in Bale Robe around Awraris & General Wako Gutu Square).
+  - `settings`: Restaurant configuration (Manager contact `0909511588`, Location in Bale Robe around Awraris & General Wako Gutu Square).
 - **Analytics Engine**: Real-time aggregation of total revenue, today's sales, active orders, and top selling dishes.
 
 ## 📡 REST API Endpoints

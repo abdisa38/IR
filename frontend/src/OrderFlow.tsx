@@ -129,9 +129,9 @@ export default function OrderFlow({
           if (parsed.phone && parsed.phone !== '0909511588' && !phone) {
             setPhone(parsed.phone)
           } else if (parsed.phone === '0909511588') {
-            parsed.phone = '0938890645'
+            parsed.phone = '0909511588'
             localStorage.setItem('ilillii_customer', JSON.stringify(parsed))
-            setPhone('0938890645')
+            setPhone('0909511588')
           }
         }
       } catch (e) { }
@@ -631,7 +631,7 @@ export default function OrderFlow({
                     value={phone}
                     maxLength={24}
                     onChange={e => setPhone(e.target.value)}
-                    placeholder="0938890645"
+                    placeholder="0909511588"
                   />
                   <small>{t('checkout.phoneHelp')}</small>
                 </label>
@@ -803,7 +803,7 @@ export default function OrderFlow({
                         Telebirr
                       </span>
                       <strong style={{ display: 'block', fontSize: '15px', color: '#14532d', marginTop: '2px' }}>
-                        0938890645
+                        0909511588
                       </strong>
                       <small style={{ fontSize: '11px', color: '#15803d' }}>
                         Abdisa
@@ -811,7 +811,7 @@ export default function OrderFlow({
                     </div>
                     <button
                       type="button"
-                      onClick={() => copyToClipboard('0938890645', 'telebirr')}
+                      onClick={() => copyToClipboard('0909511588', 'telebirr')}
                       style={{
                         background: copiedAccount === 'telebirr' ? '#dcfce7' : '#ffffff',
                         color: copiedAccount === 'telebirr' ? '#15803d' : '#1c1917',
@@ -960,7 +960,7 @@ export default function OrderFlow({
                   </button>
 
                   <a
-                    href="tel:0938890645"
+                    href="tel:0909511588"
                     className="button secondary order-full"
                     style={{
                       display: 'inline-flex',
@@ -1071,7 +1071,7 @@ export default function OrderFlow({
           ) : (
             <p className="modal-description">
               Please ask a member of the team at your table for assistance. If a table number looks
-              wrong, staff will assist you right away. Phone: 0938890645.
+              wrong, staff will assist you right away. Phone: 0909511588.
             </p>
           )}
         </Modal>

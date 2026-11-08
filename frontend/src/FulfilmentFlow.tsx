@@ -173,7 +173,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
                 <div>
                   <strong>{t('pickup.locationTitle')}</strong>
                   <span>{t('pickup.locationSubtitle')}</span>
-                  <small>{t('location.phoneTitle')}: 0938890645</small>
+                  <small>{t('location.phoneTitle')}: 0909511588</small>
                 </div>
               </div>
               <label className="order-field">
@@ -182,7 +182,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
               </label>
               <label className="order-field">
                 {t('checkout.phoneLabel')} <span>{t('optional')}</span>
-                <input aria-invalid={Boolean(error && error.toLowerCase().includes('phone'))} aria-describedby={error ? 'guest-form-error' : undefined} type="tel" inputMode="tel" autoComplete="tel" value={phone} maxLength={24} onChange={event => setPhone(event.target.value)} placeholder="0938890645" />
+                <input aria-invalid={Boolean(error && error.toLowerCase().includes('phone'))} aria-describedby={error ? 'guest-form-error' : undefined} type="tel" inputMode="tel" autoComplete="tel" value={phone} maxLength={24} onChange={event => setPhone(event.target.value)} placeholder="0909511588" />
                 <small>{t('checkout.phoneHelp')}</small>
               </label>
               <label className="order-field">
@@ -238,7 +238,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
                 >
                   <Icon name="clock" size={16} />{t('order.viewPastOrders')}
                 </button>
-                <a href="tel:0938890645" className="button secondary order-full" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none', minHeight: '44px' }}>
+                <a href="tel:0909511588" className="button secondary order-full" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', textDecoration: 'none', minHeight: '44px' }}>
                   <Icon name="phone" size={16} />{t('order.callPhone')}
                 </a>
               </div>
@@ -248,6 +248,6 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
         </div>
       </div>
     </div>
-    {open && modal && <Modal title={modal === 'language' ? 'Choose Language / Qooqa Filadhaa' : modal === 'cancel' ? 'Order Cancellation' : 'Contact Ilillii Hotel'} close={() => setModal(null)}>{modal === 'language' ? <div className="language-options">{languageOptions.map(option => <button className={`language-option ${language === option.id ? 'selected' : ''}`} key={option.id} onClick={() => { setLanguage(option.id); setModal(null) }}><span>{option.native} — {option.label}</span><Icon name={language === option.id ? 'check' : 'globe'} /></button>)}</div> : modal === 'cancel' ? <><p className="modal-description">If you need to change or cancel your order, please call our team directly before kitchen preparation finishes.</p><a href="tel:0938890645" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="phone" size={17} />Call 0938890645</a></> : <><p className="modal-description">Ilillii Hotel is located around Awraris,Bale Robe. If you have any questions or need assistance, please call our team directly.</p><a href="tel:0938890645" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="phone" size={17} />Call 0938890645</a></>}</Modal>}
+    {open && modal && <Modal title={modal === 'language' ? 'Choose Language / Qooqa Filadhaa' : modal === 'cancel' ? 'Order Cancellation' : 'Contact Ilillii Hotel'} close={() => setModal(null)}>{modal === 'language' ? <div className="language-options">{languageOptions.map(option => <button className={`language-option ${language === option.id ? 'selected' : ''}`} key={option.id} onClick={() => { setLanguage(option.id); setModal(null) }}><span>{option.native} — {option.label}</span><Icon name={language === option.id ? 'check' : 'globe'} /></button>)}</div> : modal === 'cancel' ? <><p className="modal-description">If you need to change or cancel your order, please call our team directly before kitchen preparation finishes.</p><a href="tel:0909511588" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="phone" size={17} />Call 0909511588</a></> : <><p className="modal-description">Ilillii Hotel is located around Awraris,Bale Robe. If you have any questions or need assistance, please call our team directly.</p><a href="tel:0909511588" className="button primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}><Icon name="phone" size={17} />Call 0909511588</a></>}</Modal>}
   </dialog>
 }

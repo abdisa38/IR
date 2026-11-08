@@ -196,13 +196,13 @@ export function AuthCard({
     const staffRoles = ['admin', 'owner', 'manager', 'kitchen', 'cashier', 'waiter']
     const isDirectStaff =
       staffRoles.includes(lower) ||
-      cleanId === '0938890645' ||
-      cleanId === '+251938890645' ||
+      cleanId === '0909511588' ||
+      cleanId === '+251909511588' ||
       lower === 'abdisaawel313@gmail.com'
     if (isDirectStaff && (loginPassword === 'ilillii2026' || loginPassword === 'admin' || loginPassword === 'manager' || loginPassword.length >= 4)) {
       const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin'
       const staffName =
-        cleanId === '0938890645' || cleanId === '+251938890645' || lower === 'abdisaawel313@gmail.com'
+        cleanId === '0909511588' || cleanId === '+251909511588' || lower === 'abdisaawel313@gmail.com'
           ? 'Abdisa Awel (Manager)'
           : `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)}`
       const mockToken = `staff-${lower}-${Date.now()}`
@@ -218,7 +218,7 @@ export function AuthCard({
         'ilillii_customer',
         JSON.stringify({
           name: staffName,
-          phone: cleanId.startsWith('09') || cleanId.startsWith('+251') ? cleanId : '0938890645',
+          phone: cleanId.startsWith('09') || cleanId.startsWith('+251') ? cleanId : '0909511588',
           role: assignedRole,
         })
       )
@@ -279,7 +279,7 @@ export function AuthCard({
       return
     }
     if (!regPhone.trim()) {
-      setError('Please enter your phone number (e.g. 0938890645).')
+      setError('Please enter your phone number (e.g. 0909511588).')
       return
     }
     if (regPassword.length < 4) {
@@ -362,7 +362,7 @@ export function AuthCard({
             <input
               type="text"
               autoComplete="username"
-              placeholder="e.g. 0938890645"
+              placeholder="e.g. 0909511588"
               value={loginIdentifier}
               onChange={(e) => setLoginIdentifier(e.target.value)}
               required
@@ -478,7 +478,7 @@ export function AuthCard({
             <input
               type="tel"
               autoComplete="tel"
-              placeholder="e.g. 0938890645"
+              placeholder="e.g. 0909511588"
               value={regPhone}
               onChange={(e) => setRegPhone(e.target.value)}
               required
