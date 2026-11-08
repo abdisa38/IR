@@ -345,37 +345,88 @@ export default function OrderFlow({
     }
   }
 
-  // Option 2: Pay Now with ShegerPay
-  const handleStartShegerPay = () => {
-    if (!checkGuestValidation()) return
-    go('sheger')
+  const handleNameChange = (val: string) => {
+    setName(val)
+    if (error && val.trim()) setError('')
+    try {
+      const existing = JSON.parse(localStorage.getItem('ilillii_customer') || '{}')
+      const updated = {
+        ...existing,
+        name: val.trim(),
+        id: existing.id || 'guest_' + Math.random().toString(36).substring(2, 10),
+        updatedAt: new Date().toISOString(),
+      }
+      localStorage.setItem('ilillii_customer', JSON.stringify(updated))
+      window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+    } catch (e) {}
   }
 
-  const handleVerifyAndSubmitSheger = async () => {
-    const cleanTxn = shegerTxnId.trim()
-    if (!cleanTxn) {
-      setError('Please enter your Transaction ID (e.g. FT26062K7WMY or Telebirr Txn ID).')
-      return
+  const handlePhoneChange = (val: string) => {
+    setPhone(val)
+    try {
+      const existing = JSON.parse(localStorage.getItem('ilillii_customer') || '{}')
+      const updated = {
+        ...existing,
+        phone: val.trim(),
+        id: existing.id || 'guest_' + Math.random().toString(36).substring(2, 10),
+        updatedAt: new Date().toISOString(),
+      }
+      localStorage.setItem('ilillii_customer', JSON.stringify(updated))
+      window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+    } catch (e) {}
+  }
+
+  // Option 2: Pay Now with Payo Ethiopian Gateway
+  const handleStartPayo = async () => {
+    if (!checkGuestValidation()) return
+    setError('')
+    go('sheger')
+    setLoadingPayoLink(true)
+    try {
+      const desc = `Ilillii Order - ${name.trim() || 'Guest'} (${tableNum ? `Table ${tableNum}` : 'Direct'})`
+      const res = await api.createPayoOrder(total, desc, activeOrderId || undefined)
+      if (res && res.success && res.paymentUrl) {
+        setPayoData({
+          orderId: res.orderId,
+          paymentUrl: res.paymentUrl,
+          expiresAt: res.expiresAt,
+        })
+      }
+    } catch (err: any) {
+      console.warn('Payo order initialization notice:', err.message)
+    } finally {
+      setLoadingPayoLink(false)
     }
-    if (!lines.length) {
-      setError('At least one menu item is needed. Return to the menu to check your order.')
-      return
+  }
+
+  // Auto-polling for Payo payment completion
+  useEffect(() => {
+    if (step !== 'sheger' || !payoData?.orderId || Boolean(snapshot)) return
+    let active = true
+
+    const pollPayo = async () => {
+      try {
+        const res = await api.verifyPayoPayment(payoData.orderId, activeOrderId || undefined)
+        if (!active) return
+        if (res && (res.verified || ['paid', 'completed', 'approved'].includes((res.status || '').toLowerCase()))) {
+          await handleCompleteWithVerifiedPayo(payoData.orderId)
+        }
+      } catch (e) {}
     }
 
-    setVerifyingSheger(true)
-    setError('')
+    const timer = setInterval(pollPayo, 3500)
+    return () => {
+      active = false
+      clearInterval(timer)
+    }
+  }, [step, payoData?.orderId, snapshot, lines, total, name, phone, tableNum, note])
+
+  const handleCompleteWithVerifiedPayo = async (payoId: string) => {
+    if (submitting.current) return
+    submitting.current = true
+    setBusy(true)
 
     try {
-      let isVerified = false
-      try {
-        const verifyRes = await api.verifyShegerPayment(cleanTxn, total)
-        if (verifyRes && verifyRes.verified) {
-          isVerified = true
-        }
-      } catch (verifyErr: any) {
-        console.warn('ShegerPay verification notice:', verifyErr.message)
-      }
-
       const isQr = isTableScanned
       const source = isQr ? 'table_qr' : (tableNum ? 'manual_table' : 'web_direct')
       const linePayload = lines.map(l => ({
@@ -386,7 +437,7 @@ export default function OrderFlow({
         image: l.item.confirmedImage || '',
       }))
 
-      const methodLabel = isVerified ? `ShegerPay (Verified: ${cleanTxn})` : `ShegerPay (${cleanTxn})`
+      const methodLabel = `Payo Verified (${payoId})`
 
       let orderRes
       if (activeOrderId) {
@@ -399,7 +450,7 @@ export default function OrderFlow({
             localStorage.removeItem('ilillii_active_order_time')
             setActiveOrderId(null)
           }
-        } catch (e) { }
+        } catch (e) {}
       }
 
       if (!orderRes) {
@@ -412,20 +463,98 @@ export default function OrderFlow({
           note,
           paymentTiming: 'pre_pay',
           paymentMethod: methodLabel,
-          transactionId: cleanTxn,
+          transactionId: payoId,
           source,
         })
       }
 
-      setVerifyingSheger(false)
+      setBusy(false)
+      submitting.current = false
       if (orderRes.success && orderRes.order) {
-        handleOrderSuccess(orderRes.order, methodLabel, cleanTxn, isVerified)
+        handleOrderSuccess(orderRes.order, methodLabel, payoId, true)
       }
     } catch (err: any) {
-      setVerifyingSheger(false)
-      setError(err.message || 'Payment processing failed. Please verify your transaction ID or choose Pay after meal.')
+      setBusy(false)
+      submitting.current = false
     }
   }
+
+  const handleVerifyAndSubmitPayo = async () => {
+    const cleanTxn = (payoTxnId || shegerTxnId).trim()
+    if (!lines.length) {
+      setError('At least one menu item is needed. Return to the menu to check your order.')
+      return
+    }
+
+    setVerifyingPayo(true)
+    setError('')
+
+    try {
+      let isVerified = false
+      if (payoData?.orderId) {
+        try {
+          const verifyRes = await api.verifyPayoPayment(payoData.orderId, activeOrderId || undefined)
+          if (verifyRes && (verifyRes.verified || ['paid', 'completed', 'approved'].includes((verifyRes.status || '').toLowerCase()))) {
+            isVerified = true
+          }
+        } catch (e) {}
+      }
+
+      const isQr = isTableScanned
+      const source = isQr ? 'table_qr' : (tableNum ? 'manual_table' : 'web_direct')
+      const linePayload = lines.map(l => ({
+        menuItemId: l.item.id,
+        name: l.item.name,
+        price: l.item.price,
+        quantity: l.quantity,
+        image: l.item.confirmedImage || '',
+      }))
+
+      const methodRef = cleanTxn || payoData?.orderId || 'Direct'
+      const methodLabel = isVerified ? `Payo Verified (${methodRef})` : `Payo (${methodRef})`
+
+      let orderRes
+      if (activeOrderId) {
+        try {
+          const check = await api.getOrder(activeOrderId)
+          if (check.success && check.order && !['completed', 'cancelled'].includes(check.order.status)) {
+            orderRes = await api.addItemsToOrder(activeOrderId, linePayload, note)
+          } else {
+            localStorage.removeItem('ilillii_active_order_id')
+            localStorage.removeItem('ilillii_active_order_time')
+            setActiveOrderId(null)
+          }
+        } catch (e) {}
+      }
+
+      if (!orderRes) {
+        orderRes = await api.createOrder({
+          items: linePayload,
+          type: 'Dine in',
+          table: tableNum ? tableNum : undefined,
+          customerName: name.trim(),
+          customerPhone: phone.trim(),
+          note,
+          paymentTiming: 'pre_pay',
+          paymentMethod: methodLabel,
+          transactionId: methodRef,
+          source,
+        })
+      }
+
+      setVerifyingPayo(false)
+      if (orderRes.success && orderRes.order) {
+        handleOrderSuccess(orderRes.order, methodLabel, methodRef, isVerified)
+      }
+    } catch (err: any) {
+      setVerifyingPayo(false)
+      setError(err.message || 'Payment processing failed. Please verify or choose Pay after meal.')
+    }
+  }
+
+  // Alias for backward compatibility
+  const handleStartShegerPay = handleStartPayo
+  const handleVerifyAndSubmitSheger = handleVerifyAndSubmitPayo
 
   const handleAddMoreDishes = () => {
     window.dispatchEvent(new CustomEvent('ilillii-clear-cart'))
