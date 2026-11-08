@@ -121,7 +121,8 @@ router.post('/login', async (req: Request, res: Response) => {
       cleanId === '0909511588' ||
       cleanId === '+251909511588' ||
       lower === 'abdisaawel313@gmail.com'
-    if (isDirectStaff && (password === 'ilillii2026' || password === 'admin' || password === 'manager' || password.length >= 4)) {
+    const ADMIN_KEY = process.env.ADMIN_PASSWORD || 'ilillii2026';
+    if (isDirectStaff && (password === ADMIN_KEY || password === 'ilillii2026')) {
       const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin'
       const staffName =
         cleanId === '0909511588' || cleanId === '+251909511588' || lower === 'abdisaawel313@gmail.com'
@@ -153,7 +154,7 @@ router.post('/login', async (req: Request, res: Response) => {
         { email: lower },
       ],
     })
-    if (staffDoc && (staffDoc.password === password || password === '1234' || password === 'ilillii2026')) {
+    if (staffDoc && (staffDoc.password === password || password === (process.env.ADMIN_PASSWORD || 'ilillii2026'))) {
       const assignedRole = staffDoc.role.toLowerCase()
       const staffToken = jwt.sign(
         { id: staffDoc._id.toString(), name: staffDoc.name, role: assignedRole },
