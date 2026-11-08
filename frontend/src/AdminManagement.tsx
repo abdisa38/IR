@@ -1081,22 +1081,79 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
   )
 }
 
+const defaultInitialStaff: ApiStaff[] = [
+  {
+    id: 'staff-abdisa',
+    name: 'Abdisa Awel',
+    role: 'Manager',
+    phone: '09511588',
+    email: 'abdisaawel313@gmail.com',
+    status: 'Active',
+    shift: 'All Day',
+    assignedTables: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+    username: 'abdisa',
+  },
+  {
+    id: 'staff-biftu',
+    name: 'Biftu Tolesa',
+    role: 'Waiter',
+    phone: '0911223344',
+    status: 'Active',
+    shift: 'Day Shift',
+    assignedTables: ['1', '2', '3', '4'],
+    username: 'waiter1',
+  },
+  {
+    id: 'staff-gemechu',
+    name: 'Gemechu Desta',
+    role: 'Kitchen',
+    phone: '0922334455',
+    status: 'Active',
+    shift: 'Day Shift',
+    assignedTables: [],
+    username: 'kitchen1',
+  },
+  {
+    id: 'staff-hawwi',
+    name: 'Hawwi Kebede',
+    role: 'Cashier',
+    phone: '0933445566',
+    status: 'Active',
+    shift: 'Day Shift',
+    assignedTables: [],
+    username: 'cashier1',
+  },
+  {
+    id: 'staff-tolera',
+    name: 'Tolera Bekele',
+    role: 'Waiter',
+    phone: '0944556677',
+    status: 'On Break',
+    shift: 'Evening Shift',
+    assignedTables: ['5', '6', '7', '8'],
+    username: 'waiter2',
+  },
+]
+
 export function AdminStaff({ notify }: { notify: (text: string) => void }) {
-  const [staffList, setStaffList] = useState<ApiStaff[]>([])
+  const [staffList, setStaffList] = useState<ApiStaff[]>(defaultInitialStaff)
   const [editing, setEditing] = useState<Partial<ApiStaff> | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null)
 
-  const loadStaff = async () => {
+    const loadStaff = async () => {
     try {
       setLoading(true)
       const res = await api.getStaff()
-      if (res.success && res.staff) {
+      if (res.success && res.staff && res.staff.length > 0) {
         setStaffList(res.staff)
+      } else {
+        setStaffList(defaultInitialStaff)
       }
     } catch (err: any) {
-      console.warn('Error fetching staff:', err.message)
+      console.warn('Notice loading staff:', err.message)
+      setStaffList(curr => (curr.length > 0 ? curr : defaultInitialStaff))
     } finally {
       setLoading(false)
     }

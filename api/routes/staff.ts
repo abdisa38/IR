@@ -10,7 +10,64 @@ router.use(requireStaffAuth as any)
 // GET /api/staff - fetch all staff
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const staff = await Staff.find().select('-password').sort({ role: 1, name: 1 })
+    let staff = await Staff.find().select('-password').sort({ role: 1, name: 1 })
+    if (!staff || staff.length === 0) {
+      const defaultStaff = [
+        {
+          name: 'Abdisa Awel',
+          role: 'Manager',
+          phone: '09511588',
+          email: 'abdisaawel313@gmail.com',
+          status: 'Active',
+          shift: 'All Day',
+          assignedTables: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+          username: 'abdisa',
+          password: process.env.ADMIN_PASSWORD || 'ilillii2026',
+        },
+        {
+          name: 'Biftu Tolesa',
+          role: 'Waiter',
+          phone: '0911223344',
+          status: 'Active',
+          shift: 'Day Shift',
+          assignedTables: ['1', '2', '3', '4'],
+          username: 'waiter1',
+          password: '1234',
+        },
+        {
+          name: 'Gemechu Desta',
+          role: 'Kitchen',
+          phone: '0922334455',
+          status: 'Active',
+          shift: 'Day Shift',
+          assignedTables: [],
+          username: 'kitchen1',
+          password: '1234',
+        },
+        {
+          name: 'Hawwi Kebede',
+          role: 'Cashier',
+          phone: '0933445566',
+          status: 'Active',
+          shift: 'Day Shift',
+          assignedTables: [],
+          username: 'cashier1',
+          password: '1234',
+        },
+        {
+          name: 'Tolera Bekele',
+          role: 'Waiter',
+          phone: '0944556677',
+          status: 'On Break',
+          shift: 'Evening Shift',
+          assignedTables: ['5', '6', '7', '8'],
+          username: 'waiter2',
+          password: '1234',
+        },
+      ]
+      await Staff.insertMany(defaultStaff)
+      staff = await Staff.find().select('-password').sort({ role: 1, name: 1 })
+    }
     res.json({ success: true, count: staff.length, staff })
   } catch (error: any) {
     res.status(500).json({ success: false, message: 'Failed to fetch staff', error: error.message })

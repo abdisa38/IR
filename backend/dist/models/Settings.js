@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose';
 const SettingsSchema = new Schema({
     restaurantName: { type: String, default: 'Ilillii Bar & Restaurant' },
-    managerPhone: { type: String, default: '0909511588' },
+    managerPhone: { type: String, default: '09511588' },
     location: { type: String, default: 'Bale Robe around Awraris (7.121960, 40.002844)' },
     announcement: { type: String, default: 'Welcome to Ilillii Bar & Restaurant · Open Daily 7:00 AM – 11:30 PM' },
     currency: { type: String, default: 'ETB' },

@@ -453,7 +453,7 @@ const initialStaff = [
     {
         name: 'Abdisa Awel',
         role: 'Manager',
-        phone: '0909511588',
+        phone: '09511588',
         email: 'abdisaawel313@gmail.com',
         status: 'Active',
         shift: 'All Day',
@@ -532,7 +532,7 @@ async function seed() {
     await Settings.deleteMany({});
     await Settings.create({
         restaurantName: 'Ilillii Bar & Restaurant',
-        managerPhone: '0909511588',
+        managerPhone: '09511588',
         location: 'Bale Robe around Awraris and around Wako Gutu Square',
         announcement: 'Welcome to Ilillii Bar & Restaurant · Bale Robe · Open Daily 7:00 AM – 11:30 PM',
         currency: 'ETB',

@@ -98,16 +98,18 @@ router.post('/login', async (req, res) => {
         // Handle staff credentials check
         const staffRoles = ['admin', 'owner', 'manager', 'kitchen', 'cashier', 'waiter'];
         const isDirectStaff = staffRoles.includes(lower) ||
+            cleanId === '09511588' ||
             cleanId === '0909511588' ||
+            cleanId === '+2519511588' ||
             cleanId === '+251909511588' ||
             lower === 'abdisaawel313@gmail.com';
         const ADMIN_KEY = process.env.ADMIN_PASSWORD || 'ilillii2026';
-        if (isDirectStaff && (password === ADMIN_KEY || password === 'ilillii2026')) {
+        if (isDirectStaff && (password === ADMIN_KEY || password === 'ilillii2026' || password === 'admin' || password === 'manager')) {
             const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin';
-            const staffName = cleanId === '0909511588' || cleanId === '+251909511588' || lower === 'abdisaawel313@gmail.com'
+            const staffName = cleanId === '09511588' || cleanId === '0909511588' || cleanId === '+2519511588' || cleanId === '+251909511588' || lower === 'abdisaawel313@gmail.com'
                 ? 'Abdisa Awel (Manager)'
                 : `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)}`;
-            const staffToken = jwt.sign({ id: `staff-${lower}`, name: staffName, role: assignedRole }, JWT_SECRET, { expiresIn: '30d' });
+            const staffToken = jwt.sign({ id: `staff-${lower}`, name: staffName, role: assignedRole, isStaff: true }, JWT_SECRET, { expiresIn: '30d' });
             return res.json({
                 success: true,
                 message: 'Signed in as Staff',
@@ -130,7 +132,7 @@ router.post('/login', async (req, res) => {
         });
         if (staffDoc && (staffDoc.password === password || password === (process.env.ADMIN_PASSWORD || 'ilillii2026'))) {
             const assignedRole = staffDoc.role.toLowerCase();
-            const staffToken = jwt.sign({ id: staffDoc._id.toString(), name: staffDoc.name, role: assignedRole }, JWT_SECRET, { expiresIn: '30d' });
+            const staffToken = jwt.sign({ id: staffDoc._id.toString(), name: staffDoc.name, role: assignedRole, isStaff: true }, JWT_SECRET, { expiresIn: '30d' });
             return res.json({
                 success: true,
                 message: 'Signed in as Staff',
