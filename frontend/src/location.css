@@ -599,3 +599,65 @@
     display: none !important;
   }
 }
+
+/* Mobile screen alignment & layout protection */
+@media (max-width: 600px) {
+  body .nav-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    padding-inline: 12px !important;
+  }
+
+  body .nav-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+  }
+
+  body .nav-active-order-btn,
+  body .nav-actions > .nav-active-order-btn {
+    display: inline-flex !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+    padding: 0 8px !important;
+    gap: 4px !important;
+    border-radius: 15px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    max-width: 135px !important;
+    overflow: hidden !important;
+  }
+
+  body .nav-active-order-btn * {
+    white-space: nowrap !important;
+  }
+
+  body .nav-active-order-btn .mobile-order-title {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #9a3412 !important;
+  }
+
+  body .nav-active-order-btn .nav-order-status-badge {
+    padding: 1px 5px !important;
+    font-size: 9px !important;
+    border-radius: 6px !important;
+  }
+
+  body .logo {
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+  }
+
+  body .wordmark {
+    font-size: 26px !important;
+    letter-spacing: -1.5px !important;
+  }
+}

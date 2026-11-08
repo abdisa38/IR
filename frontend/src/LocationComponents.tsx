@@ -145,21 +145,38 @@ export function GlobalHeader({
 
   const updateActiveOrder = () => {
     try {
+      const activeStoredId = localStorage.getItem('ilillii_active_order_id')
+      if (!activeStoredId) {
+        setActiveOrder(null)
+        return
+      }
+
       const saved = localStorage.getItem('ilillii_order_history')
       if (saved) {
         const parsed = JSON.parse(saved)
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const latest = parsed[0]
-          const orderTime = latest.date ? new Date(latest.date).getTime() : 0
+          const matching = parsed.find(
+            (o: any) => String(o.orderNumber).replace(/^IL-/, '') === String(activeStoredId).replace(/^IL-/, '')
+          ) || parsed[0]
+
+          if (matching.status === 'Completed' || matching.status === 'Cancelled') {
+            localStorage.removeItem('ilillii_active_order_id')
+            localStorage.removeItem('ilillii_active_order_time')
+            setActiveOrder(null)
+            return
+          }
+
+          const orderTime = matching.date ? new Date(matching.date).getTime() : 0
           // Show active order if placed within the last 12 hours
           if (Date.now() - orderTime < 12 * 60 * 60 * 1000) {
-            setActiveOrder(latest)
-            if (latest.orderNumber) {
-              api.getOrder(latest.orderNumber).then(res => {
+            setActiveOrder(matching)
+            if (matching.orderNumber) {
+              api.getOrder(matching.orderNumber).then(res => {
                 if (res.success && res.order) {
                   if (['completed', 'cancelled'].includes(res.order.status)) {
                     localStorage.removeItem('ilillii_active_order_id')
                     localStorage.removeItem('ilillii_active_order_time')
+                    setActiveOrder(null)
                     window.dispatchEvent(new CustomEvent('ilillii-order-completed'))
                     return
                   }
@@ -340,7 +357,7 @@ export function GlobalHeader({
                 >
                   <span className="nav-order-dot" />
                   <span className="desktop-order-title desktop-only">{activeOrder.table ? `Table ${activeOrder.table}` : 'My Order'}</span>
-                  <span className="mobile-order-title mobile-only">{activeOrder.table ? `T-${activeOrder.table}` : 'Order'}</span>
+                  <span className="mobile-order-title mobile-only">{activeOrder.table ? `T-${activeOrder.table}` : `#${String(activeOrder.orderNumber || '').replace(/^IL-/, '')}`}</span>
                   <span className="nav-order-status-badge">
                     {activeOrder.status || 'Received'}
                   </span>
@@ -837,10 +854,10 @@ function ActiveOrderStatusModal({
         <div style={{ marginBottom: '22px', padding: '0 8px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             {stages.map((stg, idx) => {
-              const isCompletedOrder = activeIndex === 4
+              const isCompletedOrder = activeIndex >= 4
               const isPast = activeIndex > idx
-              const isCurrent = activeIndex === idx
               const isDone = isPast || (idx === 4 && isCompletedOrder)
+              const isCurrent = activeIndex === idx && !isCompletedOrder
 
               return (
                 <div key={stg.key} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', position: 'relative' }}>
@@ -967,6 +984,9 @@ function ActiveOrderStatusModal({
               className="button primary"
               style={{ background: '#b82032', borderColor: '#981827', color: '#fff', minHeight: '46px', fontWeight: 700, fontSize: '14px', justifyContent: 'center' }}
               onClick={() => {
+                localStorage.removeItem('ilillii_active_order_id')
+                localStorage.removeItem('ilillii_active_order_time')
+                window.dispatchEvent(new CustomEvent('ilillii-order-completed'))
                 close()
                 onViewHistory()
               }}
@@ -976,10 +996,11 @@ function ActiveOrderStatusModal({
             <button
               type="button"
               className="button secondary"
-              style={{ minHeight: '42px', justifyContent: 'center', fontSize: '13px' }}
+              style={{ minHeight: '42px', justifyContent: 'center', fontSize: '13px', fontWeight: 700 }}
               onClick={() => {
                 localStorage.removeItem('ilillii_active_order_id')
                 localStorage.removeItem('ilillii_active_order_time')
+                window.dispatchEvent(new CustomEvent('ilillii-order-completed'))
                 close()
               }}
             >

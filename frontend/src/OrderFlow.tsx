@@ -1001,17 +1001,20 @@ export default function OrderFlow({
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(5, 1fr)',
               gap: '8px',
               marginBottom: '16px',
+              maxHeight: '280px',
+              overflowY: 'auto',
+              padding: '2px',
             }}
           >
-            {['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'].map(num => (
+            {Array.from({ length: 30 }, (_, i) => String(i + 1)).map(num => (
               <button
                 key={num}
                 type="button"
                 className={`button ${tableNum === num ? 'primary' : 'secondary'}`}
-                style={{ minHeight: '44px', fontWeight: 700 }}
+                style={{ minHeight: '44px', fontWeight: 750, fontSize: '14px', padding: '4px' }}
                 onClick={() => {
                   setTableNum(num)
                   setIsTableScanned(false)

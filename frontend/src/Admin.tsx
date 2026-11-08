@@ -417,6 +417,29 @@ export default function Admin() {
                     {nextOrderStatus(order)!.label === 'Accept order' ? t('admin.acceptOrder') : nextOrderStatus(order)!.label}
                   </button>
                 )}
+                {role !== 'Kitchen Staff' && (
+                  <button
+                    type="button"
+                    aria-label={`Delete order #${order.id.replace(/^IL-/, '')}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      confirmAction('delete', order)
+                    }}
+                    style={{
+                      background: '#fef2f2',
+                      border: '1px solid #fca5a5',
+                      color: '#b91c1c',
+                      padding: '8px 10px',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      borderRadius: '6px',
+                    }}
+                    title="Delete order permanently"
+                  >
+                    <Icon name="trash" size={15} />
+                  </button>
+                )}
               </div>
             </article>
           )
@@ -506,10 +529,21 @@ export default function Admin() {
                 <td>
                   <Badge value={orderStatusLabel(order)} />
                 </td>
-                <td>
+                <td style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <button className="icon-button" aria-label={`View ${order.id}`} onClick={() => setSelected(order)}>
                     <Icon name="arrow" size={15} />
                   </button>
+                  {role !== 'Kitchen Staff' && (
+                    <button
+                      className="icon-button"
+                      aria-label={`Delete order ${order.id}`}
+                      onClick={() => confirmAction('delete', order)}
+                      style={{ color: '#dc2626' }}
+                      title="Delete order permanently"
+                    >
+                      <Icon name="trash" size={15} />
+                    </button>
+                  )}
                 </td>
               </tr>
             )
@@ -720,8 +754,8 @@ export default function Admin() {
                   width: '36px',
                   height: '36px',
                   borderRadius: '50%',
-                  background: order.type === 'Pickup' ? '#f3e8ff' : '#fee2e2',
-                  color: order.type === 'Pickup' ? '#7e22ce' : '#b82032',
+                  background: order.type === 'Pickup' ? '#f3e8ff' : '#dcfce7',
+                  color: order.type === 'Pickup' ? '#7e22ce' : '#15803d',
                   display: 'grid',
                   placeItems: 'center',
                   flexShrink: 0,
@@ -731,7 +765,7 @@ export default function Admin() {
               </span>
               <span style={{ flex: 1, minWidth: 0 }}>
                 <strong style={{ display: 'block', fontSize: '13px', color: 'var(--color-ink)' }}>
-                  {order.table ? `Table ${order.table}` : order.type === 'Pickup' ? 'Takeaway' : 'Dine-in (Direct)'} · {order.customer}
+                  {order.table ? `Table ${order.table}` : order.type === 'Pickup' ? 'Takeaway' : 'Dine-in'} · {order.customer || 'Guest Customer'}
                 </strong>
                 <small style={{ fontSize: '11px', color: 'var(--color-muted)' }}>
                   {order.items.length} dishes · {formatBirr(orderTotal(order))} ETB · {time(order.received)}

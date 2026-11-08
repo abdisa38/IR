@@ -1,6 +1,10 @@
 import { isValidPhone } from './validation'
 // Explicit demo fixtures only. These are not the hotel's verified table registry.
-export const demoTables = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12'] as const
+export const demoTables = [
+  '1', '2', '3', '4', '5', '6', '7', '8', '9', '10',
+  '11', '12', '13', '14', '15', '16', '17', '18', '19', '20',
+  '21', '22', '23', '24', '25', '26', '27', '28', '29', '30'
+] as const
 export function tableFromUrl(search: string) {
   let params = new URLSearchParams(search)
   if (typeof window !== 'undefined') {
