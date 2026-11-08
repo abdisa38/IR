@@ -137,6 +137,8 @@ export interface ApiOrder {
   updatedAt: string
 }
 
+export type StaffWrite = Partial<ApiStaff> & { password?: string }
+
 export interface ApiStaff {
   id: string
   name: string
@@ -147,7 +149,6 @@ export interface ApiStaff {
   shift?: string
   assignedTables?: string[]
   username?: string
-  password?: string
   createdAt?: string
 }
 
@@ -347,14 +348,14 @@ export const api = {
     return request<{ success: boolean; count: number; staff: ApiStaff[] }>('/staff')
   },
 
-  async createStaff(staffData: Partial<ApiStaff>) {
+  async createStaff(staffData: StaffWrite) {
     return request<{ success: boolean; staff: ApiStaff }>('/staff', {
       method: 'POST',
       body: JSON.stringify(staffData),
     })
   },
 
-  async updateStaff(id: string, staffData: Partial<ApiStaff>) {
+  async updateStaff(id: string, staffData: StaffWrite) {
     return request<{ success: boolean; staff: ApiStaff }>(`/staff/${id}`, {
       method: 'PUT',
       body: JSON.stringify(staffData),
