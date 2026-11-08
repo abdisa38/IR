@@ -326,31 +326,33 @@ export function GlobalHeader({
               </SiteLink>
             </nav>
             <div className="nav-actions">
-              <SiteLink
-                href="/#profile"
-                className={`nav-profile-action-btn ${active === 'profile' ? 'active' : ''}`}
-                title="Guest Profile & Orders"
-                aria-label="Profile"
-              >
-                <span className="nav-profile-avatar-circle">
-                  {customer?.avatar ? (
-                    <img src={customer.avatar} alt={customer?.name || 'Guest'} />
-                  ) : customer?.name ? (
-                    customer.name.charAt(0).toUpperCase()
-                  ) : (
-                    <Icon name="user" size={13} />
-                  )}
-                </span>
-                <span className="nav-profile-name">
-                  {customer?.name ? customer.name.split(' ')[0] : 'Profile'}
-                </span>
-                {activeOrder && (
-                  <span className="nav-order-status-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                    <span className="nav-order-dot" />
-                    <span className="desktop-only">{activeOrder.status || 'Active'}</span>
+              {(customer?.name || customer?.phone) ? (
+                <SiteLink
+                  href="/#profile"
+                  className={`nav-profile-action-btn ${active === 'profile' ? 'active' : ''}`}
+                  title="Profile & Orders"
+                  aria-label="Profile"
+                >
+                  <span className="nav-profile-avatar-circle">
+                    {customer?.avatar ? (
+                      <img src={customer.avatar} alt={customer?.name || 'Customer'} />
+                    ) : customer?.name ? (
+                      customer.name.charAt(0).toUpperCase()
+                    ) : (
+                      <Icon name="user" size={13} />
+                    )}
                   </span>
-                )}
-              </SiteLink>
+                  <span className="nav-profile-name">
+                    {customer?.name ? customer.name.split(' ')[0] : 'Profile'}
+                  </span>
+                  {activeOrder && (
+                    <span className="nav-order-status-badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                      <span className="nav-order-dot" />
+                      <span className="desktop-only">{activeOrder.status || 'Active'}</span>
+                    </span>
+                  )}
+                </SiteLink>
+              ) : null}
               <button
                 type="button"
                 className="language-button"
@@ -529,28 +531,30 @@ export function GlobalHeader({
               </button>
             </nav>
 
-            <SiteLink
-              href="/#profile"
-              className="mobile-guest-card"
-              onClick={() => setMobileNav(false)}
-            >
-              <div className="mobile-guest-left">
-                <div className="mobile-avatar-circle" style={{ background: customer?.name ? 'linear-gradient(135deg, #b82032 0%, #8b1826 100%)' : '#f5ebe1', color: customer?.name ? '#ffffff' : 'var(--color-brand)' }}>
-                  {customer?.avatar ? (
-                    <img src={customer.avatar} alt={customer.name || 'Guest'} />
-                  ) : customer?.name ? (
-                    customer.name.charAt(0).toUpperCase()
-                  ) : (
-                    <Icon name="user" size={18} />
-                  )}
+            {(customer?.name || customer?.phone) ? (
+              <SiteLink
+                href="/#profile"
+                className="mobile-guest-card"
+                onClick={() => setMobileNav(false)}
+              >
+                <div className="mobile-guest-left">
+                  <div className="mobile-avatar-circle" style={{ background: 'linear-gradient(135deg, #b82032 0%, #8b1826 100%)', color: '#ffffff' }}>
+                    {customer?.avatar ? (
+                      <img src={customer.avatar} alt={customer.name || 'Customer'} />
+                    ) : customer?.name ? (
+                      customer.name.charAt(0).toUpperCase()
+                    ) : (
+                      <Icon name="user" size={18} />
+                    )}
+                  </div>
+                  <div className="mobile-guest-info">
+                    <strong>{customer?.name || customer?.phone}</strong>
+                    <span>Profile & Orders</span>
+                  </div>
                 </div>
-                <div className="mobile-guest-info">
-                  <strong>{customer?.name || 'Guest'}</strong>
-                  <span>{t('nav.guestProfile')}</span>
-                </div>
-              </div>
-              <Icon name="arrow" size={16} />
-            </SiteLink>
+                <Icon name="arrow" size={16} />
+              </SiteLink>
+            ) : null}
 
             <div className="mobile-drawer-footer">
               <div>{t('location.address')} · {t('location.town')}</div>

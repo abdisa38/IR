@@ -528,7 +528,7 @@ export default function Menu() {
                     setDineInCheckout(true)
                   }}
                 >
-                  <span style={{ fontSize: '14px' }}>🔘</span>
+                  <Icon name="meal" size={16} />
                   {t('checkout.orderPayAfterMeal')}
                 </button>
                 <button
@@ -546,11 +546,11 @@ export default function Menu() {
                   }}
                   onClick={() => {
                     setPanel(false)
-                    setInitialPayment('sheger')
+                    setInitialPayment('chapa')
                     setDineInCheckout(true)
                   }}
                 >
-                  <span style={{ fontSize: '15px' }}>💳</span>
+                  <Icon name="bank" size={16} />
                   {t('checkout.payNowSheger')}
                 </button>
               </div>

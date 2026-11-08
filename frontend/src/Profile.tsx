@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { GlobalHeader, GlobalFooter } from './LocationComponents'
 import { Icon } from './shared-ui'
 import { SiteLink } from './site-routing'
@@ -25,66 +25,91 @@ interface OrderRecord {
 }
 
 export default function Profile() {
-  const [customer, setCustomer] = useState<{ name?: string; phone?: string; id?: string } | null>(null)
-  const [orders, setOrders] = useState<OrderRecord[]>([])
-  const [loading, setLoading] = useState(true)
-  const [tab, setTab] = useState<'all' | 'active' | 'completed'>('all')
-
-  // Edit state
-  const [isEditing, setIsEditing] = useState(false)
-  const [editName, setEditName] = useState('')
-  const [editPhone, setEditPhone] = useState('')
-
-  // Load customer state from localStorage
-  const loadCustomer = () => {
+  const [customer, setCustomer] = useState<{ name?: string; phone?: string; id?: string } | null>(() => {
     try {
       const saved = localStorage.getItem('ilillii_customer')
       if (saved) {
         const parsed = JSON.parse(saved)
-        if (parsed && (parsed.name || parsed.phone)) {
-          setCustomer(parsed)
-          setEditName(parsed.name || '')
-          setEditPhone(parsed.phone || '')
-          return parsed
-        }
+        if (parsed && (parsed.name || parsed.phone)) return parsed
       }
-      setCustomer(null)
-      setEditName('')
-      setEditPhone('')
-      return null
-    } catch {
-      setCustomer(null)
-      return null
-    }
+    } catch {}
+    return null
+  })
+
+  const [orders, setOrders] = useState<OrderRecord[]>([])
+  const [loading, setLoading] = useState(false)
+  const [tab, setTab] = useState<'all' | 'active' | 'completed'>('all')
+
+  // Edit state
+  const [isEditing, setIsEditing] = useState(false)
+  const [editName, setEditName] = useState(customer?.name || '')
+  const [editPhone, setEditPhone] = useState(customer?.phone || '')
+
+  const customerRef = useRef(customer)
+  customerRef.current = customer
+
+  // Normalize phone for matching
+  const matchPhone = (a?: string, b?: string) => {
+    if (!a || !b) return false
+    const dA = a.replace(/\D/g, '').slice(-9)
+    const dB = b.replace(/\D/g, '').slice(-9)
+    return Boolean(dA && dB && dA === dB)
   }
 
-  // Fetch real orders from server & localStorage
-  const loadOrders = useCallback(async (currentCustomer?: { name?: string; phone?: string } | null) => {
-    setLoading(true)
+  // Load orders cleanly without blinking
+  const fetchOrders = async (silent = false) => {
+    if (!silent) setLoading(true)
+    const currentCust = customerRef.current
     const localMap = new Map<string, OrderRecord>()
 
-    // 1. Read local order history
+    // 1. Read local order history, but ONLY include orders that belong to this customer
     try {
       const localHist = localStorage.getItem('ilillii_order_history')
       if (localHist) {
-        const parsed: OrderRecord[] = JSON.parse(localHist)
+        const parsed: any[] = JSON.parse(localHist)
         if (Array.isArray(parsed)) {
           for (const ord of parsed) {
             const key = String(ord.orderNumber || ord._id || '').replace(/^IL-/, '')
-            if (key) localMap.set(key, ord)
+            if (!key) continue
+
+            // Verify order belongs to this customer
+            const activeId = localStorage.getItem('ilillii_active_order_id')
+            const matchesActive = activeId && key === activeId
+            const matchesPhone = currentCust?.phone && matchPhone(ord.phone || ord.customerPhone, currentCust.phone)
+            const matchesName = currentCust?.name && ord.name && ord.name.toLowerCase() === currentCust.name.toLowerCase()
+
+            if (matchesActive || matchesPhone || matchesName || !currentCust) {
+              localMap.set(key, {
+                _id: ord._id,
+                orderNumber: ord.orderNumber || key,
+                total: Number(ord.total) || 0,
+                table: ord.table,
+                type: ord.type || 'Dine in',
+                status: ord.status || 'Submitted',
+                paymentMethod: ord.paymentMethod,
+                createdAt: ord.date || ord.createdAt,
+                date: ord.date || ord.createdAt,
+                items: Array.isArray(ord.items)
+                  ? ord.items.map((it: any) => ({
+                      name: it.name,
+                      quantity: Number(it.quantity) || 1,
+                      price: Number(it.price) || 0,
+                    }))
+                  : [],
+              })
+            }
           }
         }
       }
     } catch {}
 
-    // 2. Fetch real orders from database if customer details exist
-    const cust = currentCustomer !== undefined ? currentCustomer : customer
-    if (cust && (cust.phone || cust.name)) {
+    // 2. Fetch real orders from database
+    if (currentCust && (currentCust.phone || currentCust.name)) {
       try {
         const res = await api.getOrders({
-          phone: cust.phone || undefined,
-          customer: cust.name || undefined,
-          limit: 30,
+          phone: currentCust.phone || undefined,
+          customer: currentCust.name || undefined,
+          limit: 50,
         })
         if (res && res.success && Array.isArray(res.orders)) {
           for (const ord of res.orders) {
@@ -103,8 +128,8 @@ export default function Profile() {
                 items: Array.isArray(ord.items)
                   ? ord.items.map((it: any) => ({
                       name: it.name,
-                      quantity: it.quantity,
-                      price: it.price,
+                      quantity: Number(it.quantity) || 1,
+                      price: Number(it.price) || 0,
                     }))
                   : [],
               })
@@ -114,7 +139,6 @@ export default function Profile() {
       } catch {}
     }
 
-    // Convert map to array and sort by most recent
     const merged = Array.from(localMap.values()).sort((a, b) => {
       const tA = new Date(a.createdAt || a.date || 0).getTime()
       const tB = new Date(b.createdAt || b.date || 0).getTime()
@@ -122,29 +146,46 @@ export default function Profile() {
     })
 
     setOrders(merged)
-    setLoading(false)
-  }, [customer])
+    if (!silent) setLoading(false)
+  }
 
   useEffect(() => {
-    const cust = loadCustomer()
-    loadOrders(cust)
+    fetchOrders(false)
+
+    // Polling for admin status updates (e.g. kitchen updates status to Preparing, Ready, Completed)
+    const pollInterval = setInterval(() => {
+      fetchOrders(true)
+    }, 6000)
 
     const handleAuth = () => {
-      const updatedCust = loadCustomer()
-      loadOrders(updatedCust)
+      try {
+        const saved = localStorage.getItem('ilillii_customer')
+        if (saved) {
+          const parsed = JSON.parse(saved)
+          setCustomer(parsed)
+          setEditName(parsed.name || '')
+          setEditPhone(parsed.phone || '')
+        } else {
+          setCustomer(null)
+          setEditName('')
+          setEditPhone('')
+        }
+      } catch {}
+      fetchOrders(false)
     }
 
     const handleOrderPlaced = () => {
-      loadOrders()
+      fetchOrders(false)
     }
 
     window.addEventListener('ilillii-auth-changed', handleAuth)
     window.addEventListener('ilillii-order-placed', handleOrderPlaced)
     return () => {
+      clearInterval(pollInterval)
       window.removeEventListener('ilillii-auth-changed', handleAuth)
       window.removeEventListener('ilillii-order-placed', handleOrderPlaced)
     }
-  }, [loadOrders])
+  }, [])
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault()
@@ -155,7 +196,7 @@ export default function Profile() {
       ...(customer || {}),
       name: cleanName,
       phone: cleanPhone,
-      id: customer?.id || 'guest_' + Math.random().toString(36).substring(2, 10),
+      id: customer?.id || 'cust_' + Math.random().toString(36).substring(2, 10),
       updatedAt: new Date().toISOString(),
     }
 
@@ -163,18 +204,21 @@ export default function Profile() {
     setCustomer(updated)
     setIsEditing(false)
     window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
-    loadOrders(updated)
+    fetchOrders(false)
   }
 
-  const handleResetProfile = () => {
-    if (window.confirm('Reset profile?')) {
+  // Logout function
+  const handleLogout = () => {
+    if (window.confirm('Log out from your profile?')) {
       localStorage.removeItem('ilillii_customer')
+      localStorage.removeItem('ilillii_active_order_id')
+      localStorage.removeItem('ilillii_active_order_time')
+      localStorage.removeItem('ilillii_order_history')
       setCustomer(null)
-      setEditName('')
-      setEditPhone('')
+      setOrders([])
       setIsEditing(false)
       window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
-      loadOrders(null)
+      window.location.hash = '#home'
     }
   }
 
@@ -205,10 +249,7 @@ export default function Profile() {
   })
 
   const displayedOrders = tab === 'active' ? activeOrders : tab === 'completed' ? completedOrders : orders
-
-  // Real stats
   const totalSpent = orders.reduce((sum, ord) => sum + (ord.total || 0), 0)
-
   const formatBirr = (num: number) => num.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 
   const formatDate = (dateStr?: string) => {
@@ -246,11 +287,8 @@ export default function Profile() {
               )}
             </div>
             <div className="profile-hero-info">
-              <h1>{customer?.name || 'Guest'}</h1>
+              <h1>{customer?.name || 'Customer Profile'}</h1>
               <div className="profile-hero-meta">
-                <span className="profile-badge">
-                  {customer?.name ? 'Guest' : 'New Guest'}
-                </span>
                 {customer?.phone && (
                   <span className="profile-phone-text">
                     <Icon name="phone" size={13} />
@@ -265,7 +303,11 @@ export default function Profile() {
             <button
               type="button"
               className="profile-action-btn"
-              onClick={() => setIsEditing(!isEditing)}
+              onClick={() => {
+                setEditName(customer?.name || '')
+                setEditPhone(customer?.phone || '')
+                setIsEditing(!isEditing)
+              }}
               title="Edit Profile"
             >
               <Icon name="pencil" size={14} />
@@ -275,10 +317,12 @@ export default function Profile() {
               <button
                 type="button"
                 className="profile-action-btn"
-                onClick={handleResetProfile}
-                title="Reset Profile"
+                onClick={handleLogout}
+                title="Log out"
+                style={{ color: '#dc2626', borderColor: '#fca5a5' }}
               >
-                Reset
+                <Icon name="logout" size={14} />
+                Logout
               </button>
             )}
           </div>
@@ -420,7 +464,7 @@ export default function Profile() {
                   type="button"
                   className="button secondary"
                   style={{ minHeight: '36px', padding: '0 14px', fontSize: '12.5px' }}
-                  onClick={() => loadOrders()}
+                  onClick={() => fetchOrders(false)}
                   title="Refresh status"
                 >
                   <Icon name="refresh" size={13} />
@@ -430,6 +474,10 @@ export default function Profile() {
                   href="/#menu"
                   className="button primary"
                   style={{ minHeight: '36px', padding: '0 16px', fontSize: '12.5px' }}
+                  onClick={() => {
+                    localStorage.setItem('ilillii_active_order_id', String(activeOrder.orderNumber).replace(/^IL-/, ''))
+                    localStorage.setItem('ilillii_active_order_time', Date.now().toString())
+                  }}
                 >
                   + Add Food
                 </SiteLink>

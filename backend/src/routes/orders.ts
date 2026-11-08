@@ -48,10 +48,17 @@ router.get('/', async (req: Request, res: Response) => {
     if (type && type !== 'all') {
       filter.type = type
     }
-    if (phone) {
-      filter.customerPhone = String(phone).trim()
-    }
-    if (customer) {
+    if (phone && customer) {
+      const cleanPhone = String(phone).trim().replace(/\s+/g, '')
+      const last9Digits = cleanPhone.replace(/\D/g, '').slice(-9)
+      const phoneRegex = last9Digits ? new RegExp(last9Digits, 'i') : new RegExp(cleanPhone, 'i')
+      const nameRegex = new RegExp(String(customer).trim(), 'i')
+      filter.$or = [{ customerPhone: phoneRegex }, { customerName: nameRegex }]
+    } else if (phone) {
+      const cleanPhone = String(phone).trim().replace(/\s+/g, '')
+      const last9Digits = cleanPhone.replace(/\D/g, '').slice(-9)
+      filter.customerPhone = { $regex: last9Digits || cleanPhone, $options: 'i' }
+    } else if (customer) {
       filter.customerName = { $regex: String(customer).trim(), $options: 'i' }
     }
 

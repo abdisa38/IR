@@ -113,8 +113,20 @@ export default function OrderFlow({
       if (lines.length > 0) {
         setSnapshot(null)
       }
-      setStep(initialPayment === 'sheger' ? 'sheger' : 'details')
+      setStep('details')
       setError('')
+      const storedActive = localStorage.getItem('ilillii_active_order_id')
+      const storedTime = localStorage.getItem('ilillii_active_order_time')
+      if (storedActive && storedTime) {
+        const ageMs = Date.now() - Number(storedTime)
+        if (ageMs <= 2 * 60 * 60 * 1000) {
+          setActiveOrderId(storedActive)
+        } else {
+          setActiveOrderId(null)
+        }
+      } else {
+        setActiveOrderId(null)
+      }
       const curTable = table || ''
       setTableNum(curTable)
       setIsTableScanned(
