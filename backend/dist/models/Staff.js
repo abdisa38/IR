@@ -4,7 +4,7 @@ const StaffSchema = new Schema({
     email: { type: String, trim: true, lowercase: true },
     phone: { type: String, required: true, trim: true },
     username: { type: String, trim: true, lowercase: true },
-    password: { type: String, default: '1234' },
+    password: { type: String, select: false },
     role: {
         type: String,
         required: true,
@@ -29,6 +29,7 @@ const StaffSchema = new Schema({
             ret.id = ret._id.toString();
             delete ret._id;
             delete ret.__v;
+            delete ret.password;
             return ret;
         },
     },
