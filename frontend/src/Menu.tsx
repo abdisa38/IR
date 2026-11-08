@@ -98,7 +98,7 @@ export default function Menu() {
   const [qrOptions, setQrOptions] = useState(false)
   const [checkout, setCheckout] = useState(false)
   const [dineInCheckout, setDineInCheckout] = useState(false)
-  const [initialPayment, setInitialPayment] = useState<'pay_after' | 'sheger'>('pay_after')
+  const [initialPayment, setInitialPayment] = useState<'pay_after' | 'chapa' | 'sheger'>('pay_after')
   const [checkoutEntry, setCheckoutEntry] = useState<'details'>('details')
   const [note, setNote] = useState('')
   const [tableHelp, setTableHelp] = useState(false)

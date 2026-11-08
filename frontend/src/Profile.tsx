@@ -78,7 +78,7 @@ export default function Profile() {
             const matchesPhone = currentCust?.phone && matchPhone(ord.phone || ord.customerPhone, currentCust.phone)
             const matchesName = currentCust?.name && ord.name && ord.name.toLowerCase() === currentCust.name.toLowerCase()
 
-            if (matchesActive || matchesPhone || matchesName || !currentCust) {
+            if (matchesActive || matchesPhone || matchesName) {
               localMap.set(key, {
                 _id: ord._id,
                 orderNumber: ord.orderNumber || key,

@@ -35,7 +35,7 @@ export default function OrderFlow({
 }: {
   open: boolean
   table: string | null
-  initialPayment?: 'pay_after' | 'sheger'
+  initialPayment?: 'pay_after' | 'sheger' | 'chapa'
   lines: Line[]
   note: string
   setNote: (value: string) => void
@@ -50,17 +50,8 @@ export default function OrderFlow({
   const [busy, setBusy] = useState(false)
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null)
   const [modal, setModal] = useState<'language' | 'help' | 'table' | null>(null)
-  const [copiedAccount, setCopiedAccount] = useState<string | null>(null)
-
-  // Chapa Gateway state
-  const [chapaTxRef, setChapaTxRef] = useState('')
-  const [verifyingChapa, setVerifyingChapa] = useState(false)
+  // Chapa Gateway loading state
   const [loadingChapa, setLoadingChapa] = useState(false)
-  const [chapaData, setChapaData] = useState<{ txRef: string; checkoutUrl: string } | null>(null)
-
-  // Legacy fallback state
-  const [shegerTxnId, setShegerTxnId] = useState('')
-  const [verifyingSheger, setVerifyingSheger] = useState(false)
 
   // Table resolution - do not force Table 1 if not scanned/selected
   const resolvedTable = table || ''
@@ -532,18 +523,15 @@ export default function OrderFlow({
         <button
           className="order-back"
           onClick={() => {
-            if (busy || verifyingSheger) return
-            if (step === 'sheger') go('details')
-            else handleClose()
+            if (busy) return
+            handleClose()
           }}
-          disabled={busy || verifyingSheger}
+          disabled={busy}
         >
           <Icon name="arrow" size={16} />
           {confirmedView
             ? t('order.backToMenu')
-            : step === 'sheger'
-              ? t('order.back')
-              : t('order.backToCart')}
+            : t('order.backToCart')}
         </button>
 
         <div className="order-page-heading">
@@ -553,8 +541,6 @@ export default function OrderFlow({
           <h1 id="order-page-title" ref={heading} tabIndex={-1}>
             {step === 'details' ? (
               <>{t('checkout.whoJoining')}</>
-            ) : step === 'sheger' ? (
-              <>{t('checkout.shegerTitle')}</>
             ) : (
               <>{t('order.stepAllTogether')}</>
             )}
@@ -580,7 +566,11 @@ export default function OrderFlow({
               <form
                 onSubmit={event => {
                   event.preventDefault()
-                  handlePlacePayAfterOrder()
+                  if (initialPayment === 'chapa' || initialPayment === 'sheger') {
+                    handleStartChapa()
+                  } else {
+                    handlePlacePayAfterOrder()
+                  }
                 }}
               >
                 {/* Real Table Display */}
@@ -695,271 +685,75 @@ export default function OrderFlow({
                   />
                 </label>
 
-                {/* Payment Action Buttons */}
+                {/* Single Payment Action Button (based on selection in cart) */}
                 <div className="order-buttons-group" style={{ gap: '12px', marginTop: '22px' }}>
-                  <button
-                    className="button primary order-full pay-after-btn"
-                    type="submit"
-                    disabled={locked}
-                    aria-busy={busy}
-                    style={{
-                      background: '#b82032',
-                      borderColor: '#981827',
-                      color: '#ffffff',
-                      boxShadow: '0 4px 14px rgba(184,32,50,0.25)',
-                      minHeight: '48px',
-                      fontWeight: 750,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '6px',
-                    }}
-                  >
-                    {busy ? (
-                      <>
-                        <span className="order-spinner" />
-                        {t('checkout.placingOrder')}
-                      </>
-                    ) : (
-                      <>
-                        {activeOrderId ? `+ Add to Order #${String(activeOrderId).replace(/^IL-/, '')}` : t('checkout.orderPayAfterMeal')}
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    className="button secondary order-full chapa-pay-btn"
-                    type="button"
-                    onClick={handleStartChapa}
-                    disabled={locked}
-                    style={{
-                      background: '#ffffff',
-                      borderColor: '#b82032',
-                      color: '#b82032',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      fontWeight: 750,
-                      minHeight: '48px',
-                    }}
-                  >
-                    <Icon name="bank" size={17} />
-                    Chapa
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Step 2: Chapa Payment Gateway Form */}
-            {step === 'sheger' && (
-              <div className="sheger-checkout-container">
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    paddingBottom: '14px',
-                    borderBottom: '1px solid #ebdcd3',
-                    marginBottom: '18px',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Icon name="bank" size={20} />
-                    <div>
-                      <strong style={{ fontSize: '16px', color: 'var(--color-ink)', display: 'block' }}>
-                        Chapa
-                      </strong>
-                      <small style={{ fontSize: '11px', color: '#16a34a', fontWeight: 600 }}>
-                        ● Live Verification
-                      </small>
-                    </div>
-                  </div>
-                  <strong style={{ fontSize: '18px', color: 'var(--color-brand)' }}>
-                    {formatBirr(total)} ETB
-                  </strong>
-                </div>
-
-                {/* Direct Chapa Hosted Checkout Link */}
-                {loadingChapa ? (
-                  <div style={{ textAlign: 'center', padding: '16px', background: '#f8fafc', borderRadius: '10px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
-                    <span className="order-spinner" style={{ margin: '0 auto 8px', borderColor: '#b82032 rgba(184,32,50,0.2) rgba(184,32,50,0.2)' }} />
-                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, display: 'block' }}>
-                      Connecting...
-                    </span>
-                  </div>
-                ) : chapaData?.checkoutUrl ? (
-                  <div style={{ marginBottom: '16px' }}>
-                    <a
-                      href={chapaData.checkoutUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  {(initialPayment === 'chapa' || initialPayment === 'sheger') ? (
+                    <button
+                      className="button primary order-full chapa-pay-btn"
+                      type="submit"
+                      disabled={locked}
+                      aria-busy={loadingChapa || busy}
                       style={{
+                        background: '#b82032',
+                        borderColor: '#981827',
+                        color: '#ffffff',
+                        boxShadow: '0 4px 14px rgba(184,32,50,0.25)',
+                        minHeight: '48px',
+                        fontWeight: 750,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: '8px',
-                        background: '#059669',
+                      }}
+                    >
+                      {loadingChapa || busy ? (
+                        <>
+                          <span className="order-spinner" />
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          <Icon name="bank" size={17} />
+                          Pay with Chapa ({formatBirr(total)} ETB)
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button
+                      className="button primary order-full pay-after-btn"
+                      type="submit"
+                      disabled={locked}
+                      aria-busy={busy}
+                      style={{
+                        background: '#b82032',
+                        borderColor: '#981827',
                         color: '#ffffff',
-                        textDecoration: 'none',
-                        padding: '13px 18px',
-                        borderRadius: '10px',
+                        boxShadow: '0 4px 14px rgba(184,32,50,0.25)',
+                        minHeight: '48px',
                         fontWeight: 750,
-                        fontSize: '14px',
-                        boxShadow: '0 4px 14px rgba(5, 150, 105, 0.25)',
-                        width: '100%',
-                        boxSizing: 'border-box',
-                      }}
-                    >
-                      <span>Pay with Chapa</span>
-                      <Icon name="external" size={15} />
-                    </a>
-                  </div>
-                ) : null}
-
-                {/* Bank / Telebirr Account Cards with 1-Click Copy */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
-                  {/* Commercial Bank of Ethiopia (CBE) */}
-                  <div
-                    style={{
-                      background: '#fffaf5',
-                      border: '1px solid #ebdcd3',
-                      borderRadius: '8px',
-                      padding: '12px 14px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontSize: '10px', color: '#78716c', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        CBE
-                      </span>
-                      <strong style={{ display: 'block', fontSize: '15px', color: 'var(--color-ink)', marginTop: '2px' }}>
-                        1000533856385
-                      </strong>
-                      <small style={{ fontSize: '11px', color: '#78716c' }}>
-                        Abdisa Awel
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard('1000533856385', 'cbe')}
-                      style={{
-                        background: copiedAccount === 'cbe' ? '#dcfce7' : '#ffffff',
-                        color: copiedAccount === 'cbe' ? '#15803d' : '#1c1917',
-                        border: '1px solid #d6d3d1',
-                        borderRadius: '6px',
-                        padding: '6px 12px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '5px',
+                        justifyContent: 'center',
+                        gap: '6px',
                       }}
                     >
-                      <Icon name="copy" size={13} />
-                      {copiedAccount === 'cbe' ? t('checkout.copied') : 'Copy'}
+                      {busy ? (
+                        <>
+                          <span className="order-spinner" />
+                          {t('checkout.placingOrder')}
+                        </>
+                      ) : (
+                        <>
+                          {activeOrderId ? `+ Add to Order #${String(activeOrderId).replace(/^IL-/, '')}` : t('checkout.orderPayAfterMeal')}
+                        </>
+                      )}
                     </button>
-                  </div>
-
-                  {/* Telebirr Account */}
-                  <div
-                    style={{
-                      background: '#f0fdf4',
-                      border: '1px solid #bbf7d0',
-                      borderRadius: '8px',
-                      padding: '12px 14px',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div>
-                      <span style={{ fontSize: '10px', color: '#15803d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        Telebirr
-                      </span>
-                      <strong style={{ display: 'block', fontSize: '15px', color: '#14532d', marginTop: '2px' }}>
-                        0909511588
-                      </strong>
-                      <small style={{ fontSize: '11px', color: '#15803d' }}>
-                        Abdisa
-                      </small>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => copyToClipboard('0909511588', 'telebirr')}
-                      style={{
-                        background: copiedAccount === 'telebirr' ? '#dcfce7' : '#ffffff',
-                        color: copiedAccount === 'telebirr' ? '#15803d' : '#1c1917',
-                        border: '1px solid #bbf7d0',
-                        borderRadius: '6px',
-                        padding: '6px 12px',
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                      }}
-                    >
-                      <Icon name="copy" size={13} />
-                      {copiedAccount === 'telebirr' ? t('checkout.copied') : 'Copy'}
-                    </button>
-                  </div>
+                  )}
                 </div>
-
-                {/* Reference ID Input */}
-                <label className="order-field" style={{ marginBlock: '14px' }}>
-                  Reference
-                  <input
-                    value={chapaTxRef || shegerTxnId}
-                    onChange={e => {
-                      setChapaTxRef(e.target.value)
-                      setShegerTxnId(e.target.value)
-                      if (error) setError('')
-                    }}
-                    placeholder="e.g. FT26062K7WMY or Chapa Ref"
-                    style={{ fontSize: '14px', letterSpacing: '0.5px', fontFamily: 'monospace' }}
-                  />
-                </label>
-
-                {/* Chapa Verification & Submit Button */}
-                <div className="order-buttons-group" style={{ gap: '10px', marginTop: '18px' }}>
-                  <button
-                    type="button"
-                    className="button primary order-full"
-                    onClick={handleVerifyAndSubmitChapa}
-                    disabled={verifyingChapa}
-                    aria-busy={verifyingChapa}
-                    style={{ background: '#b82032', color: '#ffffff', minHeight: '46px' }}
-                  >
-                    {verifyingChapa ? (
-                      <>
-                        <span className="order-spinner" />
-                        Verifying...
-                      </>
-                    ) : (
-                      <>
-                        Confirm
-                        <Icon name="arrow" size={17} />
-                      </>
-                    )}
-                  </button>
-
-                  <button
-                    type="button"
-                    className="button secondary order-full"
-                    onClick={() => go('details')}
-                    disabled={verifyingChapa}
-                    style={{ minHeight: '42px' }}
-                  >
-                    Back
-                  </button>
-                </div>
-              </div>
+              </form>
             )}
+
+
 
             {/* Step 3: Order Received Confirmation View (Clean layout) */}
             {confirmedView && snapshot && (
