@@ -848,7 +848,6 @@ export const translations: Record<Language, Record<string, string>> = {
     'order.callPhone': 'Phone: 0938890645',
     'order.requestHelp': 'Request staff assistance',
     'order.refreshStatus': 'Refresh status',
-    'order.needHand': 'Need a hand? Our team is available right at your table.',
     'order.askForHelp': 'Ask for help',
     'order.enjoyMeal': 'Your table. Your meal. Enjoy your time at Ilillii.',
     'order.backToMenu': 'Back to menu',

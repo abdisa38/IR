@@ -64,8 +64,8 @@ export default function OrderFlow({
     return Boolean(
       table &&
       (localStorage.getItem('ilillii_table_source') === 'qr' ||
-       sessionStorage.getItem('ilillii_table_source') === 'qr' ||
-       window.location.search.includes('source=qr'))
+        sessionStorage.getItem('ilillii_table_source') === 'qr' ||
+        window.location.search.includes('source=qr'))
     )
   })
 
@@ -115,8 +115,8 @@ export default function OrderFlow({
         Boolean(
           curTable &&
           (localStorage.getItem('ilillii_table_source') === 'qr' ||
-           sessionStorage.getItem('ilillii_table_source') === 'qr' ||
-           window.location.search.includes('source=qr'))
+            sessionStorage.getItem('ilillii_table_source') === 'qr' ||
+            window.location.search.includes('source=qr'))
         )
       )
 
@@ -393,7 +393,7 @@ export default function OrderFlow({
             localStorage.removeItem('ilillii_active_order_time')
             setActiveOrderId(null)
           }
-        } catch (e) {}
+        } catch (e) { }
       }
 
       if (!orderRes) {
@@ -470,8 +470,8 @@ export default function OrderFlow({
               {snapshot?.table
                 ? `${t('checkout.table')} ${snapshot.table}`
                 : tableNum
-                ? `${t('checkout.table')} ${tableNum}`
-                : 'Direct Order'}
+                  ? `${t('checkout.table')} ${tableNum}`
+                  : 'Direct Order'}
               {isTableScanned && <small style={{ color: '#16a34a' }}>· QR</small>}
             </span>
           </div>
@@ -575,8 +575,8 @@ export default function OrderFlow({
                         {isTableScanned
                           ? `${t('checkout.table')} ${tableNum} · ${t('qr.scannedBadge', undefined, { table: tableNum })}`
                           : tableNum
-                          ? `${t('checkout.table')} ${tableNum} · Dine-in Table`
-                          : ''}
+                            ? `${t('checkout.table')} ${tableNum} · Dine-in Table`
+                            : ''}
                       </small>
                     </div>
                   </div>
@@ -621,7 +621,7 @@ export default function OrderFlow({
 
                 {/* Phone Field (Optional) */}
                 <label className="order-field">
-                  {t('checkout.phoneLabel')} <span>({t('checkout.optional') || 'Optional'})</span>
+                  {t('checkout.phoneLabel')} <span>({t('optional') || 'Optional'})</span>
                   <input
                     type="tel"
                     aria-invalid={Boolean(error && error.toLowerCase().includes('phone'))}
@@ -638,7 +638,7 @@ export default function OrderFlow({
 
                 {/* Kitchen Note Field (Optional) */}
                 <label className="order-field">
-                  {t('checkout.noteLabel')} <span>({t('checkout.optional') || 'Optional'})</span>
+                  {t('checkout.noteLabel')} <span>({t('optional') || 'Optional'})</span>
                   <textarea
                     value={note}
                     onChange={e => setNote(e.target.value)}
@@ -648,7 +648,7 @@ export default function OrderFlow({
                   />
                 </label>
 
-               
+
 
                 {/* Single Payment Action Button (No Duplicate Buttons) */}
                 <div className="order-buttons-group" style={{ gap: '10px', marginTop: '20px' }}>
@@ -699,14 +699,14 @@ export default function OrderFlow({
                         </>
                       ) : (
                         <>
-                          <span>🔘</span>
-                          {activeOrderId ? `+ Add to Active Order #${String(activeOrderId).replace(/^IL-/, '')}` : t('checkout.orderPayAfterMeal')}
+
+                          {activeOrderId ? `+ Add to Order #${String(activeOrderId).replace(/^IL-/, '')}` : t('checkout.orderPayAfterMeal')}
                         </>
                       )}
                     </button>
                   )}
 
-                
+
                 </div>
               </form>
             )}

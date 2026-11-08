@@ -181,7 +181,7 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
                 <input required aria-invalid={Boolean(error && !name.trim())} aria-describedby={error ? 'guest-form-error' : undefined} autoComplete="name" value={name} maxLength={80} onChange={event => setName(event.target.value)} placeholder={t('checkout.namePlaceholder')} />
               </label>
               <label className="order-field">
-                {t('checkout.phoneLabel')} <span>{t('checkout.optional')}</span>
+                {t('checkout.phoneLabel')} <span>{t('optional')}</span>
                 <input aria-invalid={Boolean(error && error.toLowerCase().includes('phone'))} aria-describedby={error ? 'guest-form-error' : undefined} type="tel" inputMode="tel" autoComplete="tel" value={phone} maxLength={24} onChange={event => setPhone(event.target.value)} placeholder="0938890645" />
                 <small>{t('checkout.phoneHelp')}</small>
               </label>
