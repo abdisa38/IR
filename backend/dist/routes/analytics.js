@@ -2,9 +2,10 @@ import { Router } from 'express';
 import { Order } from '../models/Order.js';
 import { MenuItem } from '../models/MenuItem.js';
 import { Staff } from '../models/Staff.js';
+import { requireManager } from '../middleware/authorize.js';
 const router = Router();
 // GET /api/analytics - real-time analytics from MongoDB
-router.get('/', async (_req, res) => {
+router.get('/', requireManager, async (_req, res) => {
     try {
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
