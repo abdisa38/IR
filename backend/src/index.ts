@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express'
 import cors from 'cors'
+import { rateLimit } from 'express-rate-limit'
 import dotenv from 'dotenv'
 import path from 'path'
 import { connectDB } from './config/db.js'
@@ -16,13 +17,22 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 
-// Middleware
-app.use(
-  cors({
-    origin: true,
-    credentials: true,
-  })
-)
+// Browser access from a separate frontend requires an explicit origin allowlist.
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',').map(origin => origin.trim()).filter(Boolean)
+app.use(cors({
+  origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)),
+}))
+
+// This per-instance limit complements a shared rate limit at the deployment edge.
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, message: 'Too many authentication attempts. Please try again later.' },
+})
+app.use('/api/auth', authLimiter)
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
@@ -87,7 +97,7 @@ app.use('/api/*', (req: Request, res: Response) => {
 // Global error handler
 app.use((err: any, _req: Request, res: Response, _next: any) => {
   console.error('Unhandled server error:', err)
-  res.status(500).json({ success: false, message: 'Internal server error', error: err.message })
+  res.status(500).json({ success: false, message: 'Internal server error' })
 })
 
 // Start server after connecting to MongoDB
