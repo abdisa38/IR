@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Icon, Logo, Modal } from './shared-ui'
+import { ChapaLogo, Icon, Logo, Modal } from './shared-ui'
 import { formatBirr } from './menu-data'
 import { canAccess, canSeeCustomer, canSeeMoney, createDemoOrders, navigation, nextOrderStatus, orderTotal, orderStatusLabel, recordedSales, roles } from './admin-model'
 import type { AdminPage, DemoOrder, OrderStatus, PaymentStatus, Role } from './admin-model'
@@ -181,8 +181,10 @@ export default function Admin() {
             ? 'Completed'
             : 'Cancelled') as OrderStatus,
           payment: (o.paymentStatus === 'paid' ? 'Paid' : 'Unpaid') as PaymentStatus,
-          method: (o.paymentMethod?.includes('ShegerPay')
-            ? 'ShegerPay'
+          method: (o.paymentMethod?.toLowerCase().includes('chapa')
+            ? 'Chapa'
+            : o.paymentMethod?.includes('ShegerPay')
+            ? 'Chapa'
             : o.paymentMethod?.includes('Telebirr')
             ? 'Telebirr'
             : o.paymentMethod?.includes('CBE')
@@ -375,6 +377,35 @@ export default function Admin() {
                 {order.parentOrderId && (
                   <span className="admin-tag-extra">
                     + Extra Items
+                  </span>
+                )}
+                {order.method === 'Chapa' ? (
+                  <span style={{
+                    background: '#ecfdf5',
+                    color: '#047857',
+                    border: '1px solid #6ee7b7',
+                    padding: '2px 7px',
+                    borderRadius: '6px',
+                    fontWeight: 750,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    fontSize: '11px',
+                  }}>
+                    <ChapaLogo size={13} />
+                    {order.payment === 'Paid' ? 'Chapa · Paid' : 'Chapa · Online'}
+                  </span>
+                ) : (
+                  <span style={{
+                    background: '#f8fafc',
+                    color: '#64748b',
+                    border: '1px solid #e2e8f0',
+                    padding: '2px 7px',
+                    borderRadius: '6px',
+                    fontWeight: 650,
+                    fontSize: '11px',
+                  }}>
+                    {order.method}
                   </span>
                 )}
               </div>
