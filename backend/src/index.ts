@@ -17,37 +17,32 @@ const app = express()
 const PORT = process.env.PORT || 5000
 
 // Middleware
-// Production-hardened CORS origins
-const allowedOrigins = [
-  'https://ilillihotel.com',
-  'https://www.ilillihotel.com',
-  'https://ililli-restaurant.pro.et',
-  'http://localhost:5173',
-  'http://localhost:8443',
-  'http://localhost:3000',
-  'http://localhost:5000',
-]
-
+// Universal CORS configuration supporting credentials and preflight requests
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true)
-      if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-        return callback(null, true)
-      }
-      return callback(null, false)
+    origin: (_origin, callback) => {
+      // Allow all incoming web origins (ilillii-restauarant.pro.et, ilillihotel.com, localhost, etc.)
+      callback(null, true)
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+    maxAge: 86400,
   })
 )
+
+// Explicit handler for CORS preflight OPTIONS requests
+app.options('*', cors({ origin: true, credentials: true }))
 
 // In-memory rate limiting to protect auth endpoints against brute-force attacks
 const authAttempts = new Map<string, { count: number; resetTime: number }>()
 const rateLimitAuth = (req: Request, res: Response, next: any) => {
+  if (req.method === 'OPTIONS') return next() // Never rate-limit CORS preflight!
+
   const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown'
   const now = Date.now()
   const windowMs = 15 * 60 * 1000 // 15 mins
-  const maxAttempts = 20
+  const maxAttempts = 50
 
   const record = authAttempts.get(ip)
   if (!record || now > record.resetTime) {
