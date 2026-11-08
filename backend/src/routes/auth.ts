@@ -6,7 +6,7 @@ import { Order } from '../models/Order.js'
 import { Staff } from '../models/Staff.js'
 
 const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'ilillii_restaurant_secret_key_2026'
+import { JWT_SECRET } from '../middleware/auth.js'
 
 // Helper to safely parse string params
 function getParam(param: string | string[] | undefined): string {
@@ -121,7 +121,8 @@ router.post('/login', async (req: Request, res: Response) => {
       cleanId === '0909511588' ||
       cleanId === '+251909511588' ||
       lower === 'abdisaawel313@gmail.com'
-    if (isDirectStaff && (password === 'ilillii2026' || password === 'admin' || password === 'manager' || password.length >= 4)) {
+    const ADMIN_KEY = process.env.ADMIN_PASSWORD || 'ilillii2026';
+    if (isDirectStaff && (password === ADMIN_KEY || password === 'ilillii2026')) {
       const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin'
       const staffName =
         cleanId === '0909511588' || cleanId === '+251909511588' || lower === 'abdisaawel313@gmail.com'
@@ -153,7 +154,7 @@ router.post('/login', async (req: Request, res: Response) => {
         { email: lower },
       ],
     })
-    if (staffDoc && (staffDoc.password === password || password === '1234' || password === 'ilillii2026')) {
+    if (staffDoc && (staffDoc.password === password || password === (process.env.ADMIN_PASSWORD || 'ilillii2026'))) {
       const assignedRole = staffDoc.role.toLowerCase()
       const staffToken = jwt.sign(
         { id: staffDoc._id.toString(), name: staffDoc.name, role: assignedRole },
@@ -235,19 +236,16 @@ router.post('/google', async (req: Request, res: Response) => {
 
     let googleData: any = null
 
-    // Attempt 1: Verify token with Google's official tokeninfo endpoint
+    // Verify Google ID token cryptographically using Google tokeninfo API
     try {
-      const gRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`)
+      const gRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`)
       if (gRes.ok) {
         googleData = await gRes.json()
+      } else {
+        return res.status(401).json({ success: false, message: 'Google authentication token verification failed' })
       }
-    } catch (e) {
-      console.warn('Google tokeninfo lookup note; falling back to token decoding:', e)
-    }
-
-    // Attempt 2: Decode payload directly if tokeninfo was unreachable
-    if (!googleData || !googleData.sub) {
-      googleData = decodeJwtPayload(credential)
+    } catch (e: any) {
+      return res.status(503).json({ success: false, message: 'Unable to reach Google OAuth authentication service' })
     }
 
     if (!googleData || (!googleData.sub && !googleData.email)) {

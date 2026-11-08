@@ -1,7 +1,11 @@
 import { Router, Request, Response } from 'express'
+import { requireStaffAuth } from '../middleware/auth.js'
 import { Staff } from '../models/Staff.js'
 
 const router = Router()
+
+// Protect all staff management endpoints
+router.use(requireStaffAuth as any)
 
 // GET /api/staff - fetch all staff
 router.get('/', async (_req: Request, res: Response) => {

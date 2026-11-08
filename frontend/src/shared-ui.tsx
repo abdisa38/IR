@@ -88,5 +88,5 @@ export function Mark() {
   return <svg className="brand-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><g stroke="currentColor" strokeWidth="2.5"><path d="M24 24C7 24 5 15 9 10c5-5 15-2 15 14ZM24 24c0-17 9-19 14-15 5 5 2 15-14 15ZM24 24c17 0 19 9 15 14-5 5-15 2-15-14ZM24 24c0 17-9 19-14 15-5-5-2-15 14-15Z" /><circle cx="24" cy="24" r="4" /></g></svg>
 }
 export function Logo({ light = false }: { light?: boolean }) {
-  return <SiteLink href="/#home" className={`logo ${light ? 'logo-light' : ''}`} aria-label="Ilillii Hotel home"><Mark /><span className="wordmark">ilillii<span className="logo-caption">HOTEL · BALE ROBE</span></span></SiteLink>
+  return <SiteLink href="/#home" className={`logo ${light ? 'logo-light' : ''}`} aria-label="Ililli Hotel home"><Mark /><span className="wordmark">ililli<span className="logo-caption">HOTEL · BALE ROBE</span></span></SiteLink>
 }

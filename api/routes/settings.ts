@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express'
+import { requireStaffAuth } from '../middleware/auth.js'
 import { Settings } from '../models/Settings.js'
 
 const router = Router()
@@ -24,7 +25,7 @@ router.get('/', async (_req: Request, res: Response) => {
 })
 
 // PUT /api/settings - update restaurant settings
-router.put('/', async (req: Request, res: Response) => {
+router.put('/', requireStaffAuth as any, async (req: Request, res: Response) => {
   try {
     const { restaurantName, managerPhone, location, announcement, openingHours } = req.body
     let settings = await Settings.findOne()

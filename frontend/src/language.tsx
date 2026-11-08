@@ -31,8 +31,8 @@ export const translations: Record<Language, Record<string, string>> = {
     // Top Announcement & Brand
     'announcement.tagline': 'Bakka bashannanaa filatamaa. Dhandhama hin irraanfatamne.',
     'announcement.location': 'Baalee Roobee, Oromiyaa',
-    'brand.hotel': 'Hoteela Ilillii',
-    'brand.restaurant': 'Baarii fi Restooraantii Ilillii',
+    'brand.hotel': 'Hoteela Ililli',
+    'brand.restaurant': 'Baarii fi Restooraantii Ililli',
 
     // Navigation
     'nav.home': 'Jalqaba',
@@ -48,13 +48,13 @@ export const translations: Record<Language, Record<string, string>> = {
     'nav.pastOrders': 'Ajaja Duraanii',
 
     // Hero Section
-    'hero.welcome': 'BAGA GARA ILILLII NAGAAN DHUFTAN',
+    'hero.welcome': 'BAGA GARA ILILLI NAGAAN DHUFTAN',
     'hero.titleLine1': 'Nyaata Mi’aawaa.',
     'hero.titleLine2': 'Keessummeessaa',
     'hero.titleSpan': 'Filatamaa.',
     'hero.exploreMenu': 'Meenuu Ilaalaa',
     'hero.findUs': 'Teessoo Keenya',
-    'hero.community': 'Ilillii — kanuma keenya.',
+    'hero.community': 'Ililli — kanuma keenya.',
     'hero.moments': 'Yeroo gaarii waliin dabarsuuf.',
     'hero.imageLabel': 'MAADDII MI’AAWAAN WALITTI NU FIDA',
     'hero.sealTop': 'BEELA’AA KOTTAA',
@@ -73,7 +73,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'featured.eyebrow': 'KAN NAMNI HUNDI JAALLATU',
     'featured.title': 'Nyaata jaallattan filadhaa.',
     'featured.explore': 'Meenuu guutuu ilaalaa',
-    'featured.badgeSpecial': 'ISPEESHAALA ILILLII',
+    'featured.badgeSpecial': 'ISPEESHAALA ILILLI',
     'featured.badgeSignature': 'KAN BEEKAMUUN',
     'featured.badgeChef': 'FILANNOO SHEEFII',
     'featured.freshNote': 'Mi’eessituu Baaleetiin guyyaa guyyaan ho’aa qophaa’a.',
@@ -82,13 +82,13 @@ export const translations: Record<Language, Record<string, string>> = {
     'hospitality.eyebrow': 'NYAATA QOFA MITI',
     'hospitality.titleLine1': 'Mana ofii.',
     'hospitality.titleLine2': 'Simannaa Oromummaa.',
-    'hospitality.stampTop': 'ILILLII KEESSATTI',
+    'hospitality.stampTop': 'ILILLI KEESSATTI',
     'hospitality.stampBottom': 'YEROO HUNDA IDDOO QABDU',
     'hospitality.signoff': 'Nyaata mi’aawaa. Simannaa gaarii.',
 
     // Location & Find Us
     'location.eyebrow': 'KOOTTAA NU DAAWWADHAA',
-    'location.heading': 'Teessoo Hoteela Ilillii',
+    'location.heading': 'Teessoo Hoteela Ililli',
     'location.visitEyebrow': 'WIIRTUU BASHANNANAA ROOBEE',
     'location.visitTitleLine1': 'Iddoon keessan',
     'location.visitTitleLine2': 'as jira.',
@@ -128,7 +128,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'menu.inCart': 'Filatameera',
     'menu.unavailable': 'Dhumateera',
     'menu.houseSpecial': 'Ispeeshaala',
-    'menu.welcomeToIlillii': 'Baga nagaan gara Ilillii dhuftan.',
+    'menu.welcomeToIlilli': 'Baga nagaan gara Ililli dhuftan.',
     'menu.yourTableYourTime': 'MINJAALA KEESSAN. YEROO KEESSAN.',
     'menu.checkTable': 'Lakkoofsa minjaalaa filadhaa.',
     'menu.viewCartWithCount': 'Ajaja Ilaali · {count}',
@@ -191,7 +191,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'checkout.verifyAndOrder': 'Mirkaneessi & Ajaji',
     'checkout.verifyingSheger': 'Payo’n Mirkanaa’aa jira…',
     'checkout.cbeAccount': 'CBE: 1000533856385',
-    'checkout.telebirrAccount': 'Telebirr: 0909511588 (Ilillii)',
+    'checkout.telebirrAccount': 'Telebirr: 0909511588 (Ililli)',
     'checkout.copied': 'Garagalfameera!',
     'checkout.paidViaSheger': 'Payo’n Kaffalameera',
     'cart.dineInWithTable': 'Asumatti (Minjaala {table})',
@@ -217,7 +217,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'order.refreshStatus': 'Haaromsi',
     'order.needHand': 'Waan barbaaddan qabduu? Keessummeessaan keenya isin bira jira.',
     'order.askForHelp': 'Gargaarsa Gaafadhu',
-    'order.enjoyMeal': 'Maaddii gaarii! Ililliitti yeroo gaarii dabarsaa.',
+    'order.enjoyMeal': 'Maaddii gaarii! Ilillitti yeroo gaarii dabarsaa.',
     'order.backToMenu': 'Gara Meenuu',
     'order.backToCart': 'Duubatti',
     'order.back': 'Deebi’i',
@@ -242,7 +242,7 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Takeaway / Pickup
     'pickup.title': 'Takeaway (Fudhatanii Deemuuf)',
-    'pickup.locationTitle': 'Hoteela Ilillii · Roobee',
+    'pickup.locationTitle': 'Hoteela Ililli · Roobee',
     'pickup.locationSubtitle': 'Awwaraaris, Istaadiyomii Waaqoo Guutuu cinaa',
     'pickup.checkMeal': 'Ajaja keessan ilaalaa',
     'pickup.trackOrder': 'Ajaja hordofaa',
@@ -251,12 +251,12 @@ export const translations: Record<Language, Record<string, string>> = {
     'pickup.orderRefCode': 'Lakkoofsa Ajajaa',
     'pickup.saveCodeNotice': 'Lakkoofsa kana hin gatinaa.',
     'pickup.readyTitle': 'Nyaanni Keessan Ga’eera!',
-    'pickup.readyDesc': 'Hoteela Ilillii dhuftaniitii lakkoofsa ajajaa agarsiisuun fudhadhaa.',
+    'pickup.readyDesc': 'Hoteela Ililli dhuftaniitii lakkoofsa ajajaa agarsiisuun fudhadhaa.',
     'pickup.trackProgress': 'Haala ajajaa hordofi',
 
     // Past Orders Modal
     'history.title': 'Ajaja Duraanii',
-    'history.desc': 'Waan kanaan dura Ililliitti ajajattan.',
+    'history.desc': 'Waan kanaan dura Ilillitti ajajattan.',
     'history.emptyTitle': 'Ajajni duraanii hin jiru',
     'history.emptyDesc': 'Waan ajajattan hundi asitti kuufama.',
     'history.startFresh': 'Amma Ajaji',
@@ -267,7 +267,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'contact.eyebrow': 'SIMANNAA HO’AA',
     'contact.headingLine1': 'Koottaa',
     'contact.headingLine2': 'nuuf goranaa.',
-    'contact.comeOver': 'Ililliitti wal argina.',
+    'contact.comeOver': 'Ilillitti wal argina.',
     'contact.letsTalk': 'Nuuf bilbilaa.',
     'contact.phoneDirect': 'Ajajuuf ykn iddoo qabsiisuuf nuuf bilbilaa.',
     'contact.visitTime': 'Sa’aatii Hojii.',
@@ -445,7 +445,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'menu.inCart': 'ተመርጧል',
     'menu.unavailable': 'አልቋል',
     'menu.houseSpecial': 'ልዩ (Special)',
-    'menu.welcomeToIlillii': 'እንኳን ወደ ኢሊሊ በደህና መጡ።',
+    'menu.welcomeToIlilli': 'እንኳን ወደ ኢሊሊ በደህና መጡ።',
     'menu.yourTableYourTime': 'ጠረጴዛዎ። ጊዜዎ።',
     'menu.checkTable': 'ጠረጴዛ ይምረጡ።',
     'menu.viewCartWithCount': 'ትዕዛዝ እይ · {count}',
@@ -665,8 +665,8 @@ export const translations: Record<Language, Record<string, string>> = {
     // Top Announcement & Brand
     'announcement.tagline': 'A place to gather. A meal to remember.',
     'announcement.location': 'Bale Robe, Oromia',
-    'brand.hotel': 'Ilillii Hotel',
-    'brand.restaurant': 'Ilillii Bar & Restaurant',
+    'brand.hotel': 'Ililli Hotel',
+    'brand.restaurant': 'Ililli Bar & Restaurant',
 
     // Navigation
     'nav.home': 'Home',
@@ -682,7 +682,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'nav.pastOrders': 'My Past Orders',
 
     // Hero Section
-    'hero.welcome': 'A WARM WELCOME TO ILILLII',
+    'hero.welcome': 'A WARM WELCOME TO ILILLI',
     'hero.titleLine1': 'Good food.',
     'hero.titleLine2': 'Great',
     'hero.titleSpan': 'Restaurant.',
@@ -722,7 +722,7 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Location & Find Us
     'location.eyebrow': 'GOOD FOOD IS JUST THE BEGINNING',
-    'location.heading': 'Find Ilillii Hotel',
+    'location.heading': 'Find Ililli Hotel',
     'location.visitEyebrow': 'YOUR PLACE IN BALE ROBE',
     'location.visitTitleLine1': 'There’s a place',
     'location.visitTitleLine2': 'for you here.',
@@ -762,7 +762,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'menu.inCart': 'In your cart',
     'menu.unavailable': 'Unavailable',
     'menu.houseSpecial': 'House Special',
-    'menu.welcomeToIlillii': 'Welcome to Ilillii Hotel.',
+    'menu.welcomeToIlilli': 'Welcome to Ililli Hotel.',
     'menu.yourTableYourTime': 'YOUR TABLE. YOUR TIME.',
     'menu.checkTable': 'Let’s check your table.',
     'menu.viewCartWithCount': 'View Cart · {count}',
@@ -824,7 +824,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'checkout.verifyAndOrder': 'Verify & Place Order',
     'checkout.verifyingSheger': 'Verifying with Payo…',
     'checkout.cbeAccount': 'Commercial Bank of Ethiopia (CBE): 1000533856385',
-    'checkout.telebirrAccount': 'Telebirr: 0909511588 (Ilillii Bar & Restaurant)',
+    'checkout.telebirrAccount': 'Telebirr: 0909511588 (Ililli Bar & Restaurant)',
     'checkout.copied': 'Copied to clipboard!',
     'checkout.paidViaSheger': 'Paid via Chapa',
     'cart.dineInWithTable': 'Dine in (Table {table})',
@@ -849,7 +849,7 @@ export const translations: Record<Language, Record<string, string>> = {
     'order.requestHelp': 'Request staff assistance',
     'order.refreshStatus': 'Refresh status',
     'order.askForHelp': 'Ask for help',
-    'order.enjoyMeal': 'Your table. Your meal. Enjoy your time at Ilillii.',
+    'order.enjoyMeal': 'Your table. Your meal. Enjoy your time at Ililli.',
     'order.backToMenu': 'Back to menu',
     'order.backToCart': 'Back to cart',
     'order.back': 'Back',
@@ -874,7 +874,7 @@ export const translations: Record<Language, Record<string, string>> = {
 
     // Takeaway / Pickup
     'pickup.title': 'Pick Up My Order (Takeaway)',
-    'pickup.locationTitle': 'Ilillii Hotel · Bale Robe',
+    'pickup.locationTitle': 'Ililli Hotel · Bale Robe',
     'pickup.locationSubtitle': 'Around Awraris.',
     'pickup.checkMeal': 'Check your meal details',
     'pickup.trackOrder': 'Track your order',
@@ -883,12 +883,12 @@ export const translations: Record<Language, Record<string, string>> = {
     'pickup.orderRefCode': 'Order reference code',
     'pickup.saveCodeNotice': 'Save these codes to track your order anytime.',
     'pickup.readyTitle': 'Ready for Pickup',
-    'pickup.readyDesc': 'Please come to Ilillii Hotel (around Awraris) and present your order reference.',
+    'pickup.readyDesc': 'Please come to Ililli Hotel (around Awraris) and present your order reference.',
     'pickup.trackProgress': 'Track order progress',
 
     // Past Orders Modal
     'history.title': 'My Past Orders',
-    'history.desc': 'Meals and drinks you ordered at Ilillii Hotel.',
+    'history.desc': 'Meals and drinks you ordered at Ililli Hotel.',
     'history.emptyTitle': 'No past orders recorded',
     'history.emptyDesc': 'When you submit a meal order, a receipt will be kept here so you can review your dishes anytime.',
     'history.startFresh': 'Start Fresh Order',

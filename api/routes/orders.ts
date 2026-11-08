@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { Order } from '../models/Order.js'
+import { MenuItem } from '../models/MenuItem.js'
+import { requireStaffAuth, optionalAuth } from '../middleware/auth.js'
 
 const router = Router()
 
@@ -98,7 +100,34 @@ router.post('/', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, message: 'Order must contain at least one item' })
     }
 
-    const subtotal = items.reduce((sum: number, item: any) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0)
+    // Tamper-proof server-side price lookup
+    const rawIds = items.map((i: any) => String(i.menuItemId || i.id || i.dishId || i._id || ''))
+    const validMongoIds = rawIds.filter((id: string) => /^[0-9a-fA-F]{24}$/.test(id))
+    const dbMenuItems = await MenuItem.find({
+      $or: [
+        { id: { $in: rawIds } },
+        ...(validMongoIds.length > 0 ? [{ _id: { $in: validMongoIds } }] : [])
+      ]
+    })
+    const menuMap = new Map()
+    for (const m of dbMenuItems) {
+      menuMap.set(m.id, m)
+      menuMap.set(m._id.toString(), m)
+    }
+
+    const verifiedItems = items.map((i: any, index: number) => {
+      const rawId = String(i.menuItemId || i.id || i.dishId || i._id || `item-${index + 1}`)
+      const matched = menuMap.get(rawId)
+      return {
+        menuItemId: rawId,
+        name: matched ? matched.name : (i.name || 'Dish'),
+        price: matched ? matched.price : (Number(i.price) || 0),
+        quantity: Math.max(1, Number(i.quantity) || 1),
+        image: matched ? matched.image : (i.image || ''),
+      }
+    })
+
+    const subtotal = verifiedItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
     const total = subtotal
     const orderNumber = await generateOrderNumber()
 
@@ -112,7 +141,7 @@ router.post('/', async (req: Request, res: Response) => {
       table: table || '',
       customerName: customerName || (table ? `Table ${table}` : 'Guest'),
       customerPhone: customerPhone || '',
-      items: items.map((i: any, index: number) => ({
+      items: verifiedItems.map((i: any, index: number) => ({
         menuItemId: String(i.menuItemId || i.id || i.dishId || i._id || `item-${index + 1}`),
         name: i.name || 'Dish',
         price: Number(i.price) || 0,
@@ -339,7 +368,7 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
 })
 
 // PATCH /api/orders/:id/payment - update payment status
-router.patch('/:id/payment', async (req: Request, res: Response) => {
+router.patch('/:id/payment', requireStaffAuth as any, async (req: Request, res: Response) => {
   try {
     const { paymentStatus, paymentMethod } = req.body
     const valid = ['unpaid', 'paid', 'pay_after_eating']
@@ -365,10 +394,20 @@ router.patch('/:id/payment', async (req: Request, res: Response) => {
 })
 
 // DELETE /api/orders/:id - permanently delete or cancel order
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', optionalAuth as any, async (req: Request, res: Response) => {
   try {
     const id = getParam(req.params.id)
     const { cancel } = req.query
+
+    // Permanent delete requires staff authorization
+    if (cancel !== 'true') {
+      const authReq = req as any
+      const staffRoles = ['admin', 'manager', 'owner', 'kitchen', 'cashier', 'waiter', 'staff']
+      const isStaff = authReq.user && (authReq.user.isStaff === true || staffRoles.includes(String(authReq.user.role || '').toLowerCase()))
+      if (!isStaff) {
+        return res.status(403).json({ success: false, message: 'Permanent order deletion requires staff authorization' })
+      }
+    }
 
     if (cancel === 'true') {
       const order = await Order.findOne(buildOrderQuery(id))

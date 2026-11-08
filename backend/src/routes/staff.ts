@@ -1,12 +1,16 @@
 import { Router, Request, Response } from 'express'
+import { requireStaffAuth } from '../middleware/auth.js'
 import { Staff } from '../models/Staff.js'
 
 const router = Router()
 
+// Protect all staff management endpoints
+router.use(requireStaffAuth as any)
+
 // GET /api/staff - fetch all staff
 router.get('/', async (_req: Request, res: Response) => {
   try {
-    const staff = await Staff.find().sort({ role: 1, name: 1 })
+    const staff = await Staff.find().select('-password').sort({ role: 1, name: 1 })
     res.json({ success: true, count: staff.length, staff })
   } catch (error: any) {
     res.status(500).json({ success: false, message: 'Failed to fetch staff', error: error.message })

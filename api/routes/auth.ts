@@ -6,7 +6,7 @@ import { Order } from '../models/Order.js'
 import { Staff } from '../models/Staff.js'
 
 const router = Router()
-const JWT_SECRET = process.env.JWT_SECRET || 'ilillii_restaurant_secret_key_2026'
+import { JWT_SECRET } from '../middleware/auth.js'
 
 // Helper to safely parse string params
 function getParam(param: string | string[] | undefined): string {
@@ -234,19 +234,16 @@ router.post('/google', async (req: Request, res: Response) => {
 
     let googleData: any = null
 
-    // Attempt 1: Verify token with Google's official tokeninfo endpoint
+    // Verify Google ID token cryptographically using Google tokeninfo API
     try {
-      const gRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`)
+      const gRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(credential)}`)
       if (gRes.ok) {
         googleData = await gRes.json()
+      } else {
+        return res.status(401).json({ success: false, message: 'Google authentication token verification failed' })
       }
-    } catch (e) {
-      console.warn('Google tokeninfo lookup note; falling back to token decoding:', e)
-    }
-
-    // Attempt 2: Decode payload directly if tokeninfo was unreachable
-    if (!googleData || !googleData.sub) {
-      googleData = decodeJwtPayload(credential)
+    } catch (e: any) {
+      return res.status(503).json({ success: false, message: 'Unable to reach Google OAuth authentication service' })
     }
 
     if (!googleData || (!googleData.sub && !googleData.email)) {

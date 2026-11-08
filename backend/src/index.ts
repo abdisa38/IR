@@ -17,12 +17,54 @@ const app = express()
 const PORT = process.env.PORT || 5000
 
 // Middleware
+// Production-hardened CORS origins
+const allowedOrigins = [
+  'https://ilillihotel.com',
+  'https://www.ilillihotel.com',
+  'https://ililli-restaurant.pro.et',
+  'http://localhost:5173',
+  'http://localhost:8443',
+  'http://localhost:3000',
+  'http://localhost:5000',
+]
+
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true)
+      if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+        return callback(null, true)
+      }
+      return callback(null, false)
+    },
     credentials: true,
   })
 )
+
+// In-memory rate limiting to protect auth endpoints against brute-force attacks
+const authAttempts = new Map<string, { count: number; resetTime: number }>()
+const rateLimitAuth = (req: Request, res: Response, next: any) => {
+  const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown'
+  const now = Date.now()
+  const windowMs = 15 * 60 * 1000 // 15 mins
+  const maxAttempts = 20
+
+  const record = authAttempts.get(ip)
+  if (!record || now > record.resetTime) {
+    authAttempts.set(ip, { count: 1, resetTime: now + windowMs })
+    return next()
+  }
+
+  if (record.count >= maxAttempts) {
+    return res.status(429).json({
+      success: false,
+      message: 'Too many authentication attempts. Please wait 15 minutes before trying again.',
+    })
+  }
+
+  record.count++
+  next()
+}
 
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
@@ -76,7 +118,7 @@ app.use('/api/orders', orderRoutes)
 app.use('/api/staff', staffRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/settings', settingsRoutes)
-app.use('/api/auth', authRoutes)
+app.use('/api/auth', rateLimitAuth, authRoutes)
 app.use('/api/upload', uploadRoutes)
 
 // 404 handler for API routes

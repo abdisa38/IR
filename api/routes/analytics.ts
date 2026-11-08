@@ -1,9 +1,13 @@
 import { Router, Request, Response } from 'express'
+import { requireStaffAuth } from '../middleware/auth.js'
 import { Order } from '../models/Order.js'
 import { MenuItem } from '../models/MenuItem.js'
 import { Staff } from '../models/Staff.js'
 
 const router = Router()
+
+// Protect business analytics from unauthorized access
+router.use(requireStaffAuth as any)
 
 // GET /api/analytics - real-time analytics from MongoDB
 router.get('/', async (_req: Request, res: Response) => {
