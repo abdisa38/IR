@@ -10,13 +10,13 @@ export function ContactAction({ kind, className = 'button secondary' }: { kind: 
   if (kind === 'call') {
     return (
       <a
-        href="tel:0909511588"
+        href="tel:09511588"
         className={className}
         style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none' }}
-        aria-label="Call Ilillii Hotel at 0909511588"
+        aria-label="Call Ilillii Hotel at 09511588"
       >
         <Icon name="phone" size={17} />
-        {t('location.phoneTitle')}: 0909511588
+        {t('location.phoneTitle')}: 09511588
       </a>
     )
   }
@@ -99,8 +99,8 @@ export function FindUsSection() {
             <div className="visit-detail">
               <Icon name="phone" size={21} />
               <div>
-                <strong>{t('location.phoneTitle')}: 0909511588</strong>
-                <a href="tel:0909511588" style={{ color: 'var(--color-brand)', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>
+                <strong>{t('location.phoneTitle')}: 09511588</strong>
+                <a href="tel:09511588" style={{ color: 'var(--color-brand)', fontWeight: 600, display: 'inline-block', marginTop: '2px' }}>
                   {t('location.tapToCall')}
                 </a>
               </div>
@@ -599,8 +599,8 @@ export function GlobalHeader({
 
             <div className="mobile-drawer-footer">
               <div>{t('location.address')} · {t('location.town')}</div>
-              <a href="tel:0909511588" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                <Icon name="phone" size={14} /> {t('location.phoneTitle')}: 0909511588
+              <a href="tel:09511588" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                <Icon name="phone" size={14} /> {t('location.phoneTitle')}: 09511588
               </a>
             </div>
           </div>
@@ -976,7 +976,7 @@ function ActiveOrderStatusModal({
                 Past Orders History
               </button>
               <a
-                href="tel:0909511588"
+                href="tel:09511588"
                 className="button secondary"
                 style={{
                   display: 'inline-flex',
@@ -989,7 +989,7 @@ function ActiveOrderStatusModal({
                   fontSize: '13px',
                 }}
               >
-                Call: 0909511588
+                Call: 09511588
               </a>
             </div>
           </div>
@@ -1115,12 +1115,12 @@ function PastOrdersModal({ close }: { close: () => void }) {
               + {t('order.addMoreDishes') || 'Add More Food'}
             </button>
             <a
-              href="tel:0909511588"
+              href="tel:09511588"
               className="button secondary"
               style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', textDecoration: 'none', minHeight: '44px', padding: '0 14px' }}
             >
               <Icon name="phone" size={15} />
-              0909511588
+              09511588
             </a>
           </div>
           {orders.length > 0 && (
@@ -1175,9 +1175,9 @@ export function GlobalFooter() {
             <p className="footer-addr">
               {t('footer.brandAddr')}
             </p>
-            <a href="tel:0909511588" className="footer-phone">
+            <a href="tel:09511588" className="footer-phone">
               <Icon name="phone" size={13} />
-              <span>0909511588</span>
+              <span>09511588</span>
             </a>
           </div>
 

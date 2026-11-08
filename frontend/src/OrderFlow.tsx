@@ -135,7 +135,7 @@ export default function OrderFlow({
         if (saved) {
           const parsed = JSON.parse(saved)
           if (parsed.name && !name) setName(parsed.name)
-          if (parsed.phone && parsed.phone !== '0909511588' && !phone) {
+          if (parsed.phone && parsed.phone !== '09511588' && !phone) {
             setPhone(parsed.phone)
           }
         }
@@ -435,7 +435,7 @@ export default function OrderFlow({
         email: 'guest@ilillii.com',
         firstName: name.trim() || 'Guest',
         lastName: 'Customer',
-        phone: phone.trim() || '0909511588',
+        phone: phone.trim() || '09511588',
         orderId: cleanNum,
         returnUrl,
       })
@@ -663,7 +663,7 @@ export default function OrderFlow({
                     value={phone}
                     maxLength={24}
                     onChange={e => handlePhoneChange(e.target.value)}
-                    placeholder="0909511588"
+                    placeholder="09511588"
                   />
                   <small>{t('checkout.phoneHelp')}</small>
                 </label>
@@ -826,7 +826,7 @@ export default function OrderFlow({
                   </button>
 
                   <a
-                    href="tel:0909511588"
+                    href="tel:09511588"
                     className="button secondary order-full"
                     style={{
                       display: 'inline-flex',
@@ -937,7 +937,7 @@ export default function OrderFlow({
           ) : (
             <p className="modal-description">
               Please ask a member of the team at your table for assistance. If a table number looks
-              wrong, staff will assist you right away. Phone: 0909511588.
+              wrong, staff will assist you right away. Phone: 09511588.
             </p>
           )}
         </Modal>

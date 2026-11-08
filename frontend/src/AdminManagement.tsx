@@ -986,7 +986,7 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
         <Modal title={`Print Table ${printableTable} Tent Card`} close={() => setPrintableTable(null)}>
           <div style={{ textAlign: 'center', padding: '16px', background: '#fdfbf7', borderRadius: '12px', border: '2px dashed #b82032', maxWidth: '340px', margin: '0 auto' }}>
             <h2 style={{ color: '#b82032', margin: '0 0 4px', fontSize: '18px', fontWeight: 900 }}>ILILLII BAR &amp; RESTAURANT</h2>
-            <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#78350f' }}>Bale Robe, Oromia · 0909511588</p>
+            <p style={{ margin: '0 0 12px', fontSize: '12px', color: '#78350f' }}>Bale Robe, Oromia · 09511588</p>
             <div style={{ background: '#ffffff', padding: '14px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
               <div style={{ fontSize: '28px', fontWeight: 900, color: '#1c1917', marginBottom: '4px' }}>
                 TABLE {printableTable}
@@ -1259,7 +1259,7 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
                 value={editing.phone || ''}
                 maxLength={25}
                 required
-                placeholder="0909511588"
+                placeholder="09511588"
                 onChange={event => setEditing({ ...editing, phone: event.target.value })}
               />
             </label>
@@ -1352,7 +1352,7 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
 export function AdminSettings({ notify }: { notify: (text: string) => void }) {
   const [values, setValues] = useState({
     restaurantName: 'Ilillii Bar & Restaurant',
-    phone: '0909511588',
+    phone: '09511588',
     address: 'Around Awraris,Bale Robe',
     announcement: 'Welcome to Ilillii Bar & Restaurant · Open Daily 7:00 AM – 11:30 PM',
     hours: 'Daily: 7:00 AM – 11:30 PM',
@@ -1363,7 +1363,7 @@ export function AdminSettings({ notify }: { notify: (text: string) => void }) {
       if (res.success && res.settings) {
         setValues({
           restaurantName: res.settings.restaurantName || 'Ilillii Bar & Restaurant',
-          phone: res.settings.managerPhone || '0909511588',
+          phone: res.settings.managerPhone || '09511588',
           address: res.settings.location || 'Around Awraris,Bale Robe',
           announcement: res.settings.announcement || 'Welcome to Ilillii Bar & Restaurant',
           hours: res.settings.openingHours || 'Daily: 7:00 AM – 11:30 PM',
@@ -1407,7 +1407,7 @@ export function AdminSettings({ notify }: { notify: (text: string) => void }) {
             <input
               value={values.phone}
               onChange={event => setValues({ ...values, phone: event.target.value })}
-              placeholder="0909511588"
+              placeholder="09511588"
             />
           </label>
         </div>

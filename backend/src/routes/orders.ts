@@ -193,7 +193,7 @@ router.post('/chapa-create', async (req: Request, res: Response) => {
       email: email && email.includes('@') ? email : 'guest@ilillii.com',
       first_name: firstName || 'Guest',
       last_name: lastName || 'Customer',
-      phone_number: phone || '0909511588',
+      phone_number: phone || '09511588',
       tx_ref: txRef,
       callback_url: `${protocol}://${host}/api/orders/chapa-webhook`,
       return_url: returnUrl || `${protocol}://${host}/#profile`,

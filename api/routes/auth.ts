@@ -118,14 +118,14 @@ router.post('/login', async (req: Request, res: Response) => {
     const staffRoles = ['admin', 'owner', 'manager', 'kitchen', 'cashier', 'waiter']
     const isDirectStaff =
       staffRoles.includes(lower) ||
-      cleanId === '0909511588' ||
+      cleanId === '09511588' ||
       cleanId === '+251909511588' ||
       lower === 'abdisaawel313@gmail.com'
     const ADMIN_KEY = process.env.ADMIN_PASSWORD || 'ilillii2026';
     if (isDirectStaff && (password === ADMIN_KEY || password === 'ilillii2026')) {
       const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin'
       const staffName =
-        cleanId === '0909511588' || cleanId === '+251909511588' || lower === 'abdisaawel313@gmail.com'
+        cleanId === '09511588' || cleanId === '+251909511588' || lower === 'abdisaawel313@gmail.com'
           ? 'Abdisa Awel (Manager)'
           : `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)}`
       const staffToken = jwt.sign(
