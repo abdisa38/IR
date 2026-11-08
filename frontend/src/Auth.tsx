@@ -191,48 +191,6 @@ export function AuthCard({
       return
     }
 
-    // Instant sign-in for staff and manager accounts (no waiting or spinner delay)
-    const lower = cleanId.toLowerCase()
-    const staffRoles = ['admin', 'owner', 'manager', 'kitchen', 'cashier', 'waiter']
-    const isDirectStaff =
-      staffRoles.includes(lower) ||
-      cleanId === '0909511588' ||
-      cleanId === '+251909511588' ||
-      lower === 'abdisaawel313@gmail.com'
-    if (isDirectStaff && (loginPassword === 'ilillii2026' || loginPassword === 'admin' || loginPassword === 'manager' || loginPassword.length >= 4)) {
-      const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin'
-      const staffName =
-        cleanId === '0909511588' || cleanId === '+251909511588' || lower === 'abdisaawel313@gmail.com'
-          ? 'Abdisa Awel (Manager)'
-          : `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)}`
-      const mockToken = `staff-${lower}-${Date.now()}`
-      const staffUser: ApiUser = {
-        id: `staff-${lower}`,
-        name: staffName,
-        role: assignedRole as any,
-        isStaff: true,
-      }
-      localStorage.setItem('ilillii_user', JSON.stringify(staffUser))
-      localStorage.setItem('ilillii_token', mockToken)
-      localStorage.setItem(
-        'ilillii_customer',
-        JSON.stringify({
-          name: staffName,
-          phone: cleanId.startsWith('09') || cleanId.startsWith('+251') ? cleanId : '0909511588',
-          role: assignedRole,
-        })
-      )
-      window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
-
-      // Asynchronously notify backend without blocking immediate login
-      api.login(cleanId, loginPassword).catch(() => {})
-
-      // Instant redirect to admin workspace
-      window.location.hash = 'admin'
-      window.dispatchEvent(new HashChangeEvent('hashchange'))
-      return
-    }
-
     setBusy(true)
     try {
       const res = await api.login(cleanId, loginPassword)
