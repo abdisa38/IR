@@ -1083,7 +1083,7 @@ export function AdminTables({ notify }: { notify: (text: string) => void }) {
 
 export function AdminStaff({ notify }: { notify: (text: string) => void }) {
   const [staffList, setStaffList] = useState<ApiStaff[]>([])
-  const [editing, setEditing] = useState<Partial<ApiStaff> | null>(null)
+  const [editing, setEditing] = useState<(Partial<ApiStaff> & { password?: string }) | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState | null>(null)
@@ -1113,12 +1113,27 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
       return
     }
 
+    const password = editing.password || ''
+    const passwordIsValid = Array.from(password).length >= 12 &&
+      new TextEncoder().encode(password).length <= 72 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /\d/.test(password) &&
+      /[^A-Za-z0-9]/.test(password)
+    if ((!editing.id && !password) || (password && !passwordIsValid)) {
+      setError('Password must be at least 12 characters, no more than 72 UTF-8 bytes, and include uppercase and lowercase letters, a number, and a symbol.')
+      return
+    }
+
     try {
+      const staffData = { ...editing }
+      delete staffData.password
+      if (password) staffData.password = password
       if (editing.id) {
-        await api.updateStaff(editing.id, editing)
+        await api.updateStaff(editing.id, staffData)
         notify(`Staff '${editing.name}' updated!`)
       } else {
-        await api.createStaff(editing)
+        await api.createStaff(staffData)
         notify(`New team member '${editing.name}' added to database!`)
       }
       setEditing(null)
@@ -1193,7 +1208,6 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
                   <small>{member.email || 'No email registered'}</small>
                   <div style={{ fontSize: '11px', color: '#78716c', marginTop: '4px', background: '#f5ebe1', padding: '2px 8px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     <span>Login: <strong>{member.username || member.phone}</strong></span>
-                    <span>· PIN: <code>{member.password || '1234'}</code></span>
                   </div>
                 </td>
                 <td data-label="Role">{member.role}</td>
@@ -1213,7 +1227,7 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
                   <button
                     className="admin-table-action"
                     onClick={() => {
-                      setEditing({ ...member })
+                      setEditing({ ...member, password: '' })
                       setError('')
                     }}
                   >
@@ -1284,15 +1298,18 @@ export function AdminStaff({ notify }: { notify: (text: string) => void }) {
                 <small style={{ fontSize: '11px', color: 'var(--color-muted)', display: 'block', marginTop: '3px' }}>Staff uses this to sign in</small>
               </label>
               <label>
-                Login PIN / Password
+                {editing.id ? 'Set new password (optional)' : 'Login password'}
                 <input
-                  type="text"
+                  type="password"
                   value={editing.password || ''}
-                  maxLength={50}
-                  placeholder="e.g. 1234"
+                  minLength={12}
+                  maxLength={128}
+                  required={!editing.id}
+                  autoComplete="new-password"
+                  placeholder={editing.id ? 'Leave blank to keep current password' : 'Create a strong password'}
                   onChange={event => setEditing({ ...editing, password: event.target.value })}
                 />
-                <small style={{ fontSize: '11px', color: 'var(--color-muted)', display: 'block', marginTop: '3px' }}>Default PIN is 1234</small>
+                <small style={{ fontSize: '11px', color: 'var(--color-muted)', display: 'block', marginTop: '3px' }}>At least 12 characters with uppercase, lowercase, a number, and a symbol. Existing passwords are never shown.</small>
               </label>
             </div>
             <div className="admin-form-grid">
