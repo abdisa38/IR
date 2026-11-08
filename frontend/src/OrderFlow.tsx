@@ -8,7 +8,7 @@ import { useLanguage, languageOptions } from './language'
 import './order.css'
 
 type Line = { item: MenuItem; quantity: number }
-type Step = 'details' | 'sheger' | 'confirmation'
+type Step = 'details' | 'confirmation'
 type Snapshot = {
   reference: string
   table: string
@@ -94,7 +94,7 @@ export default function OrderFlow({
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   const total = lines.reduce((sum, line) => sum + line.item.price * line.quantity, 0)
-  const locked = busy || verifyingSheger || verifyingChapa || loadingChapa || Boolean(snapshot)
+  const locked = busy || loadingChapa || Boolean(snapshot)
   const confirmedView = step === 'confirmation'
 
   // When dialog opens or closes, manage clean state
@@ -163,10 +163,7 @@ export default function OrderFlow({
     }
   }, [error, open])
 
-  const go = (next: Step) => {
-    setError('')
-    setStep(next)
-  }
+
 
   const checkGuestValidation = () => {
     if (!name || !name.trim()) {
@@ -183,13 +180,7 @@ export default function OrderFlow({
     return true
   }
 
-  const copyToClipboard = async (text: string, label: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopiedAccount(label)
-      setTimeout(() => setCopiedAccount(null), 2500)
-    } catch (e) { }
-  }
+
 
   const handleOrderSuccess = (
     order: any,
