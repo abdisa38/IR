@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Settings } from '../models/Settings.js';
+import { requireManager } from '../middleware/authorize.js';
 const router = Router();
 // GET /api/settings - fetch restaurant settings
 router.get('/', async (_req, res) => {
@@ -22,7 +23,7 @@ router.get('/', async (_req, res) => {
     }
 });
 // PUT /api/settings - update restaurant settings
-router.put('/', async (req, res) => {
+router.put('/', requireManager, async (req, res) => {
     try {
         const { restaurantName, managerPhone, location, announcement, openingHours } = req.body;
         let settings = await Settings.findOne();
