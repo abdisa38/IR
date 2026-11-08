@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Icon, Logo, Modal, useDialog } from './shared-ui'
+import { ChapaLogo, Icon, Logo, Modal, useDialog } from './shared-ui'
 import { formatBirr } from './menu-data'
 import type { MenuItem } from './menu-data'
 import { validateGuest } from './order-prototype'
@@ -705,7 +705,7 @@ export default function OrderFlow({
                         </>
                       ) : (
                         <>
-                          <Icon name="bank" size={17} />
+                          <ChapaLogo size={19} />
                           Pay with Chapa ({formatBirr(total)} ETB)
                         </>
                       )}
