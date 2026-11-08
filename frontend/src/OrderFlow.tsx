@@ -384,196 +384,92 @@ export default function OrderFlow({
     } catch (e) {}
   }
 
-  // Option 2: Pay Now with Chapa Ethiopian Gateway
+  // Option 2: Pay Now with Chapa - Direct Hosted Checkout
   const handleStartChapa = async () => {
     if (!checkGuestValidation()) return
     setError('')
-    go('sheger')
     setLoadingChapa(true)
+
     try {
-      const email = 'guest@ilillii.com'
-      const firstName = name.trim() || 'Guest'
-      const lastName = 'Customer'
-      const phoneNum = phone.trim() || '0909511588'
+      const isQr = isTableScanned
+      const source = isQr ? 'table_qr' : (tableNum ? 'manual_table' : 'web_direct')
+      const linePayload = lines.map(l => ({
+        menuItemId: l.item.id,
+        name: l.item.name,
+        price: l.item.price,
+        quantity: l.quantity,
+        image: l.item.confirmedImage || '',
+      }))
+
+      let ourOrder
+      if (activeOrderId) {
+        try {
+          const check = await api.getOrder(activeOrderId)
+          if (check.success && check.order && !['completed', 'cancelled'].includes(check.order.status)) {
+            const addRes = await api.addItemsToOrder(activeOrderId, linePayload, note)
+            if (addRes.success && addRes.order) ourOrder = addRes.order
+          }
+        } catch (e) {}
+      }
+
+      if (!ourOrder) {
+        const createRes = await api.createOrder({
+          items: linePayload,
+          type: 'Dine in',
+          table: tableNum ? tableNum : undefined,
+          customerName: name.trim(),
+          customerPhone: phone.trim(),
+          note,
+          paymentTiming: 'pre_pay',
+          paymentMethod: 'Chapa',
+          source,
+        })
+        if (createRes.success && createRes.order) ourOrder = createRes.order
+      }
+
+      const cleanNum = ourOrder ? String(ourOrder.orderNumber).replace(/^IL-/, '') : activeOrderId || undefined
+
+      // Persist customer details and active order
+      try {
+        localStorage.setItem('ilillii_customer', JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          lastOrder: cleanNum,
+          table: tableNum || '',
+          updatedAt: new Date().toISOString(),
+        }))
+        if (cleanNum) {
+          localStorage.setItem('ilillii_active_order_id', cleanNum)
+          localStorage.setItem('ilillii_active_order_time', Date.now().toString())
+        }
+        window.dispatchEvent(new CustomEvent('ilillii-clear-cart'))
+        window.dispatchEvent(new CustomEvent('ilillii-auth-changed'))
+      } catch (e) {}
+
+      // Call Chapa initialize
+      const returnUrl = `${window.location.origin}/#profile`
       const res = await api.createChapaOrder({
         amount: total,
-        email,
-        firstName,
-        lastName,
-        phone: phoneNum,
-        orderId: activeOrderId || undefined,
-        returnUrl: window.location.href,
+        email: 'guest@ilillii.com',
+        firstName: name.trim() || 'Guest',
+        lastName: 'Customer',
+        phone: phone.trim() || '0909511588',
+        orderId: cleanNum,
+        returnUrl,
       })
+
       if (res && res.success && res.checkoutUrl) {
-        setChapaData({
-          txRef: res.txRef,
-          checkoutUrl: res.checkoutUrl,
-        })
+        // Direct browser redirect to Chapa's official hosted checkout
+        window.location.href = res.checkoutUrl
+        return
+      } else {
+        throw new Error('Unable to start Chapa checkout session.')
       }
     } catch (err: any) {
-      console.warn('Chapa order initialization notice:', err.message)
-    } finally {
       setLoadingChapa(false)
+      setError(err.message || 'Chapa connection failed. Please choose Pay after meal.')
     }
   }
-
-  // Auto-polling for Chapa payment completion
-  useEffect(() => {
-    if (step !== 'sheger' || !chapaData?.txRef || Boolean(snapshot)) return
-    let active = true
-
-    const pollChapa = async () => {
-      try {
-        const res = await api.verifyChapaPayment(chapaData.txRef, activeOrderId || undefined)
-        if (!active) return
-        if (res && (res.verified || ['paid', 'completed', 'approved', 'success'].includes((res.status || '').toLowerCase()))) {
-          await handleCompleteWithVerifiedChapa(chapaData.txRef)
-        }
-      } catch (e) {}
-    }
-
-    const timer = setInterval(pollChapa, 3000)
-    return () => {
-      active = false
-      clearInterval(timer)
-    }
-  }, [step, chapaData?.txRef, snapshot, lines, total, name, phone, tableNum, note])
-
-  const handleCompleteWithVerifiedChapa = async (txRef: string) => {
-    if (submitting.current) return
-    submitting.current = true
-    setBusy(true)
-
-    try {
-      const isQr = isTableScanned
-      const source = isQr ? 'table_qr' : (tableNum ? 'manual_table' : 'web_direct')
-      const linePayload = lines.map(l => ({
-        menuItemId: l.item.id,
-        name: l.item.name,
-        price: l.item.price,
-        quantity: l.quantity,
-        image: l.item.confirmedImage || '',
-      }))
-
-      const methodLabel = `Chapa (${txRef})`
-
-      let orderRes
-      if (activeOrderId) {
-        try {
-          const check = await api.getOrder(activeOrderId)
-          if (check.success && check.order && !['completed', 'cancelled'].includes(check.order.status)) {
-            orderRes = await api.addItemsToOrder(activeOrderId, linePayload, note)
-          } else {
-            localStorage.removeItem('ilillii_active_order_id')
-            localStorage.removeItem('ilillii_active_order_time')
-            setActiveOrderId(null)
-          }
-        } catch (e) {}
-      }
-
-      if (!orderRes) {
-        orderRes = await api.createOrder({
-          items: linePayload,
-          type: 'Dine in',
-          table: tableNum ? tableNum : undefined,
-          customerName: name.trim(),
-          customerPhone: phone.trim(),
-          note,
-          paymentTiming: 'pre_pay',
-          paymentMethod: methodLabel,
-          transactionId: txRef,
-          source,
-        })
-      }
-
-      setBusy(false)
-      submitting.current = false
-      if (orderRes.success && orderRes.order) {
-        handleOrderSuccess(orderRes.order, methodLabel, txRef, true)
-      }
-    } catch (err: any) {
-      setBusy(false)
-      submitting.current = false
-    }
-  }
-
-  const handleVerifyAndSubmitChapa = async () => {
-    const cleanTxn = (chapaTxRef || shegerTxnId).trim()
-    if (!lines.length) {
-      setError('At least one item is needed.')
-      return
-    }
-
-    setVerifyingChapa(true)
-    setError('')
-
-    try {
-      let isVerified = false
-      const refToVerify = chapaData?.txRef || cleanTxn
-      if (refToVerify) {
-        try {
-          const verifyRes = await api.verifyChapaPayment(refToVerify, activeOrderId || undefined)
-          if (verifyRes && (verifyRes.verified || ['paid', 'completed', 'approved', 'success'].includes((verifyRes.status || '').toLowerCase()))) {
-            isVerified = true
-          }
-        } catch (e) {}
-      }
-
-      const isQr = isTableScanned
-      const source = isQr ? 'table_qr' : (tableNum ? 'manual_table' : 'web_direct')
-      const linePayload = lines.map(l => ({
-        menuItemId: l.item.id,
-        name: l.item.name,
-        price: l.item.price,
-        quantity: l.quantity,
-        image: l.item.confirmedImage || '',
-      }))
-
-      const methodRef = cleanTxn || chapaData?.txRef || 'Direct'
-      const methodLabel = isVerified ? `Chapa Verified (${methodRef})` : `Chapa (${methodRef})`
-
-      let orderRes
-      if (activeOrderId) {
-        try {
-          const check = await api.getOrder(activeOrderId)
-          if (check.success && check.order && !['completed', 'cancelled'].includes(check.order.status)) {
-            orderRes = await api.addItemsToOrder(activeOrderId, linePayload, note)
-          } else {
-            localStorage.removeItem('ilillii_active_order_id')
-            localStorage.removeItem('ilillii_active_order_time')
-            setActiveOrderId(null)
-          }
-        } catch (e) {}
-      }
-
-      if (!orderRes) {
-        orderRes = await api.createOrder({
-          items: linePayload,
-          type: 'Dine in',
-          table: tableNum ? tableNum : undefined,
-          customerName: name.trim(),
-          customerPhone: phone.trim(),
-          note,
-          paymentTiming: 'pre_pay',
-          paymentMethod: methodLabel,
-          transactionId: methodRef,
-          source,
-        })
-      }
-
-      setVerifyingChapa(false)
-      if (orderRes.success && orderRes.order) {
-        handleOrderSuccess(orderRes.order, methodLabel, methodRef, isVerified)
-      }
-    } catch (err: any) {
-      setVerifyingChapa(false)
-      setError(err.message || 'Payment processing failed.')
-    }
-  }
-
-  // Alias for backward compatibility
-  const handleStartShegerPay = handleStartChapa
-  const handleVerifyAndSubmitSheger = handleVerifyAndSubmitChapa
 
   const handleAddMoreDishes = () => {
     window.dispatchEvent(new CustomEvent('ilillii-clear-cart'))
