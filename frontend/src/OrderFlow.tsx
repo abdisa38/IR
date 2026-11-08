@@ -52,7 +52,13 @@ export default function OrderFlow({
   const [modal, setModal] = useState<'language' | 'help' | 'table' | null>(null)
   const [copiedAccount, setCopiedAccount] = useState<string | null>(null)
 
-  // ShegerPay state
+  // Payo Gateway state
+  const [payoTxnId, setPayoTxnId] = useState('')
+  const [verifyingPayo, setVerifyingPayo] = useState(false)
+  const [loadingPayoLink, setLoadingPayoLink] = useState(false)
+  const [payoData, setPayoData] = useState<{ orderId: string; paymentUrl: string; expiresAt?: string } | null>(null)
+
+  // Legacy fallback state
   const [shegerTxnId, setShegerTxnId] = useState('')
   const [verifyingSheger, setVerifyingSheger] = useState(false)
 
@@ -97,7 +103,7 @@ export default function OrderFlow({
   const nameInputRef = useRef<HTMLInputElement>(null)
 
   const total = lines.reduce((sum, line) => sum + line.item.price * line.quantity, 0)
-  const locked = busy || verifyingSheger || Boolean(snapshot)
+  const locked = busy || verifyingSheger || verifyingPayo || loadingPayoLink || Boolean(snapshot)
   const confirmedView = step === 'confirmation'
 
   // When dialog opens or closes, manage clean state
