@@ -130,14 +130,13 @@ export function GlobalHeader({
   cartCount,
   onOpenCart,
 }: {
-  active?: 'home' | 'menu' | 'contact'
+  active?: 'home' | 'menu' | 'contact' | 'profile'
   cartCount?: number
   onOpenCart?: () => void
 }) {
   const [mobileNav, setMobileNav] = useState(false)
   const [languageOpen, setLanguageOpen] = useState(false)
   const [customer, setCustomer] = useState<{ name?: string; phone?: string; email?: string; avatar?: string; lastOrder?: string } | null>(null)
-  const [profileOpen, setProfileOpen] = useState(false)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [statusModalOpen, setStatusModalOpen] = useState(false)
   const [activeOrder, setActiveOrder] = useState<SavedPastOrder | null>(null)
@@ -211,25 +210,19 @@ export function GlobalHeader({
       if (saved) {
         const parsed = JSON.parse(saved)
         if (parsed && (parsed.name || parsed.phone)) {
-          if (!parsed.id) {
-            parsed.id = 'guest_' + Math.random().toString(36).substring(2, 10)
-            localStorage.setItem('ilillii_customer', JSON.stringify(parsed))
-          }
           setCustomer(parsed)
           return
         }
       }
-      // If no customer stored in ilillii_customer, see if there is an order in history
       const orderHist = localStorage.getItem('ilillii_order_history')
       if (orderHist) {
         const hist = JSON.parse(orderHist)
         if (Array.isArray(hist) && hist.length > 0) {
-          const first = hist[0]
-          if (first.name || first.customerName) {
+          const first = hist.find((h: any) => h.customerName || h.name)
+          if (first && (first.name || first.customerName)) {
             const autoCust = {
               name: first.name || first.customerName,
-              phone: first.phone || first.customerPhone || '0909511588',
-              email: 'abdisaawel313@gmail.com',
+              phone: first.phone || first.customerPhone || '',
               id: 'guest_' + Math.random().toString(36).substring(2, 10),
               updatedAt: new Date().toISOString(),
             }
@@ -281,7 +274,6 @@ export function GlobalHeader({
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setMobileNav(false)
-        setProfileOpen(false)
         setLanguageOpen(false)
       }
     }
@@ -334,12 +326,11 @@ export function GlobalHeader({
               </SiteLink>
             </nav>
             <div className="nav-actions">
-              <button
-                type="button"
-                className="nav-profile-action-btn"
-                onClick={() => setProfileOpen(true)}
-                title="View your Guest Profile, Orders & Live Status"
-                aria-label="View Guest Profile"
+              <SiteLink
+                href="/#profile"
+                className={`nav-profile-action-btn ${active === 'profile' ? 'active' : ''}`}
+                title="Guest Profile & Orders"
+                aria-label="Profile"
               >
                 <span className="nav-profile-avatar-circle">
                   {customer?.avatar ? (
@@ -359,7 +350,7 @@ export function GlobalHeader({
                     <span className="desktop-only">{activeOrder.status || 'Active'}</span>
                   </span>
                 )}
-              </button>
+              </SiteLink>
               <button
                 type="button"
                 className="language-button"
@@ -538,47 +529,28 @@ export function GlobalHeader({
               </button>
             </nav>
 
-            {customer?.name ? (
-              <button
-                type="button"
-                className="mobile-guest-card"
-                onClick={() => {
-                  setProfileOpen(true)
-                  setMobileNav(false)
-                }}
-              >
-                <div className="mobile-guest-left">
-                  <div className="mobile-avatar-circle">
-                    {customer.avatar ? (
-                      <img src={customer.avatar} alt={customer.name} />
-                    ) : (
-                      customer.name.charAt(0).toUpperCase()
-                    )}
-                  </div>
-                  <div className="mobile-guest-info">
-                    <strong>{customer.name}</strong>
-                    <span>{t('nav.guestProfile')}</span>
-                  </div>
-                </div>
-                <Icon name="arrow" size={16} />
-              </button>
-            ) : (
-              <SiteLink
-                href="/#login"
-                className="mobile-guest-card"
-                onClick={() => setMobileNav(false)}
-              >
-                <div className="mobile-guest-left">
-                  <div className="mobile-avatar-circle" style={{ background: '#f5ebe1', color: 'var(--color-brand)' }}>
+            <SiteLink
+              href="/#profile"
+              className="mobile-guest-card"
+              onClick={() => setMobileNav(false)}
+            >
+              <div className="mobile-guest-left">
+                <div className="mobile-avatar-circle" style={{ background: customer?.name ? 'linear-gradient(135deg, #b82032 0%, #8b1826 100%)' : '#f5ebe1', color: customer?.name ? '#ffffff' : 'var(--color-brand)' }}>
+                  {customer?.avatar ? (
+                    <img src={customer.avatar} alt={customer.name || 'Guest'} />
+                  ) : customer?.name ? (
+                    customer.name.charAt(0).toUpperCase()
+                  ) : (
                     <Icon name="user" size={18} />
-                  </div>
-                  <div className="mobile-guest-info">
-                    <strong>{t('nav.signIn')}</strong>
-                  </div>
+                  )}
                 </div>
-                <Icon name="arrow" size={16} />
-              </SiteLink>
-            )}
+                <div className="mobile-guest-info">
+                  <strong>{customer?.name || 'Guest'}</strong>
+                  <span>{t('nav.guestProfile')}</span>
+                </div>
+              </div>
+              <Icon name="arrow" size={16} />
+            </SiteLink>
 
             <div className="mobile-drawer-footer">
               <div>{t('location.address')} · {t('location.town')}</div>
@@ -607,18 +579,6 @@ export function GlobalHeader({
             ))}
           </div>
         </Modal>
-      )}
-
-      {profileOpen && (
-        <GuestProfileModal
-          customer={customer}
-          activeOrder={activeOrder}
-          close={() => setProfileOpen(false)}
-          onAddFood={() => {
-            setProfileOpen(false)
-            window.location.hash = '#menu'
-          }}
-        />
       )}
 
       {historyOpen && (
