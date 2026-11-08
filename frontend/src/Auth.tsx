@@ -110,7 +110,7 @@ export function AuthCard({
           setTimeout(() => {
             if (onSuccess) onSuccess(res.user)
             if (standalone) {
-              window.location.hash = 'menu'
+              window.location.hash = 'profile'
               window.dispatchEvent(new HashChangeEvent('hashchange'))
             }
           }, 400)
@@ -259,7 +259,7 @@ export function AuthCard({
 
         if (onSuccess) onSuccess(res.user)
         if (standalone) {
-          window.location.hash = 'menu'
+          window.location.hash = 'profile'
           window.dispatchEvent(new HashChangeEvent('hashchange'))
         }
       }
@@ -315,7 +315,7 @@ export function AuthCard({
         setTimeout(() => {
           if (onSuccess) onSuccess(res.user)
           if (standalone) {
-            window.location.hash = 'menu'
+            window.location.hash = 'profile'
             window.dispatchEvent(new HashChangeEvent('hashchange'))
           }
         }, 700)

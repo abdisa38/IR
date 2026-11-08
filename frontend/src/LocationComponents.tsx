@@ -354,7 +354,7 @@ export function GlobalHeader({
                 </SiteLink>
               ) : (
                 <SiteLink
-                  href="/#profile"
+                  href="/#login"
                   className="nav-signin-link desktop-only"
                   style={{
                     display: 'inline-flex',
@@ -370,7 +370,7 @@ export function GlobalHeader({
                     background: '#ffffff',
                     whiteSpace: 'nowrap',
                   }}
-                  title="Sign In / Profile"
+                  title="Sign In"
                 >
                   <Icon name="user" size={14} />
                   <span>Sign In</span>
@@ -579,7 +579,7 @@ export function GlobalHeader({
               </SiteLink>
             ) : (
               <SiteLink
-                href="/#profile"
+                href="/#login"
                 className="mobile-guest-card"
                 style={{ background: '#fffaf5', border: '1.5px solid #ebdcd0' }}
                 onClick={() => setMobileNav(false)}
@@ -589,8 +589,8 @@ export function GlobalHeader({
                     <Icon name="user" size={18} />
                   </div>
                   <div className="mobile-guest-info">
-                    <strong style={{ color: 'var(--color-ink)' }}>Sign In / Profile</strong>
-                    <span style={{ color: '#78716c' }}>View orders & account</span>
+                    <strong style={{ color: 'var(--color-ink)' }}>Sign In</strong>
+                    <span style={{ color: '#78716c' }}>Sign in to account or staff workspace</span>
                   </div>
                 </div>
                 <Icon name="arrow" size={16} />
