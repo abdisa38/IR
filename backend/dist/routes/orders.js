@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Order } from '../models/Order.js';
+import { requireManager, requireOrderStaff, requirePaymentStaff } from '../middleware/authorize.js';
 const router = Router();
 // Generate next clean order number (e.g. 1025, 1026 - no IL- prefix)
 async function generateOrderNumber() {
@@ -33,7 +34,7 @@ function buildOrderQuery(id) {
     return { $or: orConditions };
 }
 // GET /api/orders - list orders with status, type, and pagination filters
-router.get('/', async (req, res) => {
+router.get('/', requireOrderStaff, async (req, res) => {
     try {
         const { status, type, phone, customer, limit = 50 } = req.query;
         const filter = {};
@@ -69,7 +70,7 @@ router.get('/', async (req, res) => {
     }
 });
 // GET /api/orders/:identifier - lookup by orderNumber or MongoDB ID
-router.get('/:identifier', async (req, res) => {
+router.get('/:identifier', requireOrderStaff, async (req, res) => {
     try {
         const id = getParam(req.params.identifier);
         const order = await Order.findOne(buildOrderQuery(id));
@@ -251,7 +252,7 @@ router.post('/sheger-verify', async (req, res) => {
     return res.json({ success: true, verified: true, message: 'Payment recorded' });
 });
 // POST /api/orders/:id/add-items - Add extra food to existing active order
-router.post('/:id/add-items', async (req, res) => {
+router.post('/:id/add-items', requireOrderStaff, async (req, res) => {
     try {
         const { items, note } = req.body;
         if (!items || !Array.isArray(items) || items.length === 0) {
@@ -289,7 +290,7 @@ router.post('/:id/add-items', async (req, res) => {
     }
 });
 // PATCH /api/orders/:id/status - update status (pending, accepted, preparing, ready, completed, cancelled)
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', requireOrderStaff, async (req, res) => {
     try {
         const { status } = req.body;
         const valid = ['pending', 'accepted', 'preparing', 'ready', 'completed', 'cancelled'];
@@ -310,7 +311,7 @@ router.patch('/:id/status', async (req, res) => {
     }
 });
 // PATCH /api/orders/:id/payment - update payment status
-router.patch('/:id/payment', async (req, res) => {
+router.patch('/:id/payment', requirePaymentStaff, async (req, res) => {
     try {
         const { paymentStatus, paymentMethod } = req.body;
         const valid = ['unpaid', 'paid', 'pay_after_eating'];
@@ -334,7 +335,7 @@ router.patch('/:id/payment', async (req, res) => {
     }
 });
 // DELETE /api/orders/:id - permanently delete or cancel order
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireManager, async (req, res) => {
     try {
         const id = getParam(req.params.id);
         const { cancel } = req.query;

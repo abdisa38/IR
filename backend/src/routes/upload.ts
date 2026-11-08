@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import fs from 'fs'
 import path from 'path'
+import { requireManager } from '../middleware/authorize.js'
 
 const router = Router()
 
@@ -11,7 +12,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // POST /api/upload - handles base64 image upload or verified URL
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireManager, async (req: Request, res: Response) => {
   try {
     const { image, filename } = req.body
 

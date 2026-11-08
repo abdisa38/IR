@@ -2,28 +2,21 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/User.js';
-import { Order } from '../models/Order.js';
 import { Staff } from '../models/Staff.js';
+import { validateGoogleTokenInfo } from '../auth-security.js';
 const router = Router();
-const JWT_SECRET = process.env.JWT_SECRET || 'ilillii_restaurant_secret_key_2026';
+function getJwtSecret() {
+    const secret = process.env.JWT_SECRET;
+    if (!secret || secret.length < 32) {
+        throw new Error("JWT_SECRET must be configured with at least 32 characters");
+    }
+    return secret;
+}
 // Helper to safely parse string params
 function getParam(param) {
     if (Array.isArray(param))
         return param[0];
     return param || '';
-}
-// Helper to decode JWT payload safely without external library
-function decodeJwtPayload(token) {
-    try {
-        const parts = token.split('.');
-        if (parts.length < 2)
-            return null;
-        const payload = Buffer.from(parts[1], 'base64').toString('utf-8');
-        return JSON.parse(payload);
-    }
-    catch (e) {
-        return null;
-    }
 }
 // POST /api/auth/register - Register with Name, Phone, and Password
 router.post('/register', async (req, res) => {
@@ -35,8 +28,8 @@ router.post('/register', async (req, res) => {
         if (!phone || typeof phone !== 'string' || !phone.trim()) {
             return res.status(400).json({ success: false, message: 'Please enter your phone number.' });
         }
-        if (!password || typeof password !== 'string' || password.length < 4) {
-            return res.status(400).json({ success: false, message: 'Password must be at least 4 characters.' });
+        if (typeof password !== 'string' || Array.from(password).length < 12 || Buffer.byteLength(password, 'utf8') > 72) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 12 characters and no more than 72 UTF-8 bytes.' });
         }
         const cleanPhone = phone.trim().replace(/\s+/g, '');
         const cleanEmail = email && typeof email === 'string' ? email.trim().toLowerCase() : undefined;
@@ -66,7 +59,7 @@ router.post('/register', async (req, res) => {
             orders: [],
         });
         await newUser.save();
-        const token = jwt.sign({ id: newUser.id, name: newUser.name, role: newUser.role, phone: newUser.phone, email: newUser.email }, JWT_SECRET, { expiresIn: '30d' });
+        const token = jwt.sign({ id: newUser.id, name: newUser.name, role: newUser.role, phone: newUser.phone, email: newUser.email }, getJwtSecret(), { expiresIn: '30d' });
         res.status(201).json({
             success: true,
             message: 'Account created successfully',
@@ -95,30 +88,6 @@ router.post('/login', async (req, res) => {
         }
         const cleanId = identifier.trim();
         const lower = cleanId.toLowerCase();
-        // Handle staff credentials check
-        const staffRoles = ['admin', 'owner', 'manager', 'kitchen', 'cashier', 'waiter'];
-        const isDirectStaff = staffRoles.includes(lower) ||
-            cleanId === '0909511588' ||
-            cleanId === '+251909511588' ||
-            lower === 'abdisaawel313@gmail.com';
-        if (isDirectStaff && (password === 'ilillii2026' || password === 'admin' || password === 'manager' || password.length >= 4)) {
-            const assignedRole = lower === 'kitchen' ? 'kitchen' : lower === 'cashier' ? 'cashier' : lower === 'waiter' ? 'waiter' : 'admin';
-            const staffName = cleanId === '0909511588' || cleanId === '+251909511588' || lower === 'abdisaawel313@gmail.com'
-                ? 'Abdisa Awel (Manager)'
-                : `${cleanId.charAt(0).toUpperCase() + cleanId.slice(1)}`;
-            const staffToken = jwt.sign({ id: `staff-${lower}`, name: staffName, role: assignedRole }, JWT_SECRET, { expiresIn: '30d' });
-            return res.json({
-                success: true,
-                message: 'Signed in as Staff',
-                token: staffToken,
-                user: {
-                    id: `staff-${lower}`,
-                    name: staffName,
-                    role: assignedRole,
-                    isStaff: true,
-                },
-            });
-        }
         // Check registered Staff collection credentials
         const staffDoc = await Staff.findOne({
             $or: [
@@ -126,10 +95,21 @@ router.post('/login', async (req, res) => {
                 { phone: cleanId },
                 { email: lower },
             ],
-        });
-        if (staffDoc && (staffDoc.password === password || password === '1234' || password === 'ilillii2026')) {
+        }).select("+password");
+        let staffPasswordValid = false;
+        if (staffDoc?.password && staffDoc.status === "Active" && typeof password === "string" && password.length >= 8 && Buffer.byteLength(password, 'utf8') <= 72) {
+            if (/^\$2[aby]\$/.test(staffDoc.password)) {
+                staffPasswordValid = await bcrypt.compare(password, staffDoc.password);
+            }
+            else if (staffDoc.password === password) {
+                staffPasswordValid = true;
+                staffDoc.password = await bcrypt.hash(password, 10);
+                await staffDoc.save();
+            }
+        }
+        if (staffDoc && staffPasswordValid) {
             const assignedRole = staffDoc.role.toLowerCase();
-            const staffToken = jwt.sign({ id: staffDoc._id.toString(), name: staffDoc.name, role: assignedRole }, JWT_SECRET, { expiresIn: '30d' });
+            const staffToken = jwt.sign({ id: staffDoc._id.toString(), name: staffDoc.name, role: assignedRole }, getJwtSecret(), { expiresIn: '30d' });
             return res.json({
                 success: true,
                 message: 'Signed in as Staff',
@@ -163,7 +143,7 @@ router.post('/login', async (req, res) => {
             });
         }
         const isStaffMember = user.role && user.role !== 'customer';
-        const token = jwt.sign({ id: user.id, name: user.name, role: user.role, phone: user.phone, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
+        const token = jwt.sign({ id: user.id, name: user.name, role: user.role, phone: user.phone, email: user.email }, getJwtSecret(), { expiresIn: '30d' });
         res.json({
             success: true,
             message: 'Signed in successfully',
@@ -188,27 +168,31 @@ router.post('/login', async (req, res) => {
 // POST /api/auth/google - Sign in / Register with Google OAuth
 router.post('/google', async (req, res) => {
     try {
-        const { credential, clientId } = req.body;
+        const { credential } = req.body;
         if (!credential) {
             return res.status(400).json({ success: false, message: 'Google credential token is required' });
         }
-        let googleData = null;
-        // Attempt 1: Verify token with Google's official tokeninfo endpoint
+        const expectedGoogleClientId = process.env.GOOGLE_CLIENT_ID;
+        if (!expectedGoogleClientId) {
+            return res.status(503).json({ success: false, message: "Google sign-in is not configured" });
+        }
+        let tokenInfo;
         try {
-            const gRes = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${credential}`);
-            if (gRes.ok) {
-                googleData = await gRes.json();
+            const tokenInfoUrl = new URL("https://oauth2.googleapis.com/tokeninfo");
+            tokenInfoUrl.searchParams.set("id_token", credential);
+            const gRes = await fetch(tokenInfoUrl);
+            if (!gRes.ok) {
+                return res.status(401).json({ success: false, message: "Invalid Google credential" });
             }
+            // Google's tokeninfo endpoint verifies the ID token signature before returning claims.
+            tokenInfo = await gRes.json();
         }
-        catch (e) {
-            console.warn('Google tokeninfo lookup note; falling back to token decoding:', e);
+        catch {
+            return res.status(401).json({ success: false, message: "Unable to verify Google credential" });
         }
-        // Attempt 2: Decode payload directly if tokeninfo was unreachable
-        if (!googleData || !googleData.sub) {
-            googleData = decodeJwtPayload(credential);
-        }
-        if (!googleData || (!googleData.sub && !googleData.email)) {
-            return res.status(400).json({ success: false, message: 'Invalid Google credential token' });
+        const googleData = validateGoogleTokenInfo(tokenInfo, expectedGoogleClientId);
+        if (!googleData) {
+            return res.status(401).json({ success: false, message: "Google credential claims are invalid" });
         }
         const googleId = googleData.sub || `g-${Date.now()}`;
         const email = (googleData.email || '').toLowerCase();
@@ -243,7 +227,7 @@ router.post('/google', async (req, res) => {
                 user.authProvider = 'google';
             await user.save();
         }
-        const token = jwt.sign({ id: user.id, name: user.name, role: user.role, email: user.email, avatar: user.avatar }, JWT_SECRET, { expiresIn: '30d' });
+        const token = jwt.sign({ id: user.id, name: user.name, role: user.role, email: user.email, avatar: user.avatar }, getJwtSecret(), { expiresIn: '30d' });
         res.json({
             success: true,
             message: 'Signed in with Google successfully',
@@ -265,41 +249,38 @@ router.post('/google', async (req, res) => {
     }
 });
 // GET /api/auth/me - Retrieve authenticated user profile and past orders
-router.get('/me', async (req, res) => {
+router.get("/me", async (req, res) => {
     try {
         const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ success: false, message: 'Authentication required' });
+        if (!authHeader?.startsWith("Bearer ")) {
+            return res.status(401).json({ success: false, message: "Authentication required" });
         }
-        const token = authHeader.split(' ')[1];
-        let decoded;
-        try {
-            decoded = jwt.verify(token, JWT_SECRET);
+        const token = authHeader.slice(7);
+        const decoded = jwt.verify(token, getJwtSecret());
+        if (!decoded.id || !decoded.role) {
+            return res.status(401).json({ success: false, message: "Invalid authentication token" });
         }
-        catch (e) {
-            return res.status(401).json({ success: false, message: 'Session expired. Please sign in again.' });
-        }
-        const user = await User.findOne({ id: decoded.id });
-        if (!user) {
+        if (decoded.role !== "customer") {
+            const staff = await Staff.findById(decoded.id).select("-password");
+            if (!staff || staff.status !== "Active") {
+                return res.status(401).json({ success: false, message: "Staff account is unavailable" });
+            }
             return res.json({
                 success: true,
                 user: {
-                    id: decoded.id,
-                    name: decoded.name,
-                    role: decoded.role || 'customer',
-                    isStaff: decoded.role === 'admin' || decoded.role === 'kitchen',
+                    id: staff._id.toString(),
+                    name: staff.name,
+                    role: staff.role.toLowerCase(),
+                    isStaff: true,
                 },
                 orders: [],
             });
         }
-        // Find any past orders placed by this customer name or phone
-        const pastOrders = await Order.find({
-            $or: [
-                { customerName: user.name },
-                ...(user.phone ? [{ customerPhone: user.phone }] : []),
-            ],
-        }).sort({ createdAt: -1 }).limit(10);
-        res.json({
+        const user = await User.findOne({ id: decoded.id }).select("-password");
+        if (!user || user.role !== "customer") {
+            return res.status(401).json({ success: false, message: "User account is unavailable" });
+        }
+        return res.json({
             success: true,
             user: {
                 id: user.id,
@@ -307,15 +288,12 @@ router.get('/me', async (req, res) => {
                 phone: user.phone,
                 email: user.email,
                 role: user.role,
-                avatar: user.avatar,
-                authProvider: user.authProvider,
             },
-            orders: pastOrders,
+            orders: [],
         });
     }
-    catch (error) {
-        console.error('Error in /me:', error);
-        res.status(500).json({ success: false, message: 'Failed to retrieve profile', error: error.message });
+    catch {
+        return res.status(401).json({ success: false, message: "Invalid or expired token" });
     }
 });
 export default router;

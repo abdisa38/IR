@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { MenuItem } from '../models/MenuItem.js'
+import { requireManager } from '../middleware/authorize.js'
 
 const router = Router()
 
@@ -50,7 +51,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 })
 
 // POST /api/menu - create new menu item
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireManager, async (req: Request, res: Response) => {
   try {
     const { name, amharicName, category, price, description, image, houseSpecial, available, displayOrder } = req.body
 
@@ -93,7 +94,7 @@ router.post('/', async (req: Request, res: Response) => {
 })
 
 // PUT /api/menu/:id - update existing item
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', requireManager, async (req: Request, res: Response) => {
   try {
     const { name, amharicName, category, price, description, image, houseSpecial, available, displayOrder } = req.body
 
@@ -127,7 +128,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 })
 
 // PATCH /api/menu/:id/toggle-available - toggle item availability
-router.patch('/:id/toggle-available', async (req: Request, res: Response) => {
+router.patch('/:id/toggle-available', requireManager, async (req: Request, res: Response) => {
   try {
     const item = await MenuItem.findOne({ id: req.params.id })
     if (!item) {
@@ -143,7 +144,7 @@ router.patch('/:id/toggle-available', async (req: Request, res: Response) => {
 })
 
 // PATCH /api/menu/:id/toggle-special - toggle house special badge
-router.patch('/:id/toggle-special', async (req: Request, res: Response) => {
+router.patch('/:id/toggle-special', requireManager, async (req: Request, res: Response) => {
   try {
     const item = await MenuItem.findOne({ id: req.params.id })
     if (!item) {
@@ -159,7 +160,7 @@ router.patch('/:id/toggle-special', async (req: Request, res: Response) => {
 })
 
 // DELETE /api/menu/:id - delete item
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireManager, async (req: Request, res: Response) => {
   try {
     const deleted = await MenuItem.findOneAndDelete({ id: req.params.id })
     if (!deleted) {
