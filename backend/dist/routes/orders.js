@@ -87,7 +87,7 @@ router.get('/:identifier', async (req, res) => {
 // POST /api/orders - customer places new order
 router.post('/', async (req, res) => {
     try {
-        const { items, type = 'Dine in', table, customerName, customerPhone, note, paymentTiming = 'post_pay', paymentMethod, transactionId } = req.body;
+        const { items, type = 'Dine in', table, customerName, customerPhone, note, paymentTiming = 'post_pay', paymentMethod, transactionId, source, parentOrderId } = req.body;
         if (!items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ success: false, message: 'Order must contain at least one item' });
         }
