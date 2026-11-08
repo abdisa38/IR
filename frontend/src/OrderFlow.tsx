@@ -462,10 +462,13 @@ export default function OrderFlow({
 
   const handleClose = () => {
     if (busy || loadingChapa) return
+    const wasConfirmed = step === 'confirmation' || Boolean(snapshot)
     setSnapshot(null)
     setStep('details')
     close()
-    window.dispatchEvent(new CustomEvent('ilillii-open-cart'))
+    if (!wasConfirmed) {
+      window.dispatchEvent(new CustomEvent('ilillii-open-cart'))
+    }
   }
 
   const { t } = useLanguage()

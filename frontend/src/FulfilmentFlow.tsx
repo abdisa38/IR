@@ -150,8 +150,8 @@ export default function FulfilmentFlow({ open, entry = 'details', table, lines, 
     </header>
     <div className="order-shell order-content">
       <div className="fulfilment-utility">
-        <button className="order-back" disabled={busy} onClick={() => { if (isReceipt || page === 'details') close(); else go('details') }}>
-          <Icon name="arrow" size={16} />{isReceipt || page === 'details' ? t('order.backToMenu') : t('order.back')}
+        <button className="order-back" disabled={busy} onClick={() => { if (isReceipt) { close(); } else if (page === 'details') { close(); window.dispatchEvent(new CustomEvent('ilillii-open-cart')); } else { go('details'); } }}>
+          <Icon name="arrow" size={16} />{isReceipt ? t('order.backToMenu') : page === 'details' ? t('order.backToCart') : t('order.back')}
         </button>
         
       </div>
