@@ -1,10 +1,11 @@
 import mongoose, { Schema } from 'mongoose';
+import bcrypt from 'bcryptjs';
 const StaffSchema = new Schema({
     name: { type: String, required: true, trim: true },
     email: { type: String, trim: true, lowercase: true },
     phone: { type: String, required: true, trim: true },
     username: { type: String, trim: true, lowercase: true },
-    password: { type: String, default: '1234' },
+    password: { type: String, select: false },
     role: {
         type: String,
         required: true,
@@ -29,8 +30,18 @@ const StaffSchema = new Schema({
             ret.id = ret._id.toString();
             delete ret._id;
             delete ret.__v;
+            delete ret.password;
             return ret;
         },
     },
+});
+StaffSchema.pre("save", async function () {
+    if (!this.isModified("password") || !this.password)
+        return;
+    if (/^\$2[aby]\$\d{2}\$[./A-Za-z0-9]{53}$/.test(this.password))
+        return;
+    if (this.password.length < 8)
+        throw new Error("Staff password must be at least 8 characters");
+    this.password = await bcrypt.hash(this.password, 10);
 });
 export const Staff = mongoose.model('Staff', StaffSchema);

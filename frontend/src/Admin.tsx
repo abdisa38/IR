@@ -4,7 +4,7 @@ import { formatBirr } from './menu-data'
 import { canAccess, canSeeCustomer, canSeeMoney, createDemoOrders, navigation, nextOrderStatus, orderTotal, orderStatusLabel, recordedSales, roles } from './admin-model'
 import type { AdminPage, DemoOrder, OrderStatus, PaymentStatus, Role } from './admin-model'
 import { AdminCategories, AdminMenu, AdminSettings, AdminStaff, AdminTables } from './AdminManagement'
-import { api, type ApiOrder } from './api/client'
+import { api, type ApiOrder, type ApiUser } from './api/client'
 import './admin.css'
 import { Pagination, StatusBadge } from './ui-patterns'
 import { useLanguage } from './language'
@@ -63,7 +63,7 @@ function ActivityChart({ orders }: { orders: DemoOrder[] }) {
   return <div className="admin-activity-chart"><svg viewBox="0 0 630 190" role="img" aria-label={`Cumulative activity for ${orders.length} orders`}><g className="chart-grid"><path d="M35 35h560M35 75h560M35 115h560M35 155h560" /></g><g className="chart-axis"><text x="5" y="39">{orders.length}</text><text x="12" y="159">0</text><text x="35" y="182">Earliest order</text><text x="490" y="182">Latest order</text></g>{sorted.length > 0 && <><polygon className="chart-area" points={`35,155 ${points} 595,155`} /><polyline className="chart-line" points={points} /><circle cx={sorted.length === 1 ? 35 : 595} cy={35} r="4" className="chart-point" /></>}</svg></div>
 }
 
-export default function Admin() {
+function AdminWorkspace() {
   const { language, setLanguage, t } = useLanguage()
 
   // Authenticated user state
@@ -819,4 +819,50 @@ export default function Admin() {
       </Modal>
     )}
   </div>
+}
+
+
+export default function Admin() {
+  const [verified, setVerified] = useState(false)
+  const [denied, setDenied] = useState(false)
+
+  useEffect(() => {
+    let active = true
+
+    const verifyStaffSession = async () => {
+      try {
+        const { user } = await api.getMe()
+        const staffRoles = ['admin', 'owner', 'manager', 'kitchen', 'cashier', 'waiter', 'staff']
+        const isStaff = user.isStaff === true || staffRoles.includes(String(user.role || '').toLowerCase())
+
+        if (!active) return
+        if (!isStaff) {
+          localStorage.removeItem('ilillii_user')
+          window.dispatchEvent(new Event('ilillii-auth-changed'))
+          setDenied(true)
+          window.location.hash = 'menu'
+          return
+        }
+
+        localStorage.setItem('ilillii_user', JSON.stringify(user as ApiUser))
+        window.dispatchEvent(new Event('ilillii-auth-changed'))
+        setVerified(true)
+      } catch {
+        if (!active) return
+        api.logout()
+        localStorage.removeItem('ilillii_user')
+        setDenied(true)
+        window.location.hash = 'login'
+      }
+    }
+
+    void verifyStaffSession()
+    return () => { active = false }
+  }, [])
+
+  if (!verified || denied) {
+    return <main className="admin-shell" aria-live="polite">{denied ? 'Access denied. Redirecting…' : 'Verifying staff access…'}</main>
+  }
+
+  return <AdminWorkspace />
 }
