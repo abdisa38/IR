@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import { Order } from '../models/Order.js';
+import { MenuItem } from '../models/MenuItem.js';
+import { requireStaffAuth, optionalAuth } from '../middleware/auth.js';
 const router = Router();
 // Generate next clean order number (e.g. 1025, 1026 - no IL- prefix)
 async function generateOrderNumber() {
@@ -85,11 +87,36 @@ router.get('/:identifier', async (req, res) => {
 // POST /api/orders - customer places new order
 router.post('/', async (req, res) => {
     try {
-        const { items, type = 'Dine in', table, customerName, customerPhone, note, paymentTiming = 'post_pay', paymentMethod, transactionId, source = 'web_direct', parentOrderId } = req.body;
+        const { items, type = 'Dine in', table, customerName, customerPhone, note, paymentTiming = 'post_pay', paymentMethod, transactionId } = req.body;
         if (!items || !Array.isArray(items) || items.length === 0) {
             return res.status(400).json({ success: false, message: 'Order must contain at least one item' });
         }
-        const subtotal = items.reduce((sum, item) => sum + (Number(item.price) || 0) * (Number(item.quantity) || 1), 0);
+        // Tamper-proof server-side price lookup
+        const rawIds = items.map((i) => String(i.menuItemId || i.id || i.dishId || i._id || ''));
+        const validMongoIds = rawIds.filter((id) => /^[0-9a-fA-F]{24}$/.test(id));
+        const dbMenuItems = await MenuItem.find({
+            $or: [
+                { id: { $in: rawIds } },
+                ...(validMongoIds.length > 0 ? [{ _id: { $in: validMongoIds } }] : [])
+            ]
+        });
+        const menuMap = new Map();
+        for (const m of dbMenuItems) {
+            menuMap.set(m.id, m);
+            menuMap.set(m._id.toString(), m);
+        }
+        const verifiedItems = items.map((i, index) => {
+            const rawId = String(i.menuItemId || i.id || i.dishId || i._id || `item-${index + 1}`);
+            const matched = menuMap.get(rawId);
+            return {
+                menuItemId: rawId,
+                name: matched ? matched.name : (i.name || 'Dish'),
+                price: matched ? matched.price : (Number(i.price) || 0),
+                quantity: Math.max(1, Number(i.quantity) || 1),
+                image: matched ? matched.image : (i.image || ''),
+            };
+        });
+        const subtotal = verifiedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
         const total = subtotal;
         const orderNumber = await generateOrderNumber();
         const normalizedTiming = (paymentTiming === 'pay_before' || paymentTiming === 'pre_pay') ? 'pre_pay' : 'post_pay';
@@ -101,7 +128,7 @@ router.post('/', async (req, res) => {
             table: table || '',
             customerName: customerName || (table ? `Table ${table}` : 'Guest'),
             customerPhone: customerPhone || '',
-            items: items.map((i, index) => ({
+            items: verifiedItems.map((i, index) => ({
                 menuItemId: String(i.menuItemId || i.id || i.dishId || i._id || `item-${index + 1}`),
                 name: i.name || 'Dish',
                 price: Number(i.price) || 0,
@@ -246,10 +273,6 @@ router.post('/chapa-webhook', async (req, res) => {
         return res.status(200).json({ success: true, error: err.message });
     }
 });
-// POST /api/orders/sheger-verify - fallback compatibility
-router.post('/sheger-verify', async (req, res) => {
-    return res.json({ success: true, verified: true, message: 'Payment recorded' });
-});
 // POST /api/orders/:id/add-items - Add extra food to existing active order
 router.post('/:id/add-items', async (req, res) => {
     try {
@@ -310,7 +333,7 @@ router.patch('/:id/status', async (req, res) => {
     }
 });
 // PATCH /api/orders/:id/payment - update payment status
-router.patch('/:id/payment', async (req, res) => {
+router.patch('/:id/payment', requireStaffAuth, async (req, res) => {
     try {
         const { paymentStatus, paymentMethod } = req.body;
         const valid = ['unpaid', 'paid', 'pay_after_eating'];
@@ -334,10 +357,19 @@ router.patch('/:id/payment', async (req, res) => {
     }
 });
 // DELETE /api/orders/:id - permanently delete or cancel order
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', optionalAuth, async (req, res) => {
     try {
         const id = getParam(req.params.id);
         const { cancel } = req.query;
+        // Permanent delete requires staff authorization
+        if (cancel !== 'true') {
+            const authReq = req;
+            const staffRoles = ['admin', 'manager', 'owner', 'kitchen', 'cashier', 'waiter', 'staff'];
+            const isStaff = authReq.user && (authReq.user.isStaff === true || staffRoles.includes(String(authReq.user.role || '').toLowerCase()));
+            if (!isStaff) {
+                return res.status(403).json({ success: false, message: 'Permanent order deletion requires staff authorization' });
+            }
+        }
         if (cancel === 'true') {
             const order = await Order.findOne(buildOrderQuery(id));
             if (!order) {

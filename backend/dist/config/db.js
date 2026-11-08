@@ -8,7 +8,7 @@ catch (err) {
     console.warn('DNS server override warning:', err);
 }
 export async function connectDB() {
-    const uri = process.env.MONGODB_URI || 'mongodb+srv://abdisaawel313_db_user:Z3sThBMkaoNAIprs@cluster0.ssexi1b.mongodb.net/ilillii_db?retryWrites=true&w=majority&appName=Cluster0';
+    const uri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/ililli_db';
     try {
         const conn = await mongoose.connect(uri, {
             serverSelectionTimeoutMS: 15000,
