@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { Settings } from '../models/Settings.js'
+import { requireManager } from '../middleware/authorize.js'
 
 const router = Router()
 
@@ -24,7 +25,7 @@ router.get('/', async (_req: Request, res: Response) => {
 })
 
 // PUT /api/settings - update restaurant settings
-router.put('/', async (req: Request, res: Response) => {
+router.put('/', requireManager, async (req: Request, res: Response) => {
   try {
     const { restaurantName, managerPhone, location, announcement, openingHours } = req.body
     let settings = await Settings.findOne()
