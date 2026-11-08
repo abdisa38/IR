@@ -372,52 +372,62 @@ export default function OrderFlow({
     } catch (e) {}
   }
 
-  // Option 2: Pay Now with Payo Ethiopian Gateway
-  const handleStartPayo = async () => {
+  // Option 2: Pay Now with Chapa Ethiopian Gateway
+  const handleStartChapa = async () => {
     if (!checkGuestValidation()) return
     setError('')
     go('sheger')
-    setLoadingPayoLink(true)
+    setLoadingChapa(true)
     try {
-      const desc = `Ilillii Order - ${name.trim() || 'Guest'} (${tableNum ? `Table ${tableNum}` : 'Direct'})`
-      const res = await api.createPayoOrder(total, desc, activeOrderId || undefined)
-      if (res && res.success && res.paymentUrl) {
-        setPayoData({
-          orderId: res.orderId,
-          paymentUrl: res.paymentUrl,
-          expiresAt: res.expiresAt,
+      const email = 'guest@ilillii.com'
+      const firstName = name.trim() || 'Guest'
+      const lastName = 'Customer'
+      const phoneNum = phone.trim() || '0909511588'
+      const res = await api.createChapaOrder({
+        amount: total,
+        email,
+        firstName,
+        lastName,
+        phone: phoneNum,
+        orderId: activeOrderId || undefined,
+        returnUrl: window.location.href,
+      })
+      if (res && res.success && res.checkoutUrl) {
+        setChapaData({
+          txRef: res.txRef,
+          checkoutUrl: res.checkoutUrl,
         })
       }
     } catch (err: any) {
-      console.warn('Payo order initialization notice:', err.message)
+      console.warn('Chapa order initialization notice:', err.message)
     } finally {
-      setLoadingPayoLink(false)
+      setLoadingChapa(false)
     }
   }
 
-  // Auto-polling for Payo payment completion
+  // Auto-polling for Chapa payment completion
   useEffect(() => {
-    if (step !== 'sheger' || !payoData?.orderId || Boolean(snapshot)) return
+    if (step !== 'sheger' || !chapaData?.txRef || Boolean(snapshot)) return
     let active = true
 
-    const pollPayo = async () => {
+    const pollChapa = async () => {
       try {
-        const res = await api.verifyPayoPayment(payoData.orderId, activeOrderId || undefined)
+        const res = await api.verifyChapaPayment(chapaData.txRef, activeOrderId || undefined)
         if (!active) return
-        if (res && (res.verified || ['paid', 'completed', 'approved'].includes((res.status || '').toLowerCase()))) {
-          await handleCompleteWithVerifiedPayo(payoData.orderId)
+        if (res && (res.verified || ['paid', 'completed', 'approved', 'success'].includes((res.status || '').toLowerCase()))) {
+          await handleCompleteWithVerifiedChapa(chapaData.txRef)
         }
       } catch (e) {}
     }
 
-    const timer = setInterval(pollPayo, 3500)
+    const timer = setInterval(pollChapa, 3000)
     return () => {
       active = false
       clearInterval(timer)
     }
-  }, [step, payoData?.orderId, snapshot, lines, total, name, phone, tableNum, note])
+  }, [step, chapaData?.txRef, snapshot, lines, total, name, phone, tableNum, note])
 
-  const handleCompleteWithVerifiedPayo = async (payoId: string) => {
+  const handleCompleteWithVerifiedChapa = async (txRef: string) => {
     if (submitting.current) return
     submitting.current = true
     setBusy(true)
@@ -433,7 +443,7 @@ export default function OrderFlow({
         image: l.item.confirmedImage || '',
       }))
 
-      const methodLabel = `Payo Verified (${payoId})`
+      const methodLabel = `Chapa (${txRef})`
 
       let orderRes
       if (activeOrderId) {
@@ -459,7 +469,7 @@ export default function OrderFlow({
           note,
           paymentTiming: 'pre_pay',
           paymentMethod: methodLabel,
-          transactionId: payoId,
+          transactionId: txRef,
           source,
         })
       }
@@ -467,7 +477,7 @@ export default function OrderFlow({
       setBusy(false)
       submitting.current = false
       if (orderRes.success && orderRes.order) {
-        handleOrderSuccess(orderRes.order, methodLabel, payoId, true)
+        handleOrderSuccess(orderRes.order, methodLabel, txRef, true)
       }
     } catch (err: any) {
       setBusy(false)
@@ -475,22 +485,23 @@ export default function OrderFlow({
     }
   }
 
-  const handleVerifyAndSubmitPayo = async () => {
-    const cleanTxn = (payoTxnId || shegerTxnId).trim()
+  const handleVerifyAndSubmitChapa = async () => {
+    const cleanTxn = (chapaTxRef || shegerTxnId).trim()
     if (!lines.length) {
-      setError('At least one menu item is needed. Return to the menu to check your order.')
+      setError('At least one item is needed.')
       return
     }
 
-    setVerifyingPayo(true)
+    setVerifyingChapa(true)
     setError('')
 
     try {
       let isVerified = false
-      if (payoData?.orderId) {
+      const refToVerify = chapaData?.txRef || cleanTxn
+      if (refToVerify) {
         try {
-          const verifyRes = await api.verifyPayoPayment(payoData.orderId, activeOrderId || undefined)
-          if (verifyRes && (verifyRes.verified || ['paid', 'completed', 'approved'].includes((verifyRes.status || '').toLowerCase()))) {
+          const verifyRes = await api.verifyChapaPayment(refToVerify, activeOrderId || undefined)
+          if (verifyRes && (verifyRes.verified || ['paid', 'completed', 'approved', 'success'].includes((verifyRes.status || '').toLowerCase()))) {
             isVerified = true
           }
         } catch (e) {}
@@ -506,8 +517,8 @@ export default function OrderFlow({
         image: l.item.confirmedImage || '',
       }))
 
-      const methodRef = cleanTxn || payoData?.orderId || 'Direct'
-      const methodLabel = isVerified ? `Payo Verified (${methodRef})` : `Payo (${methodRef})`
+      const methodRef = cleanTxn || chapaData?.txRef || 'Direct'
+      const methodLabel = isVerified ? `Chapa Verified (${methodRef})` : `Chapa (${methodRef})`
 
       let orderRes
       if (activeOrderId) {
@@ -538,19 +549,19 @@ export default function OrderFlow({
         })
       }
 
-      setVerifyingPayo(false)
+      setVerifyingChapa(false)
       if (orderRes.success && orderRes.order) {
         handleOrderSuccess(orderRes.order, methodLabel, methodRef, isVerified)
       }
     } catch (err: any) {
-      setVerifyingPayo(false)
-      setError(err.message || 'Payment processing failed. Please verify or choose Pay after meal.')
+      setVerifyingChapa(false)
+      setError(err.message || 'Payment processing failed.')
     }
   }
 
   // Alias for backward compatibility
-  const handleStartShegerPay = handleStartPayo
-  const handleVerifyAndSubmitSheger = handleVerifyAndSubmitPayo
+  const handleStartShegerPay = handleStartChapa
+  const handleVerifyAndSubmitSheger = handleVerifyAndSubmitChapa
 
   const handleAddMoreDishes = () => {
     window.dispatchEvent(new CustomEvent('ilillii-clear-cart'))
@@ -809,9 +820,9 @@ export default function OrderFlow({
                   </button>
 
                   <button
-                    className="button secondary order-full payo-pay-btn"
+                    className="button secondary order-full chapa-pay-btn"
                     type="button"
-                    onClick={handleStartPayo}
+                    onClick={handleStartChapa}
                     disabled={locked}
                     style={{
                       background: '#ffffff',
@@ -825,14 +836,14 @@ export default function OrderFlow({
                       minHeight: '48px',
                     }}
                   >
-                    <span style={{ fontSize: '16px' }}>💳</span>
-                    {t('checkout.payNowSheger')}
+                    <Icon name="bank" size={17} />
+                    Chapa
                   </button>
                 </div>
               </form>
             )}
 
-            {/* Step 2: Payo Payment Gateway Form */}
+            {/* Step 2: Chapa Payment Gateway Form */}
             {step === 'sheger' && (
               <div className="sheger-checkout-container">
                 <div
@@ -846,13 +857,13 @@ export default function OrderFlow({
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '22px' }}>💳</span>
+                    <Icon name="bank" size={20} />
                     <div>
                       <strong style={{ fontSize: '16px', color: 'var(--color-ink)', display: 'block' }}>
-                        Payo Ethiopian Gateway
+                        Chapa
                       </strong>
                       <small style={{ fontSize: '11px', color: '#16a34a', fontWeight: 600 }}>
-                        ● Live Auto-Verification Active
+                        ● Live Verification
                       </small>
                     </div>
                   </div>
@@ -861,52 +872,45 @@ export default function OrderFlow({
                   </strong>
                 </div>
 
-                {/* Direct Payo Hosted Checkout Link */}
-                {loadingPayoLink ? (
+                {/* Direct Chapa Hosted Checkout Link */}
+                {loadingChapa ? (
                   <div style={{ textAlign: 'center', padding: '16px', background: '#f8fafc', borderRadius: '10px', marginBottom: '16px', border: '1px solid #e2e8f0' }}>
                     <span className="order-spinner" style={{ margin: '0 auto 8px', borderColor: '#b82032 rgba(184,32,50,0.2) rgba(184,32,50,0.2)' }} />
                     <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 600, display: 'block' }}>
-                      Connecting to Payo checkout...
+                      Connecting...
                     </span>
                   </div>
-                ) : payoData?.paymentUrl ? (
+                ) : chapaData?.checkoutUrl ? (
                   <div style={{ marginBottom: '16px' }}>
                     <a
-                      href={payoData.paymentUrl}
+                      href={chapaData.checkoutUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '10px',
-                        background: 'linear-gradient(135deg, #15803d 0%, #166534 100%)',
+                        gap: '8px',
+                        background: '#059669',
                         color: '#ffffff',
                         textDecoration: 'none',
-                        padding: '14px 18px',
+                        padding: '13px 18px',
                         borderRadius: '10px',
                         fontWeight: 750,
                         fontSize: '14px',
-                        boxShadow: '0 4px 14px rgba(21, 128, 61, 0.25)',
+                        boxShadow: '0 4px 14px rgba(5, 150, 105, 0.25)',
                         width: '100%',
                         boxSizing: 'border-box',
                       }}
                     >
-                      <span>💳 Open Payo Payment Window</span>
-                      <Icon name="arrow" size={16} />
+                      <span>Pay with Chapa</span>
+                      <Icon name="external" size={15} />
                     </a>
-                    <p style={{ margin: '6px 0 0', fontSize: '11px', color: '#15803d', textAlign: 'center', fontWeight: 500 }}>
-                      ✓ Telebirr, CBE & Abyssinia supported. Auto-confirms order upon payment.
-                    </p>
                   </div>
                 ) : null}
 
-                <p style={{ fontSize: '12px', color: '#57534e', lineHeight: 1.6, marginBottom: '14px' }}>
-                  {t('checkout.shegerInstructions')}
-                </p>
-
                 {/* Bank / Telebirr Account Cards with 1-Click Copy */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
                   {/* Commercial Bank of Ethiopia (CBE) */}
                   <div
                     style={{
@@ -998,42 +1002,39 @@ export default function OrderFlow({
                   </div>
                 </div>
 
-                {/* Transaction ID Input (Optional if using Payo Link) */}
-                <label className="order-field" style={{ marginBlock: '16px' }}>
-                  {t('checkout.txnIdLabel')} <span>(Optional if using Payo Link)</span>
+                {/* Reference ID Input */}
+                <label className="order-field" style={{ marginBlock: '14px' }}>
+                  Reference
                   <input
-                    value={payoTxnId || shegerTxnId}
+                    value={chapaTxRef || shegerTxnId}
                     onChange={e => {
-                      setPayoTxnId(e.target.value)
+                      setChapaTxRef(e.target.value)
                       setShegerTxnId(e.target.value)
                       if (error) setError('')
                     }}
-                    placeholder={t('checkout.txnIdPlaceholder')}
+                    placeholder="e.g. FT26062K7WMY or Chapa Ref"
                     style={{ fontSize: '14px', letterSpacing: '0.5px', fontFamily: 'monospace' }}
                   />
-                  <small>
-                    Enter your receipt or transaction number (e.g. FT26062K7WMY or Payo reference).
-                  </small>
                 </label>
 
-                {/* Payo Verification & Submit Button */}
-                <div className="order-buttons-group" style={{ gap: '10px', marginTop: '22px' }}>
+                {/* Chapa Verification & Submit Button */}
+                <div className="order-buttons-group" style={{ gap: '10px', marginTop: '18px' }}>
                   <button
                     type="button"
                     className="button primary order-full"
-                    onClick={handleVerifyAndSubmitPayo}
-                    disabled={verifyingPayo}
-                    aria-busy={verifyingPayo}
-                    style={{ background: '#b82032', color: '#ffffff', minHeight: '48px' }}
+                    onClick={handleVerifyAndSubmitChapa}
+                    disabled={verifyingChapa}
+                    aria-busy={verifyingChapa}
+                    style={{ background: '#b82032', color: '#ffffff', minHeight: '46px' }}
                   >
-                    {verifyingPayo ? (
+                    {verifyingChapa ? (
                       <>
                         <span className="order-spinner" />
-                        {t('checkout.verifyingSheger')}
+                        Verifying...
                       </>
                     ) : (
                       <>
-                        {t('checkout.verifyAndOrder')}
+                        Confirm
                         <Icon name="arrow" size={17} />
                       </>
                     )}
@@ -1043,10 +1044,10 @@ export default function OrderFlow({
                     type="button"
                     className="button secondary order-full"
                     onClick={() => go('details')}
-                    disabled={verifyingPayo}
-                    style={{ minHeight: '44px' }}
+                    disabled={verifyingChapa}
+                    style={{ minHeight: '42px' }}
                   >
-                    {t('order.back')}
+                    Back
                   </button>
                 </div>
               </div>

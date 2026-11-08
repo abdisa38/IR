@@ -1,0 +1,567 @@
+/* --- Luxury Hotel Guest Profile Page --- */
+.profile-page {
+  min-height: 100vh;
+  background: #faf6f0;
+  color: var(--color-ink, #211d1a);
+  font-family: inherit;
+}
+
+.profile-container {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 20px 64px;
+}
+
+/* Breadcrumb / Top Bar */
+.profile-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #8c827a;
+  margin-bottom: 20px;
+}
+
+.profile-breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.profile-breadcrumb a:hover {
+  color: var(--color-brand, #b82032);
+}
+
+/* Guest Hero Card */
+.profile-hero-card {
+  background: #ffffff;
+  border: 1px solid #ebdcd0;
+  border-radius: 16px;
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  margin-bottom: 24px;
+}
+
+.profile-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #b82032 0%, #8b1826 100%);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 6px 18px rgba(184, 32, 50, 0.22);
+}
+
+.profile-hero-info h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-ink, #211d1a);
+  line-height: 1.2;
+}
+
+.profile-hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.profile-badge {
+  background: #fdf2f2;
+  color: var(--color-brand, #b82032);
+  border: 1px solid #fed7d7;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile-phone-text {
+  font-size: 13px;
+  color: #78716c;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.profile-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-action-btn {
+  background: #fdfaf6;
+  border: 1.5px solid #ebdcd0;
+  color: var(--color-ink, #211d1a);
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.profile-action-btn:hover {
+  border-color: var(--color-brand, #b82032);
+  color: var(--color-brand, #b82032);
+  background: #ffffff;
+}
+
+/* Edit Form */
+.profile-edit-card {
+  background: #ffffff;
+  border: 1.5px solid #e7d6c7;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.profile-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.profile-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #78716c;
+  margin-bottom: 6px;
+}
+
+.profile-field input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid #d6d3d1;
+  border-radius: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.profile-field input:focus {
+  border-color: var(--color-brand, #b82032);
+}
+
+.profile-edit-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Metrics Row */
+.profile-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.profile-metric-tile {
+  background: #ffffff;
+  border: 1px solid #ebdcd0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.metric-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #fff8f3;
+  color: var(--color-brand, #b82032);
+  border: 1px solid #fae2d3;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.metric-data strong {
+  display: block;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--color-ink, #211d1a);
+  line-height: 1.1;
+}
+
+.metric-data span {
+  display: block;
+  font-size: 11px;
+  font-weight: 750;
+  color: #78716c;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 3px;
+}
+
+/* Active Order Card */
+.profile-active-order-card {
+  background: linear-gradient(135deg, #fffaf5 0%, #fff6ee 100%);
+  border: 1.5px solid #f97316;
+  border-radius: 16px;
+  padding: 22px 24px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 16px rgba(249, 115, 22, 0.1);
+}
+
+.active-order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.active-order-badge {
+  background: #ea580c;
+  color: #ffffff;
+  padding: 4px 12px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* 4-step Stepper */
+.active-order-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 18px 0;
+  position: relative;
+}
+
+.stepper-step {
+  text-align: center;
+  position: relative;
+}
+
+.stepper-indicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f1ede8;
+  color: #a8a29e;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  margin: 0 auto 6px;
+  border: 2px solid #e7d6c7;
+  transition: all 0.2s ease;
+}
+
+.stepper-step.active .stepper-indicator {
+  background: #ea580c;
+  border-color: #ea580c;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(234, 88, 12, 0.2);
+}
+
+.stepper-step.done .stepper-indicator {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+.stepper-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #78716c;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.stepper-step.active .stepper-label {
+  color: #ea580c;
+  font-weight: 800;
+}
+
+.stepper-step.done .stepper-label {
+  color: #16a34a;
+}
+
+.active-dishes-box {
+  background: #ffffff;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.active-dish-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #44403c;
+}
+
+.active-dish-row strong {
+  color: var(--color-ink, #211d1a);
+}
+
+.active-order-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid #fed7aa;
+}
+
+/* Orders History Section */
+.profile-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.profile-section-heading h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-ink, #211d1a);
+}
+
+/* Filter Tabs */
+.profile-filter-tabs {
+  display: inline-flex;
+  background: #f0e6dc;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.profile-filter-tab {
+  background: none;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #78716c;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.profile-filter-tab.active {
+  background: #ffffff;
+  color: var(--color-ink, #211d1a);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.filter-badge {
+  background: #fdf2f2;
+  color: var(--color-brand, #b82032);
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+/* Orders List */
+.profile-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.profile-order-card {
+  background: #ffffff;
+  border: 1px solid #ebdcd0;
+  border-radius: 14px;
+  padding: 18px 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.15s ease;
+}
+
+.profile-order-card:hover {
+  border-color: #d1b8a5;
+}
+
+.profile-order-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.order-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.order-status-pill {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.order-status-pill.in-progress {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #fed7aa;
+}
+
+.order-status-pill.completed {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.order-status-pill.cancelled {
+  background: #fff1f2;
+  color: #e11d48;
+  border: 1px solid #fecdd3;
+}
+
+.profile-order-items {
+  background: #fdfaf6;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.order-item-line {
+  display: flex;
+  justify-content: space-between;
+  color: #44403c;
+}
+
+.profile-order-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+  color: #78716c;
+  padding-top: 10px;
+  border-top: 1px solid #f5ebe1;
+}
+
+/* Empty State */
+.profile-empty-orders {
+  text-align: center;
+  padding: 48px 20px;
+  background: #ffffff;
+  border: 1px dashed #ebdcd0;
+  border-radius: 14px;
+  color: #78716c;
+}
+
+.profile-empty-orders h3 {
+  margin: 12px 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-ink, #211d1a);
+}
+
+.profile-empty-orders p {
+  margin: 0 0 16px;
+  font-size: 13px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 20px 14px 48px;
+  }
+
+  .profile-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px;
+  }
+
+  .profile-hero-actions {
+    width: 100%;
+    margin-top: 12px;
+  }
+
+  .profile-action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .profile-edit-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .profile-metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .active-order-stepper {
+    gap: 2px;
+  }
+
+  .stepper-indicator {
+    width: 24px;
+    height: 24px;
+    font-size: 11px;
+  }
+
+  .stepper-label {
+    font-size: 9.5px;
+  }
+}

@@ -231,7 +231,7 @@ router.get('/chapa-verify/:txRef', async (req: Request, res: Response) => {
         if (order && order.paymentStatus !== 'paid') {
           order.paymentStatus = 'paid'
           order.paymentMethod = 'Chapa (Verified)'
-          order.transactionId = txRef
+          order.transactionId = Array.isArray(txRef) ? txRef[0] : String(txRef)
           await order.save()
         }
       } catch (e) {}
